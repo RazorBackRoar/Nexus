@@ -8,14 +8,12 @@ for embedded hyperlinks from apps like Apple Notes.
 """
 
 import sys
-import os
 import json
 import re
-import subprocess
 import asyncio
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Union, Any
+from typing import Dict, List, Optional, Union, Any
 from urllib.parse import urlparse
 import logging
 from dataclasses import dataclass, field
@@ -28,10 +26,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QTabWidget,
     QPushButton,
-    QTextEdit,
     QLabel,
     QMessageBox,
-    QLineEdit,
     QGraphicsDropShadowEffect,
     QTreeWidget,
     QTreeWidgetItem,
@@ -40,10 +36,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QGroupBox,
     QComboBox,
-    QSlider,
-    QCheckBox,
     QFormLayout,
-    QFrame,
     QColorDialog,
     QTableWidget,
     QTableWidgetItem,
@@ -59,10 +52,9 @@ from PySide6.QtCore import (
     QStandardPaths,
     QEasingCurve,
     QByteArray,
-    QSize,
     QMimeData,
 )
-from PySide6.QtGui import QColor, QFont
+from PySide6.QtGui import QColor
 
 # ==============================================================================
 # 1. Configuration and Logging Setup
@@ -158,8 +150,8 @@ def cleanup_logs():
         for backup_file in backup_files:
             backup_file.unlink()
 
-    except Exception as e:
-        print(f"Warning: Could not fully cleanup logs: {e}")
+    except OSError as e:
+        print("Warning: Could not fully cleanup logs: %s", e)
 
 
 logger = setup_logging()
@@ -308,7 +300,9 @@ class URLProcessor:
         # Check text length limit
         if len(text) > Config.MAX_URL_EXTRACTION_LENGTH:
             logger.warning(
-                f"Text length {len(text)} exceeds limit {Config.MAX_URL_EXTRACTION_LENGTH}, truncating"
+                "Text length %d exceeds limit %d, truncating",
+                len(text),
+                Config.MAX_URL_EXTRACTION_LENGTH
             )
             text = text[: Config.MAX_URL_EXTRACTION_LENGTH]
 
@@ -316,10 +310,9 @@ class URLProcessor:
             # Use enhanced extraction if enabled
             if Config.ENABLE_ENHANCED_URL_EXTRACTION:
                 return self._extract_urls_enhanced(text)
-            else:
-                return self._extract_urls_fallback(text)
-        except Exception as e:
-            logger.error(f"URL extraction failed, falling back to basic method: {e}")
+            return self._extract_urls_fallback(text)
+        except (ValueError, TypeError, re.error) as e:
+            logger.error("URL extraction failed, falling back to basic method: %s", e)
             return self._extract_urls_fallback(text)
 
     def _extract_urls_enhanced(self, text: str) -> List[str]:
@@ -347,11 +340,11 @@ class URLProcessor:
                     matches = pattern.findall(text_without_concatenated)
                     if matches:
                         logger.debug(
-                            f"Pattern '{pattern_name}' found {len(matches)} URLs"
+                            "Pattern '%s' found %d URLs", pattern_name, len(matches)
                         )
                         all_urls.update(matches)
-                except Exception as e:
-                    logger.warning(f"Pattern '{pattern_name}' failed: {e}")
+                except (ValueError, TypeError, re.error) as e:
+                    logger.warning("Pattern '%s' failed: %s", pattern_name, e)
 
         # Remove URLs that are substrings of shortened URLs
         filtered_urls = self._remove_shortened_url_substrings(list(all_urls))
@@ -470,10 +463,10 @@ class URLProcessor:
                 invalid_count += 1
 
         if invalid_count > 0:
-            logger.debug(f"Filtered out {invalid_count} invalid URLs")
+            logger.debug("Filtered out %d invalid URLs", invalid_count)
 
         logger.info(
-            f"Extracted {len(valid_urls)} valid URLs from {len(urls)} candidates"
+            "Extracted %d valid URLs from %d candidates", len(valid_urls), len(urls)
         )
         return sorted(list(valid_urls))
 
@@ -494,7 +487,7 @@ class URLProcessor:
                     return False
                 # Filter if it looks like a file
                 return True
-        except Exception:
+        except (IndexError, AttributeError):
             pass
         return False
 
@@ -541,7 +534,7 @@ class URLProcessor:
             if len(tld) < 2 or not tld.isalpha():
                 return False
 
-        except Exception:
+        except (ValueError, IndexError, AttributeError):
             return False
 
         return True
@@ -580,8 +573,8 @@ class URLProcessor:
                 if parsed.fragment:
                     normalized += f"#{parsed.fragment}"
                 return normalized
-        except Exception as e:
-            logger.warning(f"Failed to normalize URL {url}: {e}")
+        except (ValueError, TypeError) as e:
+            logger.warning("Failed to normalize URL %s: %s", url, e)
 
         return None
 
@@ -602,7 +595,7 @@ class SafariController:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await process.communicate()
+            stdout, _ = await process.communicate()
 
             is_running = stdout.decode().strip() == "true"
 
@@ -621,8 +614,8 @@ class SafariController:
                 await asyncio.sleep(2.0)
 
             return True
-        except Exception as e:
-            logger.error(f"Failed to check/launch Safari: {e}")
+        except (OSError, asyncio.TimeoutError) as e:
+            logger.error("Failed to check/launch Safari: %s", e)
             return False
 
     @staticmethod
@@ -656,7 +649,7 @@ class SafariController:
                         batch, private_mode=private_mode
                     )
                     if not success:
-                        logger.warning(f"Failed to open batch starting with {batch[0]}")
+                        logger.warning("Failed to open batch starting with %s", batch[0])
                     if i + max_batch_size < len(urls):
                         # Use privacy-focused delay
                         delay = random.uniform(
@@ -664,8 +657,8 @@ class SafariController:
                         )
                         await asyncio.sleep(delay)
                 return True
-        except Exception as e:
-            logger.error(f"Failed to open URLs in Safari: {e}")
+        except (OSError, asyncio.TimeoutError) as e:
+            logger.error("Failed to open URLs in Safari: %s", e)
             return False
 
     @staticmethod
@@ -676,7 +669,7 @@ class SafariController:
             try:
                 domain = urlparse(url).netloc.lower()
                 domain_groups.setdefault(domain, []).append(url)
-            except:
+            except (ValueError, AttributeError):
                 domain_groups.setdefault("unknown", []).append(url)
         return domain_groups
 
@@ -689,7 +682,7 @@ class SafariController:
         is_first_domain = True
 
         for domain, domain_urls in domain_groups.items():
-            logger.info(f"Opening {len(domain_urls)} URLs from {domain}")
+            logger.info("Opening %d URLs from %s", len(domain_urls), domain)
 
             # Strategy 1: Staggered opening for same-domain URLs with privacy delay
             if len(domain_urls) > 5:
@@ -703,7 +696,7 @@ class SafariController:
 
             if not success:
                 overall_success = False
-                logger.warning(f"Failed to open URLs from domain: {domain}")
+                logger.warning("Failed to open URLs from domain: %s", domain)
 
             # Only the first domain creates a new window, rest add to existing window
             is_first_domain = False
@@ -763,7 +756,7 @@ class SafariController:
                     batch, is_first=False, private_mode=private_mode
                 )
                 if not success:
-                    logger.warning(f"Failed batch for {domain}")
+                    logger.warning("Failed batch for %s", domain)
 
                 # Balanced progressive delay - prevents 503 errors
                 base_delay = random.uniform(
@@ -781,8 +774,8 @@ class SafariController:
                     await asyncio.sleep(delay)
 
             return True
-        except Exception as e:
-            logger.error(f"Error in staggered opening for {domain}: {e}")
+        except (OSError, asyncio.TimeoutError) as e:
+            logger.error("Error in staggered opening for %s: %s", domain, e)
             return False
 
     @staticmethod
@@ -848,16 +841,15 @@ class SafariController:
                 process.communicate(), timeout=Config.REQUEST_TIMEOUT
             )
             if process.returncode == 0:
-                logger.info(f"Successfully opened {len(processed_urls)} URLs.")
+                logger.info("Successfully opened %d URLs.", len(processed_urls))
                 return True
-            else:
-                logger.error(f"Safari AppleScript error: {stderr.decode()}")
-                return False
+            logger.error("Safari AppleScript error: %s", stderr.decode())
+            return False
         except asyncio.TimeoutError:
             logger.error("Safari operation timed out.")
             return False
-        except Exception as e:
-            logger.error(f"Failed to execute Safari AppleScript: {e}")
+        except OSError as e:
+            logger.error("Failed to execute Safari AppleScript: %s", e)
             return False
 
     @staticmethod
@@ -917,16 +909,15 @@ class SafariController:
                 process.communicate(), timeout=Config.REQUEST_TIMEOUT
             )
             if process.returncode == 0:
-                logger.info(f"Successfully opened {len(processed_urls)} URLs.")
+                logger.info("Successfully opened %d URLs.", len(processed_urls))
                 return True
-            else:
-                logger.error(f"Safari AppleScript error: {stderr.decode()}")
-                return False
+            logger.error("Safari AppleScript error: %s", stderr.decode())
+            return False
         except asyncio.TimeoutError:
             logger.error("Safari operation timed out.")
             return False
-        except Exception as e:
-            logger.error(f"Failed to execute Safari AppleScript: {e}")
+        except OSError as e:
+            logger.error("Failed to execute Safari AppleScript: %s", e)
             return False
 
 
@@ -951,10 +942,10 @@ class BookmarkManager:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             bookmarks = [self._deserialize_node(node_data) for node_data in data]
-            logger.info(f"Loaded {len(bookmarks)} top-level bookmark sections")
+            logger.info("Loaded %d top-level bookmark sections", len(bookmarks))
             return bookmarks
         except (json.JSONDecodeError, KeyError, TypeError) as e:
-            logger.error(f"Failed to load bookmarks, creating defaults: {e}")
+            logger.error("Failed to load bookmarks, creating defaults: %s", e)
             return self._create_default_bookmarks()
 
     def save_bookmarks(self, bookmarks: List[BookmarkNode]) -> bool:
@@ -970,14 +961,14 @@ class BookmarkManager:
             temp_path.replace(self.file_path)
             logger.info("Saved bookmarks successfully.")
             return True
-        except Exception as e:
-            logger.error(f"Failed to save bookmarks: {e}")
+        except (OSError, IOError) as e:
+            logger.error("Failed to save bookmarks: %s", e)
             if backup_path.exists() and not self.file_path.exists():
                 try:
                     backup_path.replace(self.file_path)
                     logger.info("Restored bookmarks from backup.")
-                except Exception as restore_error:
-                    logger.error(f"CRITICAL: Failed to restore backup: {restore_error}")
+                except (OSError, IOError) as restore_error:
+                    logger.error("CRITICAL: Failed to restore backup: %s", restore_error)
             return False
 
     def _serialize_node(self, node: BookmarkNode) -> Dict[str, Any]:
@@ -1025,8 +1016,8 @@ class AsyncWorker(QThread):
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(self.coro_func(*self.args, **self.kwargs))
             self.finished.emit(result)
-        except Exception as e:
-            logger.error(f"Async worker error: {e}", exc_info=True)
+        except (RuntimeError, asyncio.CancelledError) as e:
+            logger.error("Async worker error: %s", e, exc_info=True)
             self.error.emit(str(e))
         finally:
             if loop and not loop.is_closed():
@@ -1261,12 +1252,12 @@ class GlassPanel(QWidget):
         self.setObjectName("GlassPanel")
         # Initial style, will be updated by _apply_theme
         self.setStyleSheet(
-            f"""
-            #GlassPanel {{
+            """
+            #GlassPanel {
                 background-color: transparent; /* Allow main window background to show */
                 border: 2px solid #444; /* Default subtle border */
                 border-radius: 12px;
-            }}
+            }
         """
         )
 
@@ -2050,8 +2041,8 @@ class MainWindow(QMainWindow):
                 self.url_table.update_status(row, success)
 
             return success
-        except Exception as e:
-            logger.error(f"Error in URL tracking: {e}")
+        except (OSError, asyncio.TimeoutError) as e:
+            logger.error("Error in URL tracking: %s", e)
             # Mark all as failed on error
             for row in range(self.url_table.rowCount()):
                 self.url_table.update_status(row, False)
@@ -2118,7 +2109,7 @@ class MainWindow(QMainWindow):
         self.url_table.clear_table()
         self.url_table.add_urls(cleaned_urls)
 
-        logger.info(f"Organized {len(cleaned_urls)} URLs in the table.")
+        logger.info("Organized %d URLs in the table.", len(cleaned_urls))
 
     def _show_warning_message(self, message: str):
         """Shows a warning message box with theme styling."""
@@ -2373,13 +2364,12 @@ class MainWindow(QMainWindow):
                 process.communicate(), timeout=Config.REQUEST_TIMEOUT
             )
             if process.returncode == 0:
-                logger.info(f"Successfully opened {len(processed_urls)} bookmark URLs.")
+                logger.info("Successfully opened %d bookmark URLs.", len(processed_urls))
                 return True
-            else:
-                logger.error(f"Safari AppleScript error: {stderr.decode()}")
-                return False
-        except Exception as e:
-            logger.error(f"Error opening bookmark URLs: {e}")
+            logger.error("Safari AppleScript error: %s", stderr.decode())
+            return False
+        except (OSError, asyncio.TimeoutError) as e:
+            logger.error("Error opening bookmark URLs: %s", e)
             return False
 
     def _add_bookmark_link(self, parent_item: Optional[QTreeWidgetItem] = None):
@@ -2470,7 +2460,7 @@ class MainWindow(QMainWindow):
         self.private_mode_btn.setText(
             f"🔒 Private Mode: {'ON' if is_private else 'OFF'}"
         )
-        logger.info(f"Private mode {'enabled' if is_private else 'disabled'}")
+        logger.info("Private mode %s", 'enabled' if is_private else 'disabled')
 
     def _clear_all_data(self):
         """Clear all URLs and optionally cleanup logs for privacy."""
@@ -2480,8 +2470,8 @@ class MainWindow(QMainWindow):
             try:
                 cleanup_logs()
                 logger.info("Privacy cleanup completed")
-            except Exception as e:
-                logger.warning(f"Could not complete privacy cleanup: {e}")
+            except OSError as e:
+                logger.warning("Could not complete privacy cleanup: %s", e)
 
     def _show_message(self, message: str, level: str):
         """Shows a styled QMessageBox."""
