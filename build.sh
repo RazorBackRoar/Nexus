@@ -33,35 +33,18 @@ echo -e "\n${BLUE}3. Verifying and rebuilding app icon...${NC}"
 if [ ! -f "$ICON_SOURCE" ]; then echo -e "${RED}❌ Error: AppIcon.icns not found.${NC}"; exit 1; fi
 "$PYTHON_EXE" utils/icon_generator.py "$ICON_SOURCE" "$ICON_FIXED" && mv "$ICON_FIXED" "$ICON_SOURCE"
 echo -e "   - ${GREEN}Icon processed successfully.${NC}"
-echo -e "\n${BLUE}4. Performing deep clean of all build artifacts...${NC}"
+echo -e "\n${BLUE}4. Cleaning build artifacts...${NC}"
 
-# Remove all build output directories
-rm -rf build/ dist/ dist_mac/ 2>/dev/null || true
-
-# Remove all DMG files (including any previous releases)
+# Remove build directories and DMG
+rm -rf build/ dist/ 2>/dev/null || true
 rm -f *.dmg 2>/dev/null || true
-
-# Remove DMG staging directories and temp DMGs
-rm -rf *_dmg/ 2>/dev/null || true
-
-# Remove all log files
-rm -f *.log build.log 2>/dev/null || true
-
-# Remove temporary helper files
-rm -f license_temp.r 2>/dev/null || true
 
 # Remove Python cache files
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 find . -type f -name "*.pyc" -delete 2>/dev/null || true
 find . -type f -name "*.pyo" -delete 2>/dev/null || true
 
-# Remove .egg-info directories
-rm -rf *.egg-info/ 2>/dev/null || true
-
-# Remove macOS metadata files
-find . -name ".DS_Store" -delete 2>/dev/null || true
-
-echo -e "   - ${GREEN}Deep clean complete: removed build/, dist/, DMGs, staging, caches, and temp files${NC}"
+echo -e "   - ${GREEN}Cleanup complete${NC}"
 echo -e "\n${BLUE}5. Building the .app bundle (ARM64 only)...${NC}"
 "$PYTHON_EXE" setup.py py2app --arch=arm64 2>&1 | tee build.log || { echo -e "${RED}❌ Build failed.${NC}"; exit 1; }
 echo -e "   - ${GREEN}Application bundle created.${NC}"
@@ -77,7 +60,7 @@ rm -f "$DMG_PATH" "$DMG_TEMP"
 rm -rf "$DMG_STAGING_DIR"
 mkdir -p "$DMG_STAGING_DIR"
 cp -R "$APP_PATH" "$DMG_STAGING_DIR/"
-cp "README.txt" "$DMG_STAGING_DIR/"
+cp "README.md" "$DMG_STAGING_DIR/README.txt"
 cp "LICENSE.txt" "$DMG_STAGING_DIR/License.txt"
 ln -s /Applications "$DMG_STAGING_DIR/Applications" || true
 rm -f "$DMG_STAGING_DIR/.DS_Store"
@@ -100,10 +83,10 @@ echo '
        set viewOptions to the icon view options of container window
        set arrangement of viewOptions to not arranged
        set icon size of viewOptions to 72
-       set position of item "'${APP_NAME}'.app" of container window to {130, 300}
-       set position of item "Applications" of container window to {290, 300}
-       set position of item "README.txt" of container window to {130, 140}
-       set position of item "License.txt" of container window to {290, 140}
+       set position of item "'${APP_NAME}'.app" of container window to {130, 140}
+       set position of item "Applications" of container window to {290, 140}
+       set position of item "README.txt" of container window to {130, 300}
+       set position of item "License.txt" of container window to {290, 300}
        update without registering applications
        delay 1
        close
