@@ -61,4 +61,4 @@ GitHub: [@RazorBackRoar](https://github.com/RazorBackRoar)
 
 ---
 
-Built with ❤️ using PySide6
+Built using PySide6
