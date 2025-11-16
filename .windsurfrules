@@ -1,0 +1,93 @@
+# AI Development Standards
+
+## Core Philosophy
+
+- KISS: Write the simplest solution that works
+- DRY: Extract common functionality, avoid duplication
+- YAGNI: Don't build features until actually needed
+- Readability Priority: Code must be clear and understandable
+- Fail Fast: Surface problems early rather than letting them compound
+
+## SOLID Principles
+
+- Single Responsibility: Each class/function has one job
+- Open/Closed: Open for extension, closed for modification
+- Liskov Substitution: Subtypes must be substitutable for base types
+- Interface Segregation: Many specific interfaces over one general
+- Dependency Inversion: Depend on abstractions, not concretions
+
+## Development Standards
+
+- Consistent Naming: Use meaningful, descriptive names
+- Modularity: Break code into small, reusable functions
+- Security: Validate all inputs and follow safe coding practices
+- Performance: Optimize for efficiency and responsiveness
+- Shell Robustness: Always use set -euo pipefail for strict error handling
+- Atomic Operations: Ensure file operations complete fully or rollback
+- Idempotency: Operations should be safely repeatable
+
+## Programming Rules
+
+- Separation of Concerns: Keep different aspects isolated
+- Composition Over Inheritance: Favor object composition
+- Explicit is Better Than Implicit: Code should be self-documenting
+- Defensive Programming: Assume inputs are invalid and systems will fail
+- Immutability Preference: Favor immutable data structures
+- Stateless Design: Minimize shared mutable state
+
+## Code Quality Guarantees
+
+- DRY Principle (DRY): No duplicate code. Reuse or extend existing functionality
+- Clean Architecture (CA): Generate cleanly formatted, logically structured code
+- Robust Error Handling (REH): Integrate appropriate error handling for all edge cases
+- Input Validation (IV): All external data must be validated before processing
+- Resource Management (RM): Close connections and free resources appropriately
+- Constants Over Magic Values (CMV): No magic strings or numbers. Use named constants
+- Security-First Thinking (SFT): Implement proper authentication, authorization, and data protection
+- Performance Awareness (PA): Consider computational complexity and resource usage
+
+## zsh Best Practices
+
+- Use ZERR trap instead of ERR for zsh error handling
+- Use `${(Q)}` parameter expansion for unquoting escaped strings
+- Use `--` in rm commands to handle filenames starting with dashes
+- Always use `local` for function variables to prevent global scope pollution
+- Use `emulate -L zsh` in functions for consistent behavior
+- Validate file existence with `[[ -e "$file" ]]` before operations
+- Handle array expansion safely with `"${array[@]}"`
+
+## Universal macOS Rules
+
+- **Simplicity First (SF):** Always choose the simplest viable solution. Complex patterns or architectures require explicit justification.
+- **Readability Priority (RP):** Code must be immediately understandable by both humans and AI during future modifications.
+- **Dependency Minimalism (DM):** No new libraries or frameworks without explicit request or compelling justification.
+- **Industry Standards Adherence (ISA):** Follow established conventions for the relevant language and tech stack.
+- **Strategic Documentation (SD):** Comment only complex logic or critical functions. Avoid documenting the obvious. Write new docs in english. If you find docs in other languages, rewrite them into english.
+- **Test-Driven Thinking (TDT):** Design all code to be easily testable from inception.
+- **Path Safety (PS):** Always quote variables containing paths and handle spaces, special characters, and Unicode properly.
+- **File System Awareness (FSA):** Respect macOS file naming conventions, case sensitivity, and metadata preservation.
+- **Resource Cleanup (RC):** Always cleanup temporary files, processes, and system resources on script completion or interruption.
+- **Permission Validation (PV):** Check file and directory permissions before attempting operations to prevent runtime failures.
+- **System Integration (SI):** Use native macOS APIs and tools when available instead of cross-platform alternatives.
+- **Error Transparency (ET):** Provide clear, actionable error messages that guide users toward resolution.
+
+## macOS Integration
+
+- Handle case-insensitive but case-preserving file system
+- Skip system files automatically (.DS_Store, .localized, etc.)
+- Handle App Bundle directories (.app) as single entities
+- Check and remove quarantine attributes using xattr
+- Use mdfind for Spotlight-based searching when appropriate
+- Use Homebrew paths when available: $(brew --prefix)/bin
+
+## Quality Validation
+
+- Is this the simplest solution that works?
+- Does it follow DRY principles?
+- Are all inputs validated?
+- Is error handling implemented?
+- Consistent naming conventions
+- No code duplication
+- Security considerations addressed
+
+**Build reliable, fast, delightful tools. Prioritize user experience and data safety.**

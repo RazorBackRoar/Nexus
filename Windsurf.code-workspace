@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "files.autoSave": "afterDelay",
+    "python.globalModuleInstallation": true,
+    "python.envFile": "",
+    "editor.wordWrap": "on",
+    "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+    "python.languageServer": "None",
+    "python.createEnvironment.trigger": "off",
+    "python.pythonPath": "/opt/homebrew/bin/python3",
+  },
+}
