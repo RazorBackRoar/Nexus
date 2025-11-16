@@ -1211,8 +1211,13 @@ class NeonButton(QPushButton):
             f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {self.color}, stop:1 {darker_color});
-                color: white; border: none; border-radius: 8px;
-                padding: 10px 20px; font-weight: bold; font-size: 14px;
+                color: white; 
+                border: none; 
+                border-radius: 8px;
+                padding: 10px 20px; 
+                font-weight: bold; 
+                font-size: 14px;
+                text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
             }}
             QPushButton:hover {{ /* Glow effect handled by QGraphicsDropShadowEffect */ }}
             QPushButton:pressed {{ background: {darker_color}; }}
@@ -1242,6 +1247,61 @@ class NeonButton(QPushButton):
         self.glow_out_anim.setStartValue(self.shadow.blurRadius())
         self.glow_out_anim.start()
         super().leaveEvent(event)
+
+
+class OutlinedLabel(QLabel):
+    """A QLabel with outlined text for better visibility."""
+
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self.outline_color = QColor(0, 0, 0)  # Black outline
+        self.outline_width = 2
+
+    def paintEvent(self, event):
+        """Custom paint event to draw outlined text."""
+        from PySide6.QtGui import QPainter, QPen, QPainterPath
+        from PySide6.QtCore import Qt
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Get the text and font
+        text = self.text()
+        font = self.font()
+        painter.setFont(font)
+
+        # Create a path for the text
+        path = QPainterPath()
+        path.addText(0, font.pointSize(), font, text)
+
+        # Get the bounding rect and center the text
+        rect = self.rect()
+        text_rect = painter.fontMetrics().boundingRect(text)
+        
+        # Calculate position based on alignment
+        if self.alignment() & Qt.AlignmentFlag.AlignHCenter:
+            x = (rect.width() - text_rect.width()) / 2
+        elif self.alignment() & Qt.AlignmentFlag.AlignRight:
+            x = rect.width() - text_rect.width()
+        else:
+            x = 0
+
+        if self.alignment() & Qt.AlignmentFlag.AlignVCenter:
+            y = (rect.height() + text_rect.height()) / 2
+        elif self.alignment() & Qt.AlignmentFlag.AlignBottom:
+            y = rect.height()
+        else:
+            y = text_rect.height()
+
+        # Translate to the correct position
+        painter.translate(x, y)
+
+        # Draw the outline
+        pen = QPen(self.outline_color, self.outline_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+        painter.strokePath(path, pen)
+
+        # Draw the fill
+        painter.fillPath(path, self.palette().color(self.foregroundRole()))
 
 
 class GlassPanel(QWidget):
@@ -1844,7 +1904,12 @@ class MainWindow(QMainWindow):
         # Tab-specific component styling
         # Safari Tab
         self.safari_title.setStyleSheet(
-            f"color: {safari_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
+            f"""
+            color: {safari_colors['primary']}; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 20px;
+            """
         )
         self.url_table.setStyleSheet(
             f"""
@@ -1893,7 +1958,12 @@ class MainWindow(QMainWindow):
 
         # Bookmarks Tab
         self.bookmarks_title.setStyleSheet(
-            f"color: {bookmarks_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
+            f"""
+            color: {bookmarks_colors['primary']}; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 20px;
+            """
         )
         self.bookmark_tree.setStyleSheet(
             f"""
@@ -1924,7 +1994,12 @@ class MainWindow(QMainWindow):
 
         # Settings Tab
         self.settings_title.setStyleSheet(
-            f"color: {theme_settings_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
+            f"""
+            color: {theme_settings_colors['primary']}; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 20px;
+            """
         )
 
         # Styling for the QGroupBoxes in Settings (Preset Group)
