@@ -1904,12 +1904,7 @@ class MainWindow(QMainWindow):
         # Tab-specific component styling
         # Safari Tab
         self.safari_title.setStyleSheet(
-            f"""
-            color: {safari_colors['primary']}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin: 20px;
-            """
+            f"color: {safari_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
         )
         self.url_table.setStyleSheet(
             f"""
@@ -1958,12 +1953,7 @@ class MainWindow(QMainWindow):
 
         # Bookmarks Tab
         self.bookmarks_title.setStyleSheet(
-            f"""
-            color: {bookmarks_colors['primary']}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin: 20px;
-            """
+            f"color: {bookmarks_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
         )
         self.bookmark_tree.setStyleSheet(
             f"""
@@ -1994,12 +1984,7 @@ class MainWindow(QMainWindow):
 
         # Settings Tab
         self.settings_title.setStyleSheet(
-            f"""
-            color: {theme_settings_colors['primary']}; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin: 20px;
-            """
+            f"color: {theme_settings_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
         )
 
         # Styling for the QGroupBoxes in Settings (Preset Group)
