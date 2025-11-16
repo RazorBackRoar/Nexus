@@ -15,6 +15,11 @@ fi
 BLUE='\033[0;34m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 echo -e "${BLUE}🚀 Starting build process for ${APP_NAME}...${NC}"
 
+# Increment version
+echo -e "\n${BLUE}0. Incrementing version...${NC}"
+"$PYTHON_EXE" version_bump.py
+echo -e "   - ${GREEN}Version updated${NC}"
+
 # Check for and eject any mounted Nexus volumes before building
 if hdiutil info | grep -q "/Volumes/${APP_NAME}"; then
   echo -e "${YELLOW}⚠️  Mounted ${APP_NAME} volume detected - ejecting...${NC}"
