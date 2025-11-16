@@ -1783,6 +1783,13 @@ class MainWindow(QMainWindow):
                 swatch.setStyleSheet(
                     f"background-color: {color_val}; border-radius: 12px; border: 1px solid #fff;"
                 )
+                # Update the group box title color to match the swatch
+                group_box = getattr(self, f"{tab_key}_{color_key}_color_group")
+                color_name = color_key.capitalize()
+                group_box.setStyleSheet(
+                    f"QGroupBox {{ color: {color_val}; font-weight: bold; font-size: 14px; }}"
+                )
+                group_box.setTitle(f"{color_name} Color")
 
         # QTabWidget and QTabBar styling for the neon outline effect
         self.tabs.setStyleSheet(
