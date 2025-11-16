@@ -1,6 +1,6 @@
 # Nexus
 
-**Safari Bookmark & URL Manager** - v5.0.2
+**Safari Bookmark & URL Manager** - v5.0.3
 
 A powerful macOS application for managing Safari bookmarks and batch-opening URLs with a beautiful neon-themed interface.
 
