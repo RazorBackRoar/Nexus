@@ -40,8 +40,11 @@ if [ ! -f "$ICON_SOURCE" ]; then echo -e "${RED}❌ Error: AppIcon.icns not foun
 echo -e "   - ${GREEN}Icon processed successfully.${NC}"
 echo -e "\n${BLUE}4. Cleaning build artifacts...${NC}"
 
-# Remove build directories and DMG
-rm -rf build/ dist/ 2>/dev/null || true
+# Remove build directories, app, and DMG
+rm -rf build/ 2>/dev/null || true
+rm -rf dist/Nexus.app 2>/dev/null || true
+rm -f dist/Nexus.dmg 2>/dev/null || true
+rm -f dist/Nexus_temp.dmg 2>/dev/null || true
 rm -f *.dmg 2>/dev/null || true
 
 # Remove Python cache files

@@ -22,10 +22,9 @@ def get_current_version():
 
 
 def increment_version(version):
-    """Increment patch version with rollover logic.
-    - x.y.z -> x.y.(z+1)
-    - x.y.10 -> x.(y+1).0
-    - x.10.0 -> (x+1).0.0
+    """Increment minor version, keep patch at 0.
+    - x.y.0 -> x.(y+1).0
+    - x.9.0 -> (x+1).0.0
     """
     parts = version.split(".")
     if len(parts) != 3:
@@ -33,13 +32,11 @@ def increment_version(version):
     
     major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
     
-    patch += 1
+    # Always increment minor, keep patch at 0
+    minor += 1
+    patch = 0
     
-    # Rollover logic
-    if patch == 10:
-        patch = 0
-        minor += 1
-    
+    # Rollover logic when minor hits 10
     if minor == 10:
         minor = 0
         major += 1
