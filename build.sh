@@ -79,14 +79,14 @@ echo '
        set current view of container window to icon view
        set toolbar visible of container window to false
        set statusbar visible of container window to false
-       set the bounds of container window to {100, 80, 550, 560}
+       set the bounds of container window to {100, 80, 510, 520}
        set viewOptions to the icon view options of container window
        set arrangement of viewOptions to not arranged
        set icon size of viewOptions to 72
-       set position of item "'${APP_NAME}'.app" of container window to {130, 140}
-       set position of item "Applications" of container window to {290, 140}
-       set position of item "README.txt" of container window to {130, 300}
-       set position of item "License.txt" of container window to {290, 300}
+       set position of item "'${APP_NAME}'.app" of container window to {100, 120}
+       set position of item "Applications" of container window to {260, 120}
+       set position of item "README.txt" of container window to {100, 280}
+       set position of item "License.txt" of container window to {260, 280}
        update without registering applications
        delay 1
        close
