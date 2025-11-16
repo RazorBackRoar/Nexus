@@ -1912,7 +1912,7 @@ class MainWindow(QMainWindow):
                 background-color: #1e1e1e;
                 border: 2px solid {safari_colors['primary']};
                 border-radius: 8px;
-                color: #fff;
+                color: #aaa;
                 font-size: 14px;
                 gridline-color: #333;
                 selection-background-color: {safari_colors['secondary']};
@@ -1927,7 +1927,7 @@ class MainWindow(QMainWindow):
             }}
             QHeaderView::section {{
                 background-color: #2a2a2a;
-                color: {safari_colors['primary']};
+                color: #aaa;
                 padding: 8px;
                 border: 1px solid #444;
                 font-weight: bold;
