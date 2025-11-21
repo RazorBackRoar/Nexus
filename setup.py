@@ -4,7 +4,7 @@ from setuptools import setup
 # All the key details are defined ONCE here.
 APP_NAME = "Nexus"
 APP_SCRIPT = "src/Main.py"
-APP_VERSION = "5.1.0"  # <-- UPDATED to your new version
+APP_VERSION = "5.0.0"  # <-- UPDATED to your new version
 BUNDLE_ID = "com.razorbackroar.nexus.app"
 AUTHOR_NAME = "RazorBackRoar"
 

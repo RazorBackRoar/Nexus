@@ -1,6 +1,6 @@
 # Nexus
 
-**Safari Bookmark & URL Manager** - v5.2.0
+**Safari Bookmark & URL Manager** - v5.0.0
 
 A powerful macOS application for managing Safari bookmarks and batch-opening URLs with a beautiful neon-themed interface.
 
@@ -25,7 +25,7 @@ A powerful macOS application for managing Safari bookmarks and batch-opening URL
 
 ### Troubleshooting
 
-If macOS blocks the app, go to:  
+If macOS blocks the app, go to:
 **System Settings → Privacy & Security** → look for "Nexus.app was blocked" and click "Open Anyway"
 
 You only need to do this once. After that, you can open Nexus normally.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Automatic version increment script for Nexus
-Updates version in README.md and setup.py automatically."""
+"""Comprehensive version synchronization script for Nexus
+Updates version in README.md, setup.py, src/Main.py, and build.sh automatically."""
 
 import re
 import subprocess
@@ -12,12 +12,12 @@ def get_current_version():
     readme = Path("README.md")
     if not readme.exists():
         raise FileNotFoundError("README.md not found")
-    
-    content = readme.read_text()
-    match = re.search(r'\*\*Safari Bookmark & URL Manager\*\* - v([0-9.]+)', content)
+
+    content = readme.read_text(encoding="utf-8")
+    match = re.search(r"\*\*Safari Bookmark & URL Manager\*\* - v([0-9.]+)", content)
     if not match:
         raise ValueError("Version not found in README.md")
-    
+
     return match.group(1)
 
 
@@ -29,31 +29,36 @@ def increment_version(version):
     parts = version.split(".")
     if len(parts) != 3:
         raise ValueError(f"Invalid version format: {version}")
-    
+
     major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
-    
+
     # Always increment minor, keep patch at 0
     minor += 1
     patch = 0
-    
+
     # Rollover logic when minor hits 10
     if minor == 10:
         minor = 0
         major += 1
-    
+
     return f"{major}.{minor}.{patch}"
 
 
 def update_readme(new_version):
     """Update version in README.md."""
     readme = Path("README.md")
-    content = readme.read_text()
+    if not readme.exists():
+        print("⚠️  README.md not found, skipping")
+        return
+
+    content = readme.read_text(encoding="utf-8")
     content = re.sub(
-        r'\*\*Safari Bookmark & URL Manager\*\* - v[0-9.]+',
-        f'**Safari Bookmark & URL Manager** - v{new_version}',
-        content
+        r"\*\*Safari Bookmark & URL Manager\*\* - v[0-9.]+",
+        f"**Safari Bookmark & URL Manager** - v{new_version}",
+        content,
     )
-    readme.write_text(content)
+    readme.write_text(content, encoding="utf-8")
+    print(f"✅ Updated README.md: v{new_version}")
 
 
 def update_setup_py(new_version):
@@ -62,20 +67,55 @@ def update_setup_py(new_version):
     if not setup_py.exists():
         print("⚠️  setup.py not found, skipping")
         return
-    
-    content = setup_py.read_text()
+
+    content = setup_py.read_text(encoding="utf-8")
+    # Update APP_VERSION variable
     content = re.sub(
-        r'version=["\']([^"\']+)["\']',
-        f'version="{new_version}"',
-        content
+        r'APP_VERSION = "[0-9.]+"', f'APP_VERSION = "{new_version}"', content
     )
-    setup_py.write_text(content)
+    setup_py.write_text(content, encoding="utf-8")
+    print(f'✅ Updated setup.py: APP_VERSION="{new_version}"')
+
+
+def update_main_py(new_version):
+    """Update version in src/Main.py."""
+    main_py = Path("src/Main.py")
+    if not main_py.exists():
+        print("⚠️  src/Main.py not found, skipping")
+        return
+
+    content = main_py.read_text(encoding="utf-8")
+    content = re.sub(
+        r'APP_VERSION = "[0-9.]+"', f'APP_VERSION = "{new_version}"', content
+    )
+    main_py.write_text(content, encoding="utf-8")
+    print(f'✅ Updated src/Main.py: APP_VERSION="{new_version}"')
+
+
+def update_build_sh(new_version):
+    """Update version in build.sh."""
+    build_sh = Path("build.sh")
+    if not build_sh.exists():
+        print("⚠️  build.sh not found, skipping")
+        return
+
+    content = build_sh.read_text(encoding="utf-8")
+    # Update header
+    content = re.sub(r"Nexus v[0-9.]+", f"Nexus v{new_version}", content)
+    # Update variable
+    content = re.sub(r'APP_VERSION="[0-9.]+"', f'APP_VERSION="{new_version}"', content)
+    build_sh.write_text(content, encoding="utf-8")
+    print(f"✅ Updated build.sh: v{new_version}")
 
 
 def git_commit_version_change(old_version, new_version):
     """Commit version changes to git."""
     try:
-        subprocess.run(["git", "add", "README.md", "setup.py"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "add", "README.md", "setup.py", "src/Main.py", "build.sh"],
+            check=True,
+            capture_output=True,
+        )
         subprocess.run(
             ["git", "commit", "-m", f"v{new_version}: Version bump"],
             check=True,
@@ -91,21 +131,20 @@ def main():
     try:
         old_version = get_current_version()
         new_version = increment_version(old_version)
-        
+
         print(f"🔄 Incrementing version: v{old_version} -> v{new_version}")
-        
+
         update_readme(new_version)
         update_setup_py(new_version)
-        
-        print(f'✅ Updated README.md: v{new_version}')
-        print(f'✅ Updated setup.py: version="{new_version}"')
-        
+        update_main_py(new_version)
+        update_build_sh(new_version)
+
         # Auto-commit if git repo
         if Path(".git").exists():
             git_commit_version_change(old_version, new_version)
-        
+
         return new_version
-    
+
     except Exception as e:
         print(f"❌ Error incrementing version: {e}")
         return None
