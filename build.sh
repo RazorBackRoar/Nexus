@@ -1,8 +1,8 @@
 #!/bin/bash
-# Definitive Build Script for Nexus v5.0.0 by RazorBackRoar
+# Definitive Build Script for Nexus v5.1.0 by RazorBackRoar
 set -euo pipefail
 APP_NAME="Nexus"
-APP_VERSION="5.0.0"
+APP_VERSION="5.1.0"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 ICON_SOURCE="resources/Nexus.icns"
 ICON_FIXED="resources/Nexus_fixed.icns"

@@ -65,7 +65,7 @@ class Config:
     """Application configuration constants"""
 
     APP_NAME = "Nexus"
-    APP_VERSION = "5.0.0"  # Updated version for new features
+    APP_VERSION = "5.1.0"  # Updated version for new features
     ORGANIZATION = "Nexus"
     DOMAIN = "nexus.com"
 
