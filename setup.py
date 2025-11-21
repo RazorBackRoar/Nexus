@@ -26,6 +26,8 @@ PLIST = {
     "LSMinimumSystemVersion": "11.0",
     "NSHumanReadableCopyright": f" 2025 {AUTHOR_NAME}. All rights reserved.",  # <-- UPDATED to 2025
     "NSAppleEventsUsageDescription": "Nexus needs permission to control Safari to open your organized URL lists.",
+    "LSRequiresNativeExecution": True,  # Force macOS to recognize as Apple Silicon app, not iOS
+    "LSApplicationCategoryType": "public.app-category.utilities",  # Categorize as Utilities app
 }
 
 # --- py2app Options ---
