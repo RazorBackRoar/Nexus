@@ -1,8 +1,8 @@
 #!/bin/bash
-# Definitive Build Script for Nexus v5.1.0 by RazorBackRoar
+# Definitive Build Script for Nexus v5.0.0 by RazorBackRoar
 set -euo pipefail
 APP_NAME="Nexus"
-APP_VERSION="5.1.0"
+APP_VERSION="5.0.0"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 ICON_SOURCE="resources/Nexus.icns"
 ICON_FIXED="resources/Nexus_fixed.icns"
@@ -17,9 +17,9 @@ BLUE='\033[0;34m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC
 echo -e "${BLUE}🚀 Starting build process for ${APP_NAME}...${NC}"
 
 # Increment version
-echo -e "\n${BLUE}0. Incrementing version...${NC}"
-"$PYTHON_EXE" version_bump.py
-echo -e "   - ${GREEN}Version updated${NC}"
+# echo -e "\n${BLUE}0. Incrementing version...${NC}"
+# "$PYTHON_EXE" version_bump.py
+# echo -e "   - ${GREEN}Version updated${NC}"
 
 # Check for and eject any mounted Nexus volumes before building
 if hdiutil info | grep -q "/Volumes/${APP_NAME}"; then

@@ -65,7 +65,7 @@ class Config:
     """Application configuration constants"""
 
     APP_NAME = "Nexus"
-    APP_VERSION = "5.1.0"  # Updated version for new features
+    APP_VERSION = "5.0.0"  # Updated version for new features
     ORGANIZATION = "Nexus"
     DOMAIN = "nexus.com"
 
@@ -302,7 +302,7 @@ class URLProcessor:
             logger.warning(
                 "Text length %d exceeds limit %d, truncating",
                 len(text),
-                Config.MAX_URL_EXTRACTION_LENGTH
+                Config.MAX_URL_EXTRACTION_LENGTH,
             )
             text = text[: Config.MAX_URL_EXTRACTION_LENGTH]
 
@@ -649,7 +649,9 @@ class SafariController:
                         batch, private_mode=private_mode
                     )
                     if not success:
-                        logger.warning("Failed to open batch starting with %s", batch[0])
+                        logger.warning(
+                            "Failed to open batch starting with %s", batch[0]
+                        )
                     if i + max_batch_size < len(urls):
                         # Use privacy-focused delay
                         delay = random.uniform(
@@ -968,7 +970,9 @@ class BookmarkManager:
                     backup_path.replace(self.file_path)
                     logger.info("Restored bookmarks from backup.")
                 except (OSError, IOError) as restore_error:
-                    logger.error("CRITICAL: Failed to restore backup: %s", restore_error)
+                    logger.error(
+                        "CRITICAL: Failed to restore backup: %s", restore_error
+                    )
             return False
 
     def _serialize_node(self, node: BookmarkNode) -> Dict[str, Any]:
@@ -1211,11 +1215,11 @@ class NeonButton(QPushButton):
             f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {self.color}, stop:1 {darker_color});
-                color: white; 
-                border: none; 
+                color: white;
+                border: none;
                 border-radius: 8px;
-                padding: 10px 20px; 
-                font-weight: bold; 
+                padding: 10px 20px;
+                font-weight: bold;
                 font-size: 14px;
                 text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
             }}
@@ -1277,7 +1281,7 @@ class OutlinedLabel(QLabel):
         # Get the bounding rect and center the text
         rect = self.rect()
         text_rect = painter.fontMetrics().boundingRect(text)
-        
+
         # Calculate position based on alignment
         if self.alignment() & Qt.AlignmentFlag.AlignHCenter:
             x = (rect.width() - text_rect.width()) / 2
@@ -1297,7 +1301,13 @@ class OutlinedLabel(QLabel):
         painter.translate(x, y)
 
         # Draw the outline
-        pen = QPen(self.outline_color, self.outline_width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+        pen = QPen(
+            self.outline_color,
+            self.outline_width,
+            Qt.PenStyle.SolidLine,
+            Qt.PenCapStyle.RoundCap,
+            Qt.PenJoinStyle.RoundJoin,
+        )
         painter.strokePath(path, pen)
 
         # Draw the fill
@@ -2431,7 +2441,9 @@ class MainWindow(QMainWindow):
                 process.communicate(), timeout=Config.REQUEST_TIMEOUT
             )
             if process.returncode == 0:
-                logger.info("Successfully opened %d bookmark URLs.", len(processed_urls))
+                logger.info(
+                    "Successfully opened %d bookmark URLs.", len(processed_urls)
+                )
                 return True
             logger.error("Safari AppleScript error: %s", stderr.decode())
             return False
@@ -2527,7 +2539,7 @@ class MainWindow(QMainWindow):
         self.private_mode_btn.setText(
             f"🔒 Private Mode: {'ON' if is_private else 'OFF'}"
         )
-        logger.info("Private mode %s", 'enabled' if is_private else 'disabled')
+        logger.info("Private mode %s", "enabled" if is_private else "disabled")
 
     def _clear_all_data(self):
         """Clear all URLs and optionally cleanup logs for privacy."""
