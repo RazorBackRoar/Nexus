@@ -80,7 +80,7 @@ hdiutil create -volname "${APP_NAME}" -srcfolder "$DMG_STAGING_DIR" -ov -format 
 # Mount it without showing Finder
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | grep "Volumes" | awk '{print $3}')
 
-# Set window to 410x440 (no scrollbars)
+# Set window size (compact, no scrollbars)
 echo '
    tell application "Finder"
      tell disk "'${APP_NAME}'"
@@ -88,7 +88,7 @@ echo '
        set current view of container window to icon view
        set toolbar visible of container window to false
        set statusbar visible of container window to false
-       set the bounds of container window to {100, 80, 490, 545}
+       set the bounds of container window to {100, 100, 500, 520}
        set viewOptions to the icon view options of container window
        set arrangement of viewOptions to not arranged
        set icon size of viewOptions to 72
