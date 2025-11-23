@@ -79,7 +79,7 @@ rm -f "$DMG_PATH" "$DMG_TEMP"
 rm -rf "$DMG_STAGING_DIR"
 mkdir -p "$DMG_STAGING_DIR"
 cp -R "$APP_PATH" "$DMG_STAGING_DIR/"
-require_file_and_copy "README.md" "$DMG_STAGING_DIR/README.txt"
+require_file_and_copy "README.md" "$DMG_STAGING_DIR/README.md"
 require_file_and_copy "LICENSE.txt" "$DMG_STAGING_DIR/License.txt"
 ln -s /Applications "$DMG_STAGING_DIR/Applications" || true
 rm -f "$DMG_STAGING_DIR/.DS_Store"
@@ -99,14 +99,14 @@ tell application "Finder"
         set current view of container window to icon view
         set toolbar visible of container window to false
         set statusbar visible of container window to false
-        set the bounds of container window to {200, 200, 740, 750}
+        set the bounds of container window to {200, 200, 740, 720}
         set theViewOptions to the icon view options of container window
         set arrangement of theViewOptions to not arranged
         set icon size of theViewOptions to 100
-        set position of item "${APP_NAME}.app" of container window to {140, 130}
-        set position of item "Applications" of container window to {400, 130}
-        set position of item "License.txt" of container window to {140, 350}
-        set position of item "README.txt" of container window to {400, 350}
+        set position of item "${APP_NAME}.app" of container window to {140, 120}
+        set position of item "Applications" of container window to {400, 120}
+        set position of item "License.txt" of container window to {140, 310}
+        set position of item "README.md" of container window to {400, 310}
         update without registering applications
         delay 1
         close
