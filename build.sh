@@ -16,6 +16,16 @@ fi
 BLUE='\033[0;34m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 echo -e "${BLUE}🚀 Starting build process for ${APP_NAME}...${NC}"
 
+require_file_and_copy() {
+  local source_path="$1"
+  local destination_path="$2"
+  if [ ! -f "$source_path" ]; then
+    echo -e "${RED}❌ Required file '$source_path' not found. Cannot stage DMG.${NC}"
+    exit 1
+  fi
+  cp "$source_path" "$destination_path"
+}
+
 # Increment version
 # echo -e "\n${BLUE}0. Incrementing version...${NC}"
 # "$PYTHON_EXE" version_bump.py
@@ -69,8 +79,8 @@ rm -f "$DMG_PATH" "$DMG_TEMP"
 rm -rf "$DMG_STAGING_DIR"
 mkdir -p "$DMG_STAGING_DIR"
 cp -R "$APP_PATH" "$DMG_STAGING_DIR/"
-cp "README.md" "$DMG_STAGING_DIR/README.txt"
-cp "LICENSE.txt" "$DMG_STAGING_DIR/License.txt"
+require_file_and_copy "README.md" "$DMG_STAGING_DIR/README.txt"
+require_file_and_copy "LICENSE.txt" "$DMG_STAGING_DIR/License.txt"
 ln -s /Applications "$DMG_STAGING_DIR/Applications" || true
 rm -f "$DMG_STAGING_DIR/.DS_Store"
 
@@ -117,11 +127,24 @@ rm -f "$DMG_TEMP"
 rm -rf "$DMG_STAGING_DIR"
 
 echo -e "   - ${GREEN}Disk image created successfully.${NC}"
-echo -e "\n${BLUE}8. Opening DMG in Finder (window will stay open)...${NC}"
-open "$DMG_PATH" || echo -e "${YELLOW}⚠️ Unable to auto-open DMG. Open it manually at '$DMG_PATH'${NC}"
-echo -e "\n${GREEN}🎉 Build successful!${NC}"
-APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+APP_SIZE="N/A"
+if [ -d "$APP_PATH" ]; then
+  APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+fi
 DMG_SIZE=$(du -sh "$DMG_PATH" | cut -f1)
+
+echo -e "\n${BLUE}8. Manual install reminder...${NC}"
+echo -e "   - ${BLUE}📝 Open '${DMG_PATH}' manually and drag ${APP_NAME}.app into /Applications when ready.${NC}"
+
+echo -e "\n${BLUE}9. Removing local app bundle copy...${NC}"
+if [ -d "$APP_PATH" ]; then
+  rm -rf "$APP_PATH"
+  echo -e "   - ${GREEN}Removed build artifact at '${APP_PATH}'.${NC}"
+else
+  echo -e "   - ${YELLOW}No local app bundle found to remove.${NC}"
+fi
+
+echo -e "\n${GREEN}🎉 Build successful!${NC}"
 echo -e "   - 📦 App Path: ${BLUE}${APP_PATH}${NC}"
 echo -e "   - 📀 DMG Path: ${BLUE}${DMG_PATH}${NC}"
 echo -e "   - 📊 App Size: ${BLUE}${APP_SIZE}${NC}"
