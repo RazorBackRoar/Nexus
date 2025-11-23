@@ -1,0 +1,12 @@
+{
+  "include": ["src", "utils", "setup.py", "version_bump.py"],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "build",
+    "dist",
+    ".git",
+    ".venvs",
+    "**/*.egg-info"
+  ]
+}

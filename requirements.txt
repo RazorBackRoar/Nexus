@@ -1,0 +1,3 @@
+PySide6
+py2app
+Pillow
