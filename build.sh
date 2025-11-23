@@ -103,10 +103,10 @@ tell application "Finder"
         set theViewOptions to the icon view options of container window
         set arrangement of theViewOptions to not arranged
         set icon size of theViewOptions to 100
-        set position of item "${APP_NAME}.app" of container window to {140, 160}
-        set position of item "Applications" of container window to {400, 160}
-        set position of item "License.txt" of container window to {140, 380}
-        set position of item "README.txt" of container window to {400, 380}
+        set position of item "${APP_NAME}.app" of container window to {140, 130}
+        set position of item "Applications" of container window to {400, 130}
+        set position of item "License.txt" of container window to {140, 350}
+        set position of item "README.txt" of container window to {400, 350}
         update without registering applications
         delay 1
         close
