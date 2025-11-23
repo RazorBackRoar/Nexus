@@ -1,13 +1,9 @@
-<<<<<<< HEAD
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Thumbnails
+Icon?
 ._*
-
-# Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
 .Spotlight-V100
@@ -15,8 +11,6 @@
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
 .AppleDB
 .AppleDesktop
 Network Trash Folder
@@ -29,11 +23,6 @@ Temporary Items
 *.swp
 *.swo
 *~
-=======
-# -----------------------------------------------------------------------------
-# Universal .gitignore for Python, Streamlit, Node.js, and Docker projects
-# Solo Developer Setup - IDE settings are committed for convenience
-# -----------------------------------------------------------------------------
 
 # Python virtual environments
 .venv/
@@ -48,19 +37,14 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# py2app build artifacts (temporary build files)
-build/
-dist/
+# Build artifacts
+build/*
+dist/*
+!dist/*.dmg
 dist_mac/
-
-# Temporary DMG files created during build process
 rw.*.dmg
 
-# Note: Final release DMG files should be committed or uploaded to GitHub Releases
-# If you want to commit DMGs: remove *.dmg from ignore
-# If using GitHub Releases: keep *.dmg ignored and upload manually
-
-# Environment variables (security best practice)
+# Environment variables
 .env
 .env.local
 .env.development.local
@@ -72,13 +56,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# macOS specific files
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -98,17 +75,11 @@ tmp/
 *.sqlite3
 *.db
 
-# IDE settings - COMMITTED for solo work (syncs your config across projects)
-# Remove the ! prefix if working in a team
+# IDE settings committed for solo work
 !.vscode/
 !.windsurf/
 !*.code-workspace
-
-# But ignore these IDE-specific files
 .vscode/*.log
 .windsurf/*.log
-.idea/
 *.sublime-project
 *.sublime-workspace
-*.swp
->>>>>>> e07f1e33fcd8432df46c83766fbf744377a678ba
