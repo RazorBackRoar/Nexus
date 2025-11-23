@@ -1570,20 +1570,6 @@ class MainWindow(QMainWindow):
             self._apply_theme
         )  # Re-apply theme on tab switch
 
-        # Add version label at the bottom
-        version_label = QLabel(f"v{Config.APP_VERSION}")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        version_label.setStyleSheet(
-            """
-            QLabel {
-                color: #666;
-                font-size: 10px;
-                padding: 5px;
-            }
-            """
-        )
-        main_layout.addWidget(version_label)
-
     def _populate_safari_tab(self, tab_widget: QWidget):  # Renamed method
         """Populates the 'Safari' tab content."""
         layout = QVBoxLayout(tab_widget)
