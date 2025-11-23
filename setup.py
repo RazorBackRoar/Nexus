@@ -3,7 +3,7 @@ from setuptools import setup
 # --- Application Configuration (Single Source of Truth) ---
 # All the key details are defined ONCE here.
 APP_NAME = "Nexus"
-APP_SCRIPT = "src/Main.py"
+APP_SCRIPT = "src/main.py"
 APP_VERSION = "5.0.0"  # <-- UPDATED to your new version
 BUNDLE_ID = "com.razorbackroar.nexus.app"
 AUTHOR_NAME = "RazorBackRoar"
@@ -12,7 +12,7 @@ AUTHOR_NAME = "RazorBackRoar"
 # This list tells py2app which non-code files to include in the final app bundle.
 # Format: list of tuples (destination_dir, [source_files])
 # Empty string "" means root of Resources folder
-DATA_FILES = [("", ["resources", "LICENSE.txt"])]
+DATA_FILES = [("", ["LICENSE.txt"])]
 
 # --- Info.plist Configuration ---
 # This dictionary is programmatically populated using the variables from above.
@@ -32,7 +32,7 @@ PLIST = {
 
 # --- py2app Options ---
 OPTIONS = {
-    "iconfile": "resources/Nexus.icns",
+    "iconfile": "src/assets/icons/Nexus.icns",
     "packages": ["PySide6"],
     "plist": PLIST,
     "bdist_base": "build/temp",

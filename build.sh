@@ -4,8 +4,8 @@ set -euo pipefail
 APP_NAME="Nexus"
 APP_VERSION="5.0.0"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
-ICON_SOURCE="resources/Nexus.icns"
-ICON_FIXED="resources/Nexus_fixed.icns"
+ICON_SOURCE="src/assets/icons/Nexus.icns"
+ICON_FIXED="src/assets/icons/Nexus_fixed.icns"
 CODESIGN_IDENTITY_DEFAULT="GitHub: RazorBackRoar"
 IDENTITIES=$(security find-identity -p codesigning -v 2>/dev/null || true)
 if echo "$IDENTITIES" | grep -q "${CODESIGN_IDENTITY_DEFAULT}"; then
@@ -47,7 +47,7 @@ echo -e "\n${BLUE}2. Installing dependencies...${NC}"
 echo -e "   - ${GREEN}Dependencies are up to date.${NC}"
 echo -e "\n${BLUE}3. Verifying and rebuilding app icon...${NC}"
 if [ ! -f "$ICON_SOURCE" ]; then echo -e "${RED}❌ Error: AppIcon.icns not found.${NC}"; exit 1; fi
-"$PYTHON_EXE" utils/icon_generator.py "$ICON_SOURCE" "$ICON_FIXED" && mv "$ICON_FIXED" "$ICON_SOURCE"
+"$PYTHON_EXE" scripts/icon_generator.py "$ICON_SOURCE" "$ICON_FIXED" && mv "$ICON_FIXED" "$ICON_SOURCE"
 echo -e "   - ${GREEN}Icon processed successfully.${NC}"
 echo -e "\n${BLUE}4. Cleaning build artifacts...${NC}"
 
@@ -69,7 +69,7 @@ echo -e "\n${BLUE}5. Building the .app bundle (ARM64 only)...${NC}"
 echo -e "   - ${GREEN}Application bundle created.${NC}"
 echo -e "\n${BLUE}6. Applying signature and entitlements...${NC}"
 APP_PATH="dist/${APP_NAME}.app"
-codesign --force --deep --sign "$CODESIGN_IDENTITY" --entitlements entitlements.plist "$APP_PATH"
+codesign --force --deep --sign "$CODESIGN_IDENTITY" --entitlements src/config/entitlements.plist "$APP_PATH"
 echo -e "   - ${GREEN}App signed with identity:${NC} ${BLUE}${CODESIGN_IDENTITY}${NC}"
 echo -e "\n${BLUE}7. Creating .dmg disk image...${NC}"
 DMG_PATH="dist/${APP_NAME}.dmg"
@@ -86,40 +86,6 @@ rm -f "$DMG_STAGING_DIR/.DS_Store"
 
 # Create temporary DMG
 hdiutil create -volname "${APP_NAME}" -srcfolder "$DMG_STAGING_DIR" -ov -format UDRW "$DMG_TEMP"
-
-# Mount it without showing Finder
-MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | grep "Volumes" | awk '{print $3}')
-
-# Set window size (compact, no scrollbars)
-echo '
-   tell application "Finder"
-     tell disk "'${APP_NAME}'"
-       open
-       set current view of container window to icon view
-       set toolbar visible of container window to false
-       set statusbar visible of container window to false
-       set the bounds of container window to {100, 100, 540, 560}
-       set viewOptions to the icon view options of container window
-       set arrangement of viewOptions to not arranged
-       set icon size of viewOptions to 80
-       set position of item "'${APP_NAME}'.app" of container window to {110, 90}
-       set position of item "Applications" of container window to {310, 90}
-       set position of item "README.txt" of container window to {110, 260}
-       set position of item "License.txt" of container window to {310, 260}
-       update without registering applications
-       delay 1
-       close
-     end tell
-   end tell
-' | osascript
-
-# Unmount
-hdiutil detach "$MOUNT_DIR" -force
-sleep 3
-# Ensure fully detached
-while hdiutil info | grep -q "$MOUNT_DIR"; do
-  sleep 1
-done
 
 # Convert to compressed
 hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_PATH"

@@ -79,9 +79,9 @@ def update_setup_py(new_version):
 
 def update_main_py(new_version):
     """Update version in src/Main.py."""
-    main_py = Path("src/Main.py")
+    main_py = Path("src/main.py")
     if not main_py.exists():
-        print("⚠️  src/Main.py not found, skipping")
+        print("⚠️  src/main.py not found, skipping")
         return
 
     content = main_py.read_text(encoding="utf-8")
@@ -89,7 +89,7 @@ def update_main_py(new_version):
         r'APP_VERSION = "[0-9.]+"', f'APP_VERSION = "{new_version}"', content
     )
     main_py.write_text(content, encoding="utf-8")
-    print(f'✅ Updated src/Main.py: APP_VERSION="{new_version}"')
+    print(f'✅ Updated src/main.py: APP_VERSION="{new_version}"')
 
 
 def update_build_sh(new_version):
@@ -112,7 +112,7 @@ def git_commit_version_change(old_version, new_version):
     """Commit version changes to git."""
     try:
         subprocess.run(
-            ["git", "add", "README.md", "setup.py", "src/Main.py", "build.sh"],
+            ["git", "add", "README.md", "setup.py", "src/main.py", "build.sh"],
             check=True,
             capture_output=True,
         )
