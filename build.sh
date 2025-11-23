@@ -91,11 +91,13 @@ echo -e "   - ${BLUE}🎨 Styling DMG window...${NC}"
 DEVICE=$(hdiutil attach -readwrite -noverify -noautoopen "$DMG_TEMP" | egrep '^/dev/' | sed 1q | awk '{print $1}')
 sleep 2
 
+# Hide Finder to minimize window flashing
+osascript -e 'tell application "System Events" to set visible of process "Finder" to false'
+
 osascript <<EOF
 tell application "Finder"
     tell disk "${APP_NAME}"
         open
-        delay 1
         set current view of container window to icon view
         set toolbar visible of container window to false
         set statusbar visible of container window to false
@@ -108,13 +110,12 @@ tell application "Finder"
         set position of item "License.txt" of container window to {140, 380}
         set position of item "README.txt" of container window to {400, 380}
         update without registering applications
-        delay 1
+        delay 0.5
         close
     end tell
 end tell
 EOF
 
-sleep 1
 osascript -e 'tell application "System Events" to set visible of process "Finder" to false'
 
 hdiutil detach "$DEVICE" -force
