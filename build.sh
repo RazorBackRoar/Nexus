@@ -87,6 +87,36 @@ rm -f "$DMG_STAGING_DIR/.DS_Store"
 # Create temporary DMG
 hdiutil create -volname "${APP_NAME}" -srcfolder "$DMG_STAGING_DIR" -ov -format UDRW "$DMG_TEMP"
 
+echo -e "   - ${BLUE}🎨 Styling DMG window...${NC}"
+DEVICE=$(hdiutil attach -readwrite -noverify -noautoopen "$DMG_TEMP" | egrep '^/dev/' | sed 1q | awk '{print $1}')
+sleep 2
+
+osascript <<EOF
+tell application "Finder"
+    tell disk "${APP_NAME}"
+        open
+        delay 1
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        set the bounds of container window to {200, 200, 740, 750}
+        set theViewOptions to the icon view options of container window
+        set arrangement of theViewOptions to not arranged
+        set icon size of theViewOptions to 100
+        set position of item "${APP_NAME}.app" of container window to {140, 225}
+        set position of item "Applications" of container window to {400, 225}
+        update without registering applications
+        delay 1
+        close
+    end tell
+end tell
+EOF
+
+sleep 1
+osascript -e 'tell application "System Events" to set visible of process "Finder" to false'
+
+hdiutil detach "$DEVICE" -force
+
 # Convert to compressed
 hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_PATH"
 rm -f "$DMG_TEMP"
