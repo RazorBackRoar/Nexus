@@ -1,5 +1,5 @@
 {
-  "include": ["src", "utils", "setup.py", "version_bump.py"],
+  "include": ["src", "setup.py", "scripts"],
   "exclude": [
     "**/node_modules",
     "**/__pycache__",

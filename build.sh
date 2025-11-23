@@ -28,7 +28,7 @@ require_file_and_copy() {
 
 # Increment version
 # echo -e "\n${BLUE}0. Incrementing version...${NC}"
-# "$PYTHON_EXE" version_bump.py
+# "$PYTHON_EXE" scripts/version_bump.py
 # echo -e "   - ${GREEN}Version updated${NC}"
 
 # Check for and eject any mounted Nexus volumes before building
