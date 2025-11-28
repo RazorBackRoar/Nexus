@@ -1,10 +1,29 @@
+from pathlib import Path
+
 from setuptools import setup
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore
+
+
+def get_project_version(default: str = "0.0.0") -> str:
+    pyproject = Path(__file__).resolve().parent / "pyproject.toml"
+    if not pyproject.exists():
+        return default
+    try:
+        with pyproject.open("rb") as fp:
+            data = tomllib.load(fp)
+        return data["project"]["version"]
+    except Exception:
+        return default
+
+
 # --- Application Configuration (Single Source of Truth) ---
-# All the key details are defined ONCE here.
 APP_NAME = "Nexus"
 APP_SCRIPT = "src/main.py"
-APP_VERSION = "5.0.0"  # <-- UPDATED to your new version
+APP_VERSION = get_project_version()
 BUNDLE_ID = "com.razorbackroar.nexus.app"
 AUTHOR_NAME = "RazorBackRoar"
 

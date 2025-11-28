@@ -1,8 +1,22 @@
 #!/bin/bash
-# Definitive Build Script for Nexus v5.0.0 by RazorBackRoar
+# Definitive Build Script for Nexus by RazorBackRoar
 set -euo pipefail
 APP_NAME="Nexus"
-APP_VERSION="5.0.0"
+
+get_pyproject_version() {
+  python3 - <<'PY'
+import pathlib, re, sys
+pyproject = pathlib.Path('pyproject.toml')
+if not pyproject.exists():
+    sys.exit('pyproject.toml not found')
+match = re.search(r'version\s*=\s*"([^"\n]+)"', pyproject.read_text(encoding='utf-8'))
+if not match:
+    sys.exit('Unable to locate version in pyproject.toml')
+print(match.group(1))
+PY
+}
+
+APP_VERSION="$(get_pyproject_version)"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 ICON_SOURCE="src/assets/icons/Nexus.icns"
 ICON_FIXED="src/assets/icons/Nexus_fixed.icns"
@@ -14,7 +28,7 @@ else
   CODESIGN_IDENTITY="-"
 fi
 BLUE='\033[0;34m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
-echo -e "${BLUE}🚀 Starting build process for ${APP_NAME}...${NC}"
+echo -e "${BLUE}🚀 Starting build process for ${APP_NAME} v${APP_VERSION}...${NC}"
 
 require_file_and_copy() {
   local source_path="$1"
@@ -99,7 +113,7 @@ tell application "Finder"
         set current view of container window to icon view
         set toolbar visible of container window to false
         set statusbar visible of container window to false
-        set the bounds of container window to {200, 200, 740, 720}
+        set the bounds of container window to {200, 200, 740, 750}
         set theViewOptions to the icon view options of container window
         set arrangement of theViewOptions to not arranged
         set icon size of theViewOptions to 100

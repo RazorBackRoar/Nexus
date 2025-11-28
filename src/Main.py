@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Nexus - v5.0.0
+Nexus
 A fully themeable, production-ready PySide6 app with a "neon outline" aesthetic,
 hierarchical bookmarks, and powerful Safari automation. This version integrates
 a full theme customizer, robust URL parsing, and rich text clipboard handling
@@ -13,10 +13,16 @@ import re
 import asyncio
 import random
 from pathlib import Path
+from importlib.metadata import PackageNotFoundError, version as pkg_version
 from typing import Dict, List, Optional, Union, Any
 from urllib.parse import urlparse
 import logging
 from dataclasses import dataclass, field
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -56,6 +62,22 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor
 
+
+def resolve_version(default: str = "0.0.0") -> str:
+    try:
+        return pkg_version("Nexus")
+    except PackageNotFoundError:
+        pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        if pyproject.exists():
+            try:
+                with pyproject.open("rb") as fp:
+                    data = tomllib.load(fp)
+                return data["project"]["version"]
+            except Exception:
+                pass
+    return default
+
+
 # ==============================================================================
 # 1. Configuration and Logging Setup
 # ==============================================================================
@@ -65,7 +87,7 @@ class Config:
     """Application configuration constants"""
 
     APP_NAME = "Nexus"
-    APP_VERSION = "5.0.0"  # Updated version for new features
+    APP_VERSION = resolve_version("5.0.0")
     ORGANIZATION = "Nexus"
     DOMAIN = "nexus.com"
 
