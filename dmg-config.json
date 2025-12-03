@@ -1,0 +1,29 @@
+{
+  "app_name": "Nexus",
+  "version": "1.0.0",
+  "volume_name": "Nexus Installer",
+  "source_app": "./build/Nexus.app",
+  "window": {
+    "x": 200,
+    "y": 200,
+    "width": 500,
+    "height": 320
+  },
+  "icon_settings": {
+    "size": 100,
+    "text_size": 12
+  },
+  "background_image": "",
+  "volume_icon": "",
+  "additional_files": [],
+  "icon_positions": {
+    "Nexus.app": {
+      "x": 125,
+      "y": 130
+    },
+    "Applications": {
+      "x": 375,
+      "y": 130
+    }
+  }
+}

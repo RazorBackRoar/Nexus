@@ -1,0 +1,13 @@
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+
+# But allow DMG template
+!dmg-template/.DS_Store
+
+# DMG build artifacts
+temp-dmg-*
+*.dmg
