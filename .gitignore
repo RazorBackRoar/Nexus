@@ -1,13 +1,34 @@
 
-# macOS Finder metadata
+# macOS
 .DS_Store
 **/.DS_Store
 .AppleDouble
 .LSOverride
 
-# But allow DMG template
-!dmg-template/.DS_Store
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+*.log
+*.tmp
+*.orig
 
-# DMG build artifacts
+# Packaging / build artifacts
+build/
+dist/
+pip-wheel-metadata/
+*.spec
 temp-dmg-*
 *.dmg
+
+# Virtual envs
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/

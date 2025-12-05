@@ -3,8 +3,22 @@
 set -euo pipefail
 APP_NAME="Nexus"
 
+find_python() {
+  local candidates=("$HOME/.venvs/razor/bin/python" "/opt/homebrew/bin/python3.13" "$(command -v python3 2>/dev/null)" "/usr/bin/python3")
+  for candidate in "${candidates[@]}"; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  echo "❌ Python3 interpreter not found" >&2
+  exit 1
+}
+
+PYTHON_EXE="$(find_python)"
+
 get_pyproject_version() {
-  python3 - <<'PY'
+  "$PYTHON_EXE" - <<'PY'
 import pathlib, re, sys
 pyproject = pathlib.Path('pyproject.toml')
 if not pyproject.exists():
@@ -17,7 +31,6 @@ PY
 }
 
 APP_VERSION="$(get_pyproject_version)"
-PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 ICON_SOURCE="src/assets/icons/Nexus.icns"
 ICON_FIXED="src/assets/icons/Nexus_fixed.icns"
 CODESIGN_IDENTITY_DEFAULT="GitHub: RazorBackRoar"
