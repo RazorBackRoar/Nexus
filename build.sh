@@ -95,7 +95,7 @@ tell application "Finder"
         set the bounds of container window to {200, 200, 740, 520}
         set theViewOptions to the icon view options of container window
         set arrangement of theViewOptions to not arranged
-        set icon size of theViewOptions to 128
+        set icon size of theViewOptions to 100
         set position of item "${APP_NAME}.app" of container window to {140, 130}
         set position of item "Applications" of container window to {400, 130}
         update without registering applications
