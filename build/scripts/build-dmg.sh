@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UNIVERSAL_SCRIPT="/Users/home/GitHub/universal_dmg.sh"
+UNIVERSAL_SCRIPT="/Users/home/GitHub/.dev-tools/universal_dmg.sh"
 CONFIG_FILE="$SCRIPT_DIR/../dmg-config.json"
 
 if [[ ! -x "$UNIVERSAL_SCRIPT" ]]; then
