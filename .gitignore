@@ -19,11 +19,13 @@ __pycache__/
 
 # Packaging / build artifacts
 build/
-dist/
 pip-wheel-metadata/
 *.spec
 temp-dmg-*
-*.dmg
+
+# Dist folder - ignore everything except DMG
+dist/*
+!dist/*.dmg
 
 # Virtual envs
 .venv/
