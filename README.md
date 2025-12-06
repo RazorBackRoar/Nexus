@@ -13,13 +13,13 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### ⚡ About
+## ⚡ About
 
 Nexus is a powerful native macOS application for managing Safari bookmarks and batch-opening URLs. Features a beautiful neon-themed dark interface with hierarchical bookmark organization.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### ✨ Highlights
+## ✨ Highlights
 
 - 🌐 **Safari Integration** – Batch open URLs in Safari with one click via AppleScript
 - 📑 **Hierarchical Bookmarks** – Organize bookmarks in folders and subfolders
@@ -33,7 +33,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📦 Installation
+## 📦 Installation
 
 1. Download the latest `Nexus.dmg` from [Releases](https://github.com/RazorBackRoar/Nexus/releases)
 2. Mount the DMG → drag `Nexus.app` into `/Applications` → eject
@@ -52,7 +52,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 🚀 Usage
+## 🚀 Usage
 
 1. **Add Bookmarks:** Click "+" or paste URLs directly
 2. **Organize:** Create folders, drag and drop to rearrange
@@ -62,7 +62,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💻 Requirements
+## 💻 Requirements
 
 - macOS 11.0 (Big Sur) or later
 - Safari (for URL opening feature)
@@ -71,7 +71,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 🔧 Troubleshooting
+## 🔧 Troubleshooting
 
 - **"App is damaged / Cannot be opened"** – Use the Gatekeeper override above
 - **Safari not opening URLs** – Grant Automation permission in System Settings
@@ -79,7 +79,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 🛠️ Building from Source
+## 🛠️ Building from Source
 
 ```bash
 # Clone repository
@@ -98,26 +98,26 @@ python src/nexus/main.py
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📜 License
+## 📜 License
 
 MIT License – see `LICENSE.txt`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 🐞 Support
+## 🐞 Support
 
 - Issues: <https://github.com/RazorBackRoar/Nexus/issues>
 - Source: <https://github.com/RazorBackRoar/Nexus>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 🔐 Privacy
+## 🔐 Privacy
 
 Nexus runs 100% locally. No telemetry, no analytics. Only uses AppleScript to communicate with Safari for URL opening.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 👤 Author
+## 👤 Author
 
 **RazorBackRoar**
 
