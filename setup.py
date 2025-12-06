@@ -65,8 +65,20 @@ OPTIONS = {
         "PySide6.QtWidgets",
     ],
     "excludes": [
-        # Exclude tkinter
+        # Exclude tkinter and other unnecessary packages
         "tkinter",
+        "PyInstaller",
+        "numpy",
+        "pandas",
+        "IPython",
+        "jupyter_client",
+        "ipykernel",
+        "tornado",
+        "zmq",
+        "PIL",
+        "botocore",
+        "test",
+        "unittest",
         # Exclude unused PySide6 modules to reduce app size (~200-300MB savings)
         "PySide6.QtWebEngine",
         "PySide6.QtWebEngineCore",
