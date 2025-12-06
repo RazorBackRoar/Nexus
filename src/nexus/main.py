@@ -9,13 +9,6 @@ for embedded hyperlinks from apps like Apple Notes.
 
 import sys
 import os
-
-# Add src directory to Python path to allow 'nexus' package imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.dirname(current_dir)
-if src_dir not in sys.path:
-    sys.path.insert(0, src_dir)
-
 import json
 import re
 import asyncio
@@ -69,6 +62,12 @@ from PySide6.QtCore import (
     QMimeData,
 )
 from PySide6.QtGui import QColor
+
+# Add src directory to Python path to allow 'nexus' package imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 
 def resolve_version(default: str = "0.0.0") -> str:
@@ -2160,7 +2159,7 @@ class MainWindow(QMainWindow):
             try:
                 domain = urlparse(url).netloc.replace("www.", "")
                 domain_groups.setdefault(domain, []).append(url)
-            except:
+            except Exception:
                 domain_groups.setdefault("Other", []).append(url)
 
         for domain, domain_urls in domain_groups.items():
@@ -2257,7 +2256,7 @@ class MainWindow(QMainWindow):
                 return f"{domain.capitalize()} - {path.replace('/', ' ').title()}"
             else:
                 return domain.capitalize()
-        except:
+        except Exception:
             return "Bookmark"
 
     def _handle_item_double_click(self, item: QTreeWidgetItem, column: int):
@@ -2488,7 +2487,7 @@ class MainWindow(QMainWindow):
                 "type": "bookmark",
                 "url": self.url_processor._normalize_url(url.strip()) or url.strip(),
             }
-            bookmark_item = self._create_tree_item(bookmark_data, parent)
+            self._create_tree_item(bookmark_data, parent)
             if parent:
                 parent.setExpanded(True)
             self.save_bookmarks()

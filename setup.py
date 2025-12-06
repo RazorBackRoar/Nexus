@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 try:
     import tomllib
@@ -51,7 +51,7 @@ PLIST = {
 
 # --- py2app Options ---
 OPTIONS = {
-    "iconfile": "assets/icons/app_icon.icns",
+    "iconfile": "assets/icons/Nexus.icns",
     "packages": ["PySide6"],
     "plist": PLIST,
     "bdist_base": "build/temp",
@@ -116,7 +116,7 @@ OPTIONS = {
 
 # --- Setup Definition ---
 # The setup() function also uses the variables for consistency.
-from setuptools import find_packages
+
 
 setup(
     app=[APP_SCRIPT],

@@ -68,9 +68,9 @@ codesign --force --deep --sign "$CODESIGN_IDENTITY" --entitlements src/nexus/con
 echo -e "   - ${GREEN}App signed${NC}"
 
 echo -e "\n${BLUE}6. Creating DMG...${NC}"
-DMG_PATH="dist/${APP_NAME}.dmg"
-DMG_STAGING_DIR="dist/${APP_NAME}_dmg"
-DMG_TEMP="dist/${APP_NAME}_temp.dmg"
+DMG_PATH="build/dist/${APP_NAME}.dmg"
+DMG_STAGING_DIR="build/dist/${APP_NAME}_dmg"
+DMG_TEMP="build/dist/${APP_NAME}_temp.dmg"
 rm -f "$DMG_PATH" "$DMG_TEMP"
 rm -rf "$DMG_STAGING_DIR"
 mkdir -p "$DMG_STAGING_DIR"
@@ -113,7 +113,7 @@ rm -rf "$DMG_STAGING_DIR"
 echo -e "   - ${GREEN}DMG created${NC}"
 
 echo -e "\n${BLUE}7. Cleanup...${NC}"
-rm -rf "$APP_PATH" build/ Nexus.egg-info/
+rm -rf "$APP_PATH" build/temp Nexus.egg-info/
 echo -e "   - ${GREEN}Build artifacts removed${NC}"
 
 DMG_SIZE=$(du -sh "$DMG_PATH" | cut -f1)
