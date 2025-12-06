@@ -8,5 +8,5 @@ authors = [
 requires-python = ">=3.9"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["nexus*"]

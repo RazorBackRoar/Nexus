@@ -22,7 +22,7 @@ def get_project_version(default: str = "0.0.0") -> str:
 
 # --- Application Configuration (Single Source of Truth) ---
 APP_NAME = "Nexus"
-APP_SCRIPT = "src/main.py"
+APP_SCRIPT = "src/nexus/main.py"
 APP_VERSION = get_project_version()
 BUNDLE_ID = "com.razorbackroar.nexus.app"
 AUTHOR_NAME = "RazorBackRoar"
@@ -51,11 +51,11 @@ PLIST = {
 
 # --- py2app Options ---
 OPTIONS = {
-    "iconfile": "src/assets/icons/Nexus.icns",
+    "iconfile": "assets/icons/app_icon.icns",
     "packages": ["PySide6"],
     "plist": PLIST,
     "bdist_base": "build/temp",
-    "dist_dir": "dist",
+    "dist_dir": "build/dist",
     "strip": True,
     "argv_emulation": False,  # Disabled - Carbon framework not available on modern macOS
     "includes": [
@@ -116,6 +116,8 @@ OPTIONS = {
 
 # --- Setup Definition ---
 # The setup() function also uses the variables for consistency.
+from setuptools import find_packages
+
 setup(
     app=[APP_SCRIPT],
     name=APP_NAME,
@@ -123,4 +125,6 @@ setup(
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
     setup_requires=["py2app"],
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
 )

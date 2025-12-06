@@ -8,6 +8,14 @@ for embedded hyperlinks from apps like Apple Notes.
 """
 
 import sys
+import os
+
+# Add src directory to Python path to allow 'nexus' package imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 import json
 import re
 import asyncio
@@ -1822,9 +1830,9 @@ class MainWindow(QMainWindow):
         current_color = self.current_theme[tab_key][color_key]
         color = QColorDialog.getColor(QColor(current_color), self)
         if color.isValid():
-            self.current_theme[tab_key][
-                color_key
-            ] = color.name()  # Update current theme colors
+            self.current_theme[tab_key][color_key] = (
+                color.name()
+            )  # Update current theme colors
             self.settings.setValue(
                 f"theme/custom_{tab_key}_{color_key}", color.name()
             )  # Save custom color
@@ -1928,19 +1936,19 @@ class MainWindow(QMainWindow):
             f"""
             QTableWidget {{
                 background-color: #1e1e1e;
-                border: 2px solid {safari_colors['primary']};
+                border: 2px solid {safari_colors["primary"]};
                 border-radius: 8px;
                 color: #aaa;
                 font-size: 14px;
                 gridline-color: #333;
-                selection-background-color: {safari_colors['secondary']};
+                selection-background-color: {safari_colors["secondary"]};
             }}
             QTableWidget::item {{
                 padding: 8px;
                 border-bottom: 1px solid #333;
             }}
             QTableWidget::item:selected {{
-                background-color: {safari_colors['secondary']};
+                background-color: {safari_colors["secondary"]};
                 color: #000;
             }}
             QHeaderView::section {{
@@ -1977,7 +1985,7 @@ class MainWindow(QMainWindow):
             f"""
             QTreeWidget {{
                 background-color: #1e1e1e;
-                border: 2px solid {bookmarks_colors['primary']}; /* Neon outline for the bookmark tree */
+                border: 2px solid {bookmarks_colors["primary"]}; /* Neon outline for the bookmark tree */
                 border-radius: 8px;
                 color: #fff;
             }}
@@ -1988,10 +1996,10 @@ class MainWindow(QMainWindow):
                 border-bottom: 1px solid #333; /* Separator line */
             }}
             QTreeWidget::item:hover {{
-                background-color: rgba({QColor(bookmarks_colors['secondary']).red()},{QColor(bookmarks_colors['secondary']).green()},{QColor(bookmarks_colors['secondary']).blue()},0.1);
+                background-color: rgba({QColor(bookmarks_colors["secondary"]).red()},{QColor(bookmarks_colors["secondary"]).green()},{QColor(bookmarks_colors["secondary"]).blue()},0.1);
             }}
             QTreeWidget::item:selected {{
-                background-color: {bookmarks_colors['primary']};
+                background-color: {bookmarks_colors["primary"]};
                 color: #000; /* Black text on selected item for contrast */
             }}
         """
@@ -2010,7 +2018,7 @@ class MainWindow(QMainWindow):
             f"""
             QGroupBox {{
                 color: #fff;
-                border: 2px solid {theme_settings_colors['primary']}; /* Outline for preset group */
+                border: 2px solid {theme_settings_colors["primary"]}; /* Outline for preset group */
                 border-radius: 8px;
                 padding: 10px;
                 margin-top: 10px;
@@ -2018,7 +2026,7 @@ class MainWindow(QMainWindow):
             }}
             QGroupBox::title {{
                 subcontrol-position: top center;
-                color: {theme_settings_colors['primary']}; /* Title color matches outline */
+                color: {theme_settings_colors["primary"]}; /* Title color matches outline */
                 padding: 0 5px;
             }}
         """
@@ -2027,11 +2035,11 @@ class MainWindow(QMainWindow):
         self.theme_combo.setStyleSheet(
             f"""
             QComboBox {{
-                border: 1px solid {theme_settings_colors['primary']}; /* ComboBox border matches primary */
+                border: 1px solid {theme_settings_colors["primary"]}; /* ComboBox border matches primary */
                 border-radius: 4px;
                 padding: 8px;
                 background: #1e1e1e;
-                color: {theme_settings_colors['primary']}; /* ComboBox text color matches primary */
+                color: {theme_settings_colors["primary"]}; /* ComboBox text color matches primary */
                 font-size: 16px;
                 min-width: 150px; /* Ensure combo box text is not cut off */
             }}
@@ -2046,39 +2054,39 @@ class MainWindow(QMainWindow):
             # Group Boxes
             getattr(self, f"{tab_key}_primary_color_group").setStyleSheet(
                 f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors['primary']}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors['primary']}; padding: 0 5px; }}
+                QGroupBox {{ color: #fff; border: 2px solid {colors["primary"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
+                QGroupBox::title {{ subcontrol-position: top center; color: {colors["primary"]}; padding: 0 5px; }}
             """
             )
             getattr(self, f"{tab_key}_secondary_color_group").setStyleSheet(
                 f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors['secondary']}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors['secondary']}; padding: 0 5px; }}
+                QGroupBox {{ color: #fff; border: 2px solid {colors["secondary"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
+                QGroupBox::title {{ subcontrol-position: top center; color: {colors["secondary"]}; padding: 0 5px; }}
             """
             )
             getattr(self, f"{tab_key}_accent_color_group").setStyleSheet(
                 f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors['accent']}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors['accent']}; padding: 0 5px; }}
+                QGroupBox {{ color: #fff; border: 2px solid {colors["accent"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
+                QGroupBox::title {{ subcontrol-position: top center; color: {colors["accent"]}; padding: 0 5px; }}
             """
             )
 
             # Buttons
             getattr(self, f"{tab_key}_primary_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors['primary']}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["primary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
             getattr(self, f"{tab_key}_secondary_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors['secondary']}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["secondary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
             getattr(self, f"{tab_key}_accent_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors['accent']}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["accent"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
@@ -2209,7 +2217,7 @@ class MainWindow(QMainWindow):
                 color: #fff;
             }}
             QMessageBox QPushButton {{
-                background: {self.current_theme['safari']['accent']}; # Use accent from safari tab
+                background: {self.current_theme["safari"]["accent"]}; # Use accent from safari tab
                 color: white;
                 border: none;
                 padding: 8px 16px;
@@ -2359,11 +2367,11 @@ class MainWindow(QMainWindow):
             QMenu {{
                 background-color: #2a2a2a;
                 color: #fff;
-                border: 1px solid {self.current_theme['bookmarks']['primary']}; # Use bookmarks primary
+                border: 1px solid {self.current_theme["bookmarks"]["primary"]}; # Use bookmarks primary
                 border-radius: 5px;
             }}
             QMenu::item:selected {{
-                background-color: {self.current_theme['bookmarks']['primary']};
+                background-color: {self.current_theme["bookmarks"]["primary"]};
                 color: #000;
             }}
         """
