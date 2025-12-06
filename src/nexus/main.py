@@ -1244,7 +1244,7 @@ class NeonButton(QPushButton):
             f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {self.color}, stop:1 {darker_color});
-                color: white;
+                color: #d0d0d0;
                 border: none;
                 border-radius: 8px;
                 padding: 10px 20px;
@@ -2073,19 +2073,19 @@ class MainWindow(QMainWindow):
             # Buttons
             getattr(self, f"{tab_key}_primary_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["primary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["primary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
             getattr(self, f"{tab_key}_secondary_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["secondary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["secondary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
             getattr(self, f"{tab_key}_accent_color_btn").setStyleSheet(
                 f"""
-                QPushButton {{ background-color: #333; color: white; border: 1px solid {colors["accent"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
+                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["accent"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
                 QPushButton:hover {{ background-color: #444; }}
             """
             )
@@ -2217,7 +2217,7 @@ class MainWindow(QMainWindow):
             }}
             QMessageBox QPushButton {{
                 background: {self.current_theme["safari"]["accent"]}; # Use accent from safari tab
-                color: white;
+                color: #d0d0d0;
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
