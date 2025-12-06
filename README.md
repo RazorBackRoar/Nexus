@@ -7,7 +7,7 @@
 ██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║
 ██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║
 ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-```
+
 
 ## Nexus — Safari Bookmark & URL Manager for macOS
 
@@ -66,7 +66,7 @@ Nexus is a powerful native macOS application for managing Safari bookmarks and b
 
 - macOS 11.0 (Big Sur) or later
 - Safari (for URL opening feature)
-- ~200 MB free disk space
+- ~2 GB free disk space
 - No Python install needed
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
