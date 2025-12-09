@@ -1,12 +1,1 @@
-{
-  "include": ["src", "setup.py", "scripts"],
-  "exclude": [
-    "**/node_modules",
-    "**/__pycache__",
-    "build",
-    "dist",
-    ".git",
-    ".venvs",
-    "**/*.egg-info"
-  ]
-}
+../.dev-tools/_shared-configs/pyrightconfig.json
