@@ -1,1 +1,32 @@
-../.dev-tools/_shared-configs/pyrightconfig.json
+{
+  "include": ["."],
+  "exclude": [
+    "**/dist",
+    "**/build",
+    "**/__pycache__",
+    "**/*.pyc",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/.git",
+    "**/.venv",
+    "**/venv",
+    "**/env",
+    "**/.env",
+    "**/node_modules",
+    "**/.DS_Store",
+    "**/*.egg-info",
+    "**/.tox",
+    "**/.eggs",
+    "**/.coverage",
+    "**/htmlcov",
+    "**/.idea",
+    "**/.vscode",
+    "**/.windsurf",
+    "**/Icon",
+    "resources"
+  ],
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "typeCheckingMode": "basic"
+}
