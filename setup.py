@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 try:
     import tomllib
@@ -31,7 +31,7 @@ AUTHOR_NAME = "RazorBackRoar"
 # This list tells py2app which non-code files to include in the final app bundle.
 # Format: list of tuples (destination_dir, [source_files])
 # Empty string "" means root of Resources folder
-DATA_FILES = [("", ["LICENSE.txt"])]
+DATA_FILES = [("", ["LICENSE"])]
 
 # --- Info.plist Configuration ---
 # This dictionary is programmatically populated using the variables from above.
