@@ -6,8 +6,8 @@
   "window": {
     "x": 200,
     "y": 200,
-    "width": 500,
-    "height": 320
+    "width": 540,
+    "height": 360
   },
   "icon_settings": {
     "size": 100,
@@ -19,11 +19,11 @@
   "icon_positions": {
     "Nexus.app": {
       "x": 140,
-      "y": 130
+      "y": 160
     },
     "Applications": {
       "x": 400,
-      "y": 130
+      "y": 160
     }
   }
 }
