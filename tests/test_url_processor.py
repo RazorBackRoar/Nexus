@@ -1,7 +1,10 @@
+"""Logic tests for URLProcessor extraction and normalization."""
+
 from nexus.main import URLProcessor
 
 
 def test_sanitize_and_extract_urls():
+    """Ensure sanitize removes control chars and extract finds URLs."""
     proc = URLProcessor()
     text = "Check this https://example.com and also www.test.com/page"
 
@@ -14,6 +17,7 @@ def test_sanitize_and_extract_urls():
 
 
 def test_filter_and_normalize_urls():
+    """Ensure normalized URLs are returned and invalid ones are dropped."""
     proc = URLProcessor()
     text = "example.com and also https://site.com/page?x=1 plus invalid://bad"
     urls = proc.extract_urls(text)
