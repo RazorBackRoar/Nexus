@@ -32,11 +32,12 @@ jobs:
           pip install -e ./.razorcore
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install -e .
+          pip install pytest
 
       - name: Run tests (if any)
         run: |
           if [ -d tests ]; then
-            pytest
+            pytest --maxfail=1 --disable-warnings
           else
             echo "No tests directory; skipping."
           fi
