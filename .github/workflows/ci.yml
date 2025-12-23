@@ -3,11 +3,12 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  test-build:
+  test:
     runs-on: macos-latest
     env:
       QT_QPA_PLATFORM: offscreen
@@ -26,6 +27,14 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -42,6 +51,49 @@ jobs:
             echo "No tests directory; skipping."
           fi
 
+  build:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: macos-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+
+      - name: Checkout razorcore
+        uses: actions/checkout@v4
+        with:
+          repository: RazorBackRoar/razorcore
+          path: .razorcore
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./.razorcore
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -e .
+
       - name: Build DMG
         run: |
           razorcore build Nexus
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nexus-build-${{ github.run_id }}
+          path: build/dist/**
+          if-no-files-found: warn
