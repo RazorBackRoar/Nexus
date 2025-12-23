@@ -1,6 +1,6 @@
 {
   "app_name": "Nexus",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "volume_name": "Nexus Installer",
   "source_app": "./build/dist/Nexus.app",
   "window": {
