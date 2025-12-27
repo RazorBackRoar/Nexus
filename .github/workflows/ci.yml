@@ -77,6 +77,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install bash 4+ (for associative arrays)
+        run: |
+          brew install bash
+          echo "$(brew --prefix)/bin" >> $GITHUB_PATH
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -94,8 +99,10 @@ jobs:
           pip install -e .
 
       - name: Build DMG
+        shell: bash
         run: |
-          .razorcore/universal-build.sh ${{ github.event.repository.name }}
+          # Use Homebrew bash which supports associative arrays
+          "$(brew --prefix)/bin/bash" .razorcore/universal-build.sh ${{ github.event.repository.name }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
