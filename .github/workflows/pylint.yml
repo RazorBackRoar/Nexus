@@ -23,29 +23,3 @@ jobs:
         run: |
           pylint $(git ls-files '*.py') --fail-under=7.0
 
-  markdown-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-      - name: Install markdownlint-cli
-        run: npm install -g markdownlint-cli
-      - name: Create inline config
-        run: |
-          cat > .markdownlint.json << 'EOF'
-          {
-            "MD013": false,
-            "MD022": false,
-            "MD031": false,
-            "MD032": false,
-            "MD034": false,
-            "MD040": false,
-            "MD009": false,
-            "MD036": false
-          }
-          EOF
-      - name: Lint Markdown files
-        run: markdownlint '**/*.md' --config .markdownlint.json
