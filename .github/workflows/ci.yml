@@ -59,8 +59,11 @@ jobs:
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
-      - name: Checkout app
+      # Create workspace structure: workspace/ProjectName + workspace/.razorcore
+      - name: Checkout app into named folder
         uses: actions/checkout@v4
+        with:
+          path: ${{ github.event.repository.name }}
 
       - name: Checkout razorcore
         uses: actions/checkout@v4
@@ -78,7 +81,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'pyproject.toml') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements.txt', github.event.repository.name), format('{0}/pyproject.toml', github.event.repository.name)) }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -86,16 +89,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ./.razorcore
+          cd ${{ github.event.repository.name }}
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install -e .
 
       - name: Build DMG
         run: |
-          razorcore build ${{ github.event.repository.name }}
+          .razorcore/universal-build.sh ${{ github.event.repository.name }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-build-${{ github.run_id }}
-          path: build/dist/**
+          path: ${{ github.event.repository.name }}/build/dist/**
           if-no-files-found: warn
