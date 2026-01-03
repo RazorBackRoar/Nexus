@@ -43,7 +43,7 @@ PLIST = {
     "CFBundleShortVersionString": APP_VERSION,
     "CFBundleIdentifier": BUNDLE_ID,
     "LSMinimumSystemVersion": "11.0",
-    "NSHumanReadableCopyright": f"Copyright © 2025 {AUTHOR_NAME}. All rights reserved.",
+    "NSHumanReadableCopyright": "Copyright © 2026 RazorBackRoar. All rights reserved.",
     "NSAppleEventsUsageDescription": "Nexus needs permission to control Safari to open your organized URL lists.",
     "LSRequiresNativeExecution": True,  # Force macOS to recognize as Apple Silicon app, not iOS
     "LSApplicationCategoryType": "public.app-category.utilities",  # Categorize as Utilities app
