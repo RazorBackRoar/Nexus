@@ -1777,17 +1777,16 @@ class MainWindow(QMainWindow):
                 font-weight: 600;
             }
             QTreeWidget::item {
-                padding: 12px 16px;
-                border-radius: 12px;
-                margin: 4px 4px;
-                background: rgba(255, 255, 255, 0.08);
+                padding: 10px 12px;
+                border-radius: 8px;
+                margin: 2px 0;
+                background: transparent;
             }
             QTreeWidget::item:hover {
-                background: rgba(255, 255, 255, 0.15);
+                background: rgba(255, 255, 255, 0.08);
             }
             QTreeWidget::item:selected {
-                background: rgba(255, 255, 255, 0.2);
-                color: #ffffff;
+                background: rgba(255, 255, 255, 0.12);
             }
         """)
         sidebar_layout.addWidget(self.bookmark_tree, 1)
@@ -2246,13 +2245,8 @@ class MainWindow(QMainWindow):
             color = folder_colors[self._folder_color_index % len(folder_colors)]
             self._folder_color_index += 1
 
-            # Set text color
+            # Set text color only - no background box
             item.setForeground(0, QColor(color))
-
-            # Set semi-transparent background matching the color
-            bg_color = QColor(color)
-            bg_color.setAlpha(50)  # 20% opacity for glassmorphism effect
-            item.setBackground(0, bg_color)
 
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
         else:
