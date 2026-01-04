@@ -102,6 +102,7 @@ jobs:
         shell: bash
         run: |
           # Use Homebrew bash which supports associative arrays
+          cd ${{ github.event.repository.name }}
           "$(brew --prefix)/bin/bash" .razorcore/universal-build.sh ${{ github.event.repository.name }}
 
       - name: Upload build artifacts
