@@ -1307,13 +1307,13 @@ class GlassButton(QPushButton):
     def _apply_variant_style(self):
         """Apply styling based on variant - using icon colors (cyan, magenta, green)."""
         if self.variant == "primary":
-            # Primary: Deeper Teal with WHITE text
+            # Primary: Darker Blue with white text
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(0, 180, 180, 0.9), stop:1 rgba(0, 140, 140, 0.9));
+                        stop:0 rgba(30, 80, 150, 0.9), stop:1 rgba(20, 60, 120, 0.9));
                     color: #ffffff;
-                    border: 1px solid rgba(0, 200, 200, 0.6);
+                    border: 1px solid rgba(50, 100, 180, 0.6);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
@@ -1321,12 +1321,12 @@ class GlassButton(QPushButton):
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(0, 210, 210, 0.95), stop:1 rgba(0, 170, 170, 0.95));
-                    border: 1px solid rgba(0, 230, 230, 0.8);
+                        stop:0 rgba(40, 100, 180, 0.95), stop:1 rgba(30, 80, 150, 0.95));
+                    border: 1px solid rgba(60, 120, 200, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(0, 150, 150, 0.95), stop:1 rgba(0, 120, 120, 0.95));
+                        stop:0 rgba(20, 60, 120, 0.95), stop:1 rgba(15, 50, 100, 0.95));
                 }
             """)
         elif self.variant == "secondary":
@@ -1375,13 +1375,13 @@ class GlassButton(QPushButton):
                         stop:0 rgba(0, 150, 0, 0.9), stop:1 rgba(0, 120, 0, 0.9));
                 }
             """)
-        else:  # danger/delete style - Purple accent
-            # Clear: Purple accent style
+        else:  # danger/delete style - Purple accent with WHITE text
+            # Clear: Purple accent style with white text
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
-                    color: #a78bfa;
+                    color: #ffffff;
                     border: 1px solid rgba(139, 92, 246, 0.4);
                     border-radius: 12px;
                     padding: 14px 28px;
@@ -1391,7 +1391,6 @@ class GlassButton(QPushButton):
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(139, 92, 246, 0.5), stop:1 rgba(99, 102, 241, 0.5));
-                    color: #ffffff;
                     border: 1px solid rgba(139, 92, 246, 0.7);
                 }
                 QPushButton:pressed {
@@ -1698,12 +1697,13 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # ===== HEADER: Centered NEXUS title =====
+        # ===== HEADER: Centered NEXUS title with tagline =====
         header_widget = QWidget()
-        header_widget.setFixedHeight(60)
+        header_widget.setFixedHeight(80)
         header_widget.setStyleSheet("background: transparent;")
-        header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(20, 15, 20, 10)
+        header_layout = QVBoxLayout(header_widget)
+        header_layout.setContentsMargins(20, 15, 20, 5)
+        header_layout.setSpacing(4)
 
         self.title_label = QLabel("NEXUS")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1712,11 +1712,23 @@ class MainWindow(QMainWindow):
                 color: #ffffff;
                 font-size: 28px;
                 font-weight: 300;
-                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
                 letter-spacing: 8px;
             }
         """)
         header_layout.addWidget(self.title_label)
+
+        # Pink tagline description
+        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tagline.setStyleSheet("""
+            QLabel {
+                color: #ff2d92;
+                font-size: 12px;
+                font-weight: 500;
+                letter-spacing: 1px;
+            }
+        """)
+        header_layout.addWidget(tagline)
 
         main_layout.addWidget(header_widget)
 
