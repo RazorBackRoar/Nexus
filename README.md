@@ -1,5 +1,14 @@
 # Nexus
 
+[![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
+[![Pylint](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![macOS](https://img.shields.io/badge/macOS-13+-blue.svg)](https://www.apple.com/macos)
+[![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
+[![Python](https://img.shields.io/badge/Python-3.13-blueviolet.svg)](https://www.python.org/)
+[![PyInstaller](https://img.shields.io/badge/PyInstaller-bundler-informational.svg)](https://pyinstaller.org/)
+
 ```
 ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
 ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
@@ -124,5 +133,3 @@ Nexus runs 100% locally. No telemetry, no analytics. Only uses AppleScript to co
 GitHub: [@RazorBackRoar](https://github.com/RazorBackRoar)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
