@@ -1032,8 +1032,13 @@ class BookmarkManager:
             return Bookmark(name=data["name"], url=data["url"])
 
     def _create_default_bookmarks(self) -> List[BookmarkNode]:
-        """Creates a default set of bookmarks - starts empty for users to add their own."""
-        return []
+        """Creates default bookmark folders for common categories."""
+        return [
+            BookmarkNode(name="Github", type="folder", children=[]),
+            BookmarkNode(name="Apple", type="folder", children=[]),
+            BookmarkNode(name="AI News", type="folder", children=[]),
+            BookmarkNode(name="Google", type="folder", children=[]),
+        ]
 
 
 class AsyncWorker(QThread):
@@ -1767,21 +1772,21 @@ class MainWindow(QMainWindow):
             QTreeWidget {
                 background: transparent;
                 border: none;
-                color: #d0d0d0;
-                font-size: 14px;
-                font-weight: 500;
+                color: #ffffff;
+                font-size: 15px;
+                font-weight: 600;
             }
             QTreeWidget::item {
-                padding: 10px 8px;
-                border-radius: 8px;
-                margin: 2px 0;
+                padding: 12px 16px;
+                border-radius: 12px;
+                margin: 4px 4px;
+                background: rgba(255, 255, 255, 0.08);
             }
             QTreeWidget::item:hover {
-                background: rgba(139, 92, 246, 0.15);
+                background: rgba(255, 255, 255, 0.15);
             }
             QTreeWidget::item:selected {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(139, 92, 246, 0.4), stop:1 rgba(99, 102, 241, 0.4));
+                background: rgba(255, 255, 255, 0.2);
                 color: #ffffff;
             }
         """)
@@ -2218,17 +2223,41 @@ class MainWindow(QMainWindow):
         item = QTreeWidgetItem([f"{prefix} {data['name']}"])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
 
+        # Color palette for folders (rotates through these)
+        folder_colors = [
+            "#ff2d92",  # Pink/Magenta
+            "#00e5e5",  # Cyan
+            "#39ff14",  # Neon Green
+            "#a78bfa",  # Purple
+            "#ff9500",  # Orange
+        ]
+
         # Apply font styling directly to the item
         font = item.font(0)
         font.setBold(is_folder)
         font.setPointSize(16 if is_folder else 14)  # Larger font sizes
         item.setFont(0, font)
 
-        # Only folders should be editable for renaming
+        # Apply color to folders based on index with glassmorphism pill backgrounds
         if is_folder:
+            # Get folder index for color rotation
+            if not hasattr(self, '_folder_color_index'):
+                self._folder_color_index = 0
+            color = folder_colors[self._folder_color_index % len(folder_colors)]
+            self._folder_color_index += 1
+
+            # Set text color
+            item.setForeground(0, QColor(color))
+
+            # Set semi-transparent background matching the color
+            bg_color = QColor(color)
+            bg_color.setAlpha(50)  # 20% opacity for glassmorphism effect
+            item.setBackground(0, bg_color)
+
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
         else:
-            # Remove editable flag from bookmarks to prevent rename on double-click
+            # Bookmarks stay default color, not editable
+            item.setForeground(0, QColor("#c0c0c0"))
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
         if parent:
