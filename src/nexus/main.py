@@ -823,11 +823,13 @@ class SafariController:
         # Add stealth measures with private mode support
         if is_first:
             if private_mode:
+                # Use direct Safari AppleScript command instead of System Events keystroke
+                # This avoids the need for Accessibility permissions
                 script_parts.extend(
                     [
                         "activate",
-                        'tell application "System Events" to keystroke "n" using {command down, shift down}',
-                        "delay 1",
+                        'set newWindow to make new document with properties {URL:"about:blank"}',
+                        "delay 0.5",
                         f'set URL of front document to "{processed_urls[0]}"',
                     ]
                 )
@@ -892,10 +894,12 @@ class SafariController:
         script_parts = ['tell application "Safari"', "activate"]
         if len(processed_urls) == 1:
             if private_mode:
+                # Use direct Safari AppleScript command instead of System Events keystroke
+                # This avoids the need for Accessibility permissions
                 script_parts.extend(
                     [
-                        'tell application "System Events" to keystroke "n" using {command down, shift down}',
-                        "delay 1",
+                        'set newWindow to make new document with properties {URL:"about:blank"}',
+                        "delay 0.5",
                         f'set URL of front document to "{processed_urls[0]}"',
                     ]
                 )
@@ -908,10 +912,12 @@ class SafariController:
                 )
         else:
             if private_mode:
+                # Use direct Safari AppleScript command instead of System Events keystroke
+                # This avoids the need for Accessibility permissions
                 script_parts.extend(
                     [
-                        'tell application "System Events" to keystroke "n" using {command down, shift down}',
-                        "delay 1",
+                        'set newWindow to make new document with properties {URL:"about:blank"}',
+                        "delay 0.5",
                     ]
                 )
             else:
