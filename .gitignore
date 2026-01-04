@@ -21,8 +21,8 @@ __pycache__/
 build/
 !build/scripts/
 !build/dmg-config.json
+!Nexus.spec
 pip-wheel-metadata/
-*.spec
 temp-dmg-*
 
 # Dist folder - ignore everything except DMG
