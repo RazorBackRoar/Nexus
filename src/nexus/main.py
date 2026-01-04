@@ -1288,6 +1288,113 @@ class NeonButton(QPushButton):
         super().leaveEvent(event)
 
 
+class GlassButton(QPushButton):
+    """A modern glass-styled button for the Glass Noir theme."""
+
+    def __init__(self, text: str = "", variant: str = "primary"):
+        """
+        Initialize GlassButton.
+
+        Args:
+            text: Button text
+            variant: 'primary', 'secondary', or 'tertiary'
+        """
+        super().__init__(text)
+        self.variant = variant
+        self._apply_variant_style()
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def _apply_variant_style(self):
+        """Apply styling based on variant - using icon colors (cyan, magenta, green)."""
+        if self.variant == "primary":
+            # Primary: Cyan/Teal gradient (matches icon)
+            self.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #00f5ff, stop:1 #00d4aa);
+                    color: #000000;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 14px 28px;
+                    font-weight: 700;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #33f7ff, stop:1 #33e0bb);
+                }
+                QPushButton:pressed {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #00c4cc, stop:1 #00a488);
+                }
+            """)
+        elif self.variant == "secondary":
+            # Secondary: Magenta/Pink (matches icon)
+            self.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #ff2d92, stop:1 #cc0066);
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 14px 28px;
+                    font-weight: 700;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #ff5aab, stop:1 #e6007a);
+                }
+                QPushButton:pressed {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #cc2475, stop:1 #990052);
+                }
+            """)
+        elif self.variant == "tertiary":
+            # Tertiary: Neon Green (matches icon)
+            self.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #39ff14, stop:1 #00cc00);
+                    color: #000000;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 14px 28px;
+                    font-weight: 700;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #66ff44, stop:1 #33dd33);
+                }
+                QPushButton:pressed {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #2ecc11, stop:1 #009900);
+                }
+            """)
+        else:  # danger/delete style
+            # Danger: Dark subtle for delete/clear
+            self.setStyleSheet("""
+                QPushButton {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #aaaaaa;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 12px;
+                    padding: 14px 28px;
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background: rgba(255, 100, 100, 0.2);
+                    color: #ff6666;
+                    border: 1px solid rgba(255, 100, 100, 0.4);
+                }
+                QPushButton:pressed {
+                    background: rgba(255, 50, 50, 0.3);
+                }
+            """)
+
+
 class OutlinedLabel(QLabel):
     """A QLabel with outlined text for better visibility."""
 
@@ -1564,537 +1671,332 @@ class MainWindow(QMainWindow):
                     )
 
     def _setup_window(self):
-        """Sets up the main window properties."""
-        self.setWindowTitle(Config.APP_NAME)  # Just "Nexus"
-        self.setGeometry(
-            200, 200, 1080, 750
-        )  # Increased size for better URL visibility
-        self.setStyleSheet(
-            "background-color: #121212;"
-        )  # Base dark background for the app
+        """Sets up the main window properties with Glass Noir styling."""
+        self.setWindowTitle("")  # No title bar text - we show NEXUS in the UI
+        self.setGeometry(200, 200, 950, 650)
+        # Glass Noir gradient background
+        self.setStyleSheet("""
+            QMainWindow {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #0a0a0f, stop:1 #12121a);
+            }
+        """)
 
     def _setup_ui(self):
-        """Sets up the main tabbed UI structure."""
+        """Sets up the Glass Noir single-pane UI with sidebar."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+
+        # Main vertical layout
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(
-            10, 10, 10, 10
-        )  # Margin around the tabs container
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        self.tabs = QTabWidget()
-        main_layout.addWidget(self.tabs)
+        # ===== HEADER: Centered NEXUS title =====
+        header_widget = QWidget()
+        header_widget.setFixedHeight(60)
+        header_widget.setStyleSheet("background: transparent;")
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(20, 15, 20, 10)
 
-        # Create GlassPanel instances for each tab content area
-        self.safari_panel = GlassPanel()  # Renamed from quick_organize_panel
-        self.bookmarks_panel = GlassPanel()
-        self.settings_panel = GlassPanel()
+        self.title_label = QLabel("NEXUS")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                color: #ffffff;
+                font-size: 28px;
+                font-weight: 300;
+                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+                letter-spacing: 8px;
+            }
+        """)
+        header_layout.addWidget(self.title_label)
 
-        # Populate the content of each GlassPanel
-        self._populate_safari_tab(self.safari_panel)  # Renamed method
-        self._populate_bookmarks_tab(self.bookmarks_panel)
-        self._populate_settings_tab(self.settings_panel)
+        main_layout.addWidget(header_widget)
 
-        # Add the populated GlassPanels as tabs
-        self.tabs.addTab(self.safari_panel, "🌐 Safari")  # Renamed tab title and emoji
-        self.tabs.addTab(self.bookmarks_panel, "📑 Bookmarks")
-        self.tabs.addTab(self.settings_panel, "🎨 Theme")
+        # ===== CONTENT: Sidebar + Main area =====
+        content_widget = QWidget()
+        content_layout = QHBoxLayout(content_widget)
+        content_layout.setContentsMargins(20, 0, 20, 20)
+        content_layout.setSpacing(20)
 
-        # Connect tab change signal to theme application
-        self.tabs.currentChanged.connect(
-            self._apply_theme
-        )  # Re-apply theme on tab switch
+        # ----- SIDEBAR: Bookmark folders -----
+        self.sidebar = QWidget()
+        self.sidebar.setFixedWidth(200)
+        self.sidebar.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(30, 30, 40, 0.9),
+                    stop:1 rgba(20, 20, 30, 0.95));
+                border: 1px solid rgba(139, 92, 246, 0.3);
+                border-radius: 16px;
+            }
+        """)
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(16, 20, 16, 20)
+        sidebar_layout.setSpacing(12)
 
-    def _populate_safari_tab(self, tab_widget: QWidget):  # Renamed method
-        """Populates the 'Safari' tab content."""
-        layout = QVBoxLayout(tab_widget)
-        layout.setContentsMargins(20, 20, 20, 20)  # Padding inside the GlassPanel
+        # Sidebar title with accent color
+        sidebar_title = QLabel("BOOKMARKS")
+        sidebar_title.setStyleSheet("""
+            QLabel {
+                color: #a78bfa;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 2px;
+                padding: 0 4px 8px 4px;
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            }
+        """)
+        sidebar_layout.addWidget(sidebar_title)
 
-        # Title for the tab
-        self.safari_title = QLabel("Safari URLs")  # Renamed title
-        self.safari_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Bookmark tree with improved styling
+        self.bookmark_tree = QTreeWidget()
+        self.bookmark_tree.setHeaderHidden(True)
+        self.bookmark_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.bookmark_tree.customContextMenuRequested.connect(self._show_bookmark_context_menu)
+        self.bookmark_tree.itemDoubleClicked.connect(self._handle_item_double_click)
+        self.bookmark_tree.setStyleSheet("""
+            QTreeWidget {
+                background: transparent;
+                border: none;
+                color: #d0d0d0;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            QTreeWidget::item {
+                padding: 10px 8px;
+                border-radius: 8px;
+                margin: 2px 0;
+            }
+            QTreeWidget::item:hover {
+                background: rgba(139, 92, 246, 0.15);
+            }
+            QTreeWidget::item:selected {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(139, 92, 246, 0.4), stop:1 rgba(99, 102, 241, 0.4));
+                color: #ffffff;
+            }
+        """)
+        sidebar_layout.addWidget(self.bookmark_tree, 1)
 
-        # URL table area - NEW TABLE WIDGET
+        # Add folder button with icon styling
+        self.add_folder_btn = GlassButton("+ New Folder", "secondary")
+        self.add_folder_btn.clicked.connect(self.add_bookmark_section)
+        sidebar_layout.addWidget(self.add_folder_btn)
+
+        content_layout.addWidget(self.sidebar)
+
+        # ----- MAIN CONTENT: URL area -----
+        main_content = QWidget()
+        main_content.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(25, 25, 35, 0.95),
+                    stop:1 rgba(15, 15, 25, 0.98));
+                border: 1px solid rgba(139, 92, 246, 0.25);
+                border-radius: 16px;
+            }
+        """)
+        main_content_layout = QVBoxLayout(main_content)
+        main_content_layout.setContentsMargins(24, 24, 24, 24)
+        main_content_layout.setSpacing(20)
+
+        # Section title for URL area
+        url_section_title = QLabel("URL MANAGER")
+        url_section_title.setStyleSheet("""
+            QLabel {
+                color: #a78bfa;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 2px;
+                padding-bottom: 8px;
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            }
+        """)
+        main_content_layout.addWidget(url_section_title)
+
+        # URL Table with enhanced styling
         self.url_table = URLTableWidget()
-        # Connect to update counter when URLs are added
         self.url_table.itemChanged.connect(self._update_url_counter)
-        # Also connect to model changes for when rows are added/removed
         self.url_table.model().rowsInserted.connect(self._update_url_counter)
         self.url_table.model().rowsRemoved.connect(self._update_url_counter)
+        self.url_table.setStyleSheet("""
+            QTableWidget {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(15, 15, 25, 0.8),
+                    stop:1 rgba(10, 10, 20, 0.9));
+                border: 1px solid rgba(139, 92, 246, 0.2);
+                border-radius: 12px;
+                color: #e0e0e0;
+                font-size: 13px;
+                gridline-color: rgba(139, 92, 246, 0.1);
+                selection-background-color: rgba(139, 92, 246, 0.3);
+            }
+            QTableWidget::item {
+                padding: 12px 10px;
+                border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+            }
+            QTableWidget::item:hover {
+                background: rgba(139, 92, 246, 0.1);
+            }
+            QTableWidget::item:selected {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(139, 92, 246, 0.35), stop:1 rgba(99, 102, 241, 0.35));
+            }
+            QHeaderView::section {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(139, 92, 246, 0.15), stop:1 rgba(99, 102, 241, 0.1));
+                color: #a78bfa;
+                padding: 12px 10px;
+                border: none;
+                border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+                font-weight: 700;
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+            QScrollBar:vertical {
+                background: rgba(0, 0, 0, 0.2);
+                width: 8px;
+                border-radius: 4px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(139, 92, 246, 0.4);
+                border-radius: 4px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: rgba(139, 92, 246, 0.6);
+            }
+        """)
+        main_content_layout.addWidget(self.url_table, 1)
 
-        # URL counter label
-        self.url_counter_label = QLabel("0 URLs found")
+        # URL counter with accent styling
+        self.url_counter_label = QLabel("0 URLs")
+        self.url_counter_label.setStyleSheet("""
+            QLabel {
+                color: #8b8b8b;
+                font-size: 13px;
+                font-weight: 500;
+                background: transparent;
+                border: none;
+                padding: 4px 0;
+            }
+        """)
+        main_content_layout.addWidget(self.url_counter_label)
 
-        # Button layout
-        button_layout = QHBoxLayout()
+        # Action buttons row - Open All, Save, Private Browsing, then Clear on right
+        button_row = QHBoxLayout()
+        button_row.setSpacing(14)
 
-        # Run in Safari button
-        self.run_btn = NeonButton("🚀 Run in Safari")
+        self.run_btn = GlassButton("🚀 Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
-        # Save to Bookmarks button
-        self.save_btn = NeonButton("💾 Save to Bookmarks")
+        self.save_btn = GlassButton("🔖 Save", "secondary")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
-        # Organize URLs button (NEW)
-        self.organize_btn = NeonButton("✨ Organize URLs")
-        self.organize_btn.clicked.connect(self._organize_urls_in_input)
-
-        # Private mode toggle
-        self.private_mode_btn = NeonButton("🔒 Private Mode: ON")
+        self.private_mode_btn = GlassButton("🔒 Private", "tertiary")
         self.private_mode_btn.setCheckable(True)
         self.private_mode_btn.setChecked(Config.DEFAULT_PRIVATE_MODE)
         self.private_mode_btn.clicked.connect(self._toggle_private_mode)
 
-        # Clear button
-        self.clear_btn = NeonButton("🧹 Clear")
+        self.clear_btn = GlassButton("🗑 Clear", "danger")
         self.clear_btn.clicked.connect(self._clear_all_data)
 
-        button_layout.addWidget(self.run_btn)
-        button_layout.addWidget(self.save_btn)
-        button_layout.addWidget(self.organize_btn)  # Added new button
-        button_layout.addWidget(self.private_mode_btn)  # Add private mode toggle
-        button_layout.addWidget(self.clear_btn)
+        button_row.addWidget(self.run_btn)
+        button_row.addWidget(self.save_btn)
+        button_row.addWidget(self.private_mode_btn)
+        button_row.addStretch()  # Push Clear to the right
+        button_row.addWidget(self.clear_btn)
 
-        # Add all components to layout
-        layout.addWidget(self.safari_title)
-        layout.addWidget(self.url_table)
-        layout.addWidget(self.url_counter_label)
-        layout.addLayout(button_layout)
+        main_content_layout.addLayout(button_row)
 
-    def _populate_bookmarks_tab(self, tab_widget: QWidget):
-        """Populates the 'Bookmark Manager' tab content."""
-        layout = QVBoxLayout(tab_widget)
-        layout.setContentsMargins(20, 20, 20, 20)  # Padding inside the GlassPanel
+        content_layout.addWidget(main_content, 1)
 
-        # Title for the tab
-        self.bookmarks_title = QLabel("Bookmark Manager")
-        self.bookmarks_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(content_widget, 1)
 
-        # Bookmark tree widget
-        self.bookmark_tree = QTreeWidget()
-        self.bookmark_tree.setHeaderHidden(True)  # Hide default header
-        self.bookmark_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.bookmark_tree.customContextMenuRequested.connect(
-            self._show_bookmark_context_menu
-        )
-        self.bookmark_tree.itemDoubleClicked.connect(self._handle_item_double_click)
+        # ===== STATUS BAR =====
+        self.status_bar = QLabel("Ready")
+        self.status_bar.setStyleSheet("""
+            QLabel {
+                color: #444444;
+                font-size: 11px;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                padding: 8px 20px;
+            }
+        """)
+        main_layout.addWidget(self.status_bar)
 
-        # Button layout
-        button_layout = QHBoxLayout()
+        # Store references for legacy compatibility (some methods reference these)
+        self.safari_panel = main_content
+        self.bookmarks_panel = self.sidebar
+        self.settings_panel = None
+        self.safari_title = self.title_label
+        self.bookmarks_title = sidebar_title
+        self.organize_btn = None  # Removed in redesign
+        self.add_link_btn = None  # Use context menu instead
+        self.export_btn = None  # Use context menu instead
 
-        # Add Folder button
-        self.add_folder_btn = NeonButton("📁 New Folder")
-        self.add_folder_btn.clicked.connect(self.add_bookmark_section)
+    def _update_private_mode_style(self):
+        """Update private mode button appearance based on state."""
+        if hasattr(self, 'private_mode_btn'):
+            if self.private_mode_btn.isChecked():
+                self.private_mode_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(139, 92, 246, 0.2);
+                        color: #a78bfa;
+                        border: 1px solid rgba(139, 92, 246, 0.4);
+                        border-radius: 10px;
+                        padding: 12px 24px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    }
+                    QPushButton:hover {
+                        background: rgba(139, 92, 246, 0.3);
+                    }
+                """)
+            else:
+                self.private_mode_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(255, 255, 255, 0.05);
+                        color: #888888;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 10px;
+                        padding: 12px 24px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    }
+                    QPushButton:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                    }
+                """)
 
-        # Add Bookmark button
-        self.add_link_btn = NeonButton("🔗 Add Bookmark")
-        self.add_link_btn.clicked.connect(self._add_bookmark_link)
+    def _populate_safari_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+        """Legacy method - functionality moved to _setup_ui."""
+        pass
 
-        # Export button
-        self.export_btn = NeonButton("📤 Export")
-        self.export_btn.clicked.connect(self._export_bookmarks)
+    def _populate_bookmarks_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+        """Legacy method - functionality moved to _setup_ui."""
+        pass
 
-        button_layout.addWidget(self.add_folder_btn)
-        button_layout.addWidget(self.add_link_btn)
-        button_layout.addWidget(self.export_btn)
+    def _populate_settings_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+        """Legacy method - settings accessible via menu/dialog now."""
+        pass
 
-        # Add all components to layout
-        layout.addWidget(self.bookmarks_title)
-        layout.addWidget(self.bookmark_tree)
-        layout.addLayout(button_layout)
-
-    def _populate_settings_tab(self, tab_widget: QWidget):
-        """Populates the 'Settings' tab content with theme customization."""
-        layout = QVBoxLayout(tab_widget)
-        layout.setContentsMargins(20, 20, 20, 20)  # Padding inside the GlassPanel
-
-        # Title for the tab
-        self.settings_title = QLabel("Theme Settings")
-        self.settings_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Group for Preset Selection
-        self.preset_group = QGroupBox("Theme Presets")
-        self.preset_group.setObjectName("preset_group")  # Set objectName for styling
-        preset_layout = QFormLayout(self.preset_group)
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItems(list(self.themes.keys()) + ["Custom"])
-        self.theme_combo.setCurrentText(str(self.current_theme_name))
-        self.theme_combo.currentTextChanged.connect(self._on_theme_preset_selected)
-        preset_layout.addRow("Preset:", self.theme_combo)
-
-        # --- Inner Tab Widget for Per-Tab Color Customization ---
-        self.inner_theme_tabs = QTabWidget()
-        self.inner_theme_tabs.setObjectName("inner_theme_tabs")  # For specific styling
-
-        # Safari Tab Colors
-        safari_color_tab = QWidget()
-        self.inner_theme_tabs.addTab(safari_color_tab, "🌐 Safari Tab Colors")
-        self._populate_color_options(safari_color_tab, "safari")
-
-        # Bookmarks Tab Colors
-        bookmarks_color_tab = QWidget()
-        self.inner_theme_tabs.addTab(bookmarks_color_tab, "📑 Bookmarks Tab Colors")
-        self._populate_color_options(bookmarks_color_tab, "bookmarks")
-
-        # Theme Settings Tab Colors (for the settings tab itself)
-        theme_settings_color_tab = QWidget()
-        self.inner_theme_tabs.addTab(theme_settings_color_tab, "🎨 Theme Tab Colors")
-        self._populate_color_options(theme_settings_color_tab, "theme_settings")
-        # --- End Inner Tab Widget ---
-
-        # Add all groups to the main layout
-        layout.addWidget(self.settings_title)
-        layout.addWidget(self.preset_group)
-        layout.addWidget(self.inner_theme_tabs)  # Add the inner tab widget
-        layout.addStretch()  # Push content to the top
-
-    def _populate_color_options(self, parent_widget: QWidget, tab_key: str):
-        """Helper to populate color selection group boxes for a given tab_key."""
-        layout = QVBoxLayout(parent_widget)
-        layout.setContentsMargins(10, 10, 10, 10)
-
-        # Primary Color
-        primary_color_group = QGroupBox("Primary Color")
-        primary_color_group.setObjectName(f"{tab_key}_primary_color_group")
-        primary_layout = QFormLayout(primary_color_group)
-        primary_color_btn = QPushButton("Choose Primary Color")
-        primary_color_swatch = QLabel()
-        primary_color_btn.clicked.connect(lambda: self._pick_color(tab_key, "primary"))
-        primary_layout.addRow(primary_color_btn, primary_color_swatch)
-        layout.addWidget(primary_color_group)
-        setattr(self, f"{tab_key}_primary_color_btn", primary_color_btn)
-        setattr(self, f"{tab_key}_primary_color_swatch", primary_color_swatch)
-        setattr(self, f"{tab_key}_primary_color_group", primary_color_group)
-
-        # Secondary Color
-        secondary_color_group = QGroupBox("Secondary Color")
-        secondary_color_group.setObjectName(f"{tab_key}_secondary_color_group")
-        secondary_layout = QFormLayout(secondary_color_group)
-        secondary_color_btn = QPushButton("Choose Secondary Color")
-        secondary_color_swatch = QLabel()
-        secondary_color_btn.clicked.connect(
-            lambda: self._pick_color(tab_key, "secondary")
-        )
-        secondary_layout.addRow(secondary_color_btn, secondary_color_swatch)
-        layout.addWidget(secondary_color_group)
-        setattr(self, f"{tab_key}_secondary_color_btn", secondary_color_btn)
-        setattr(self, f"{tab_key}_secondary_color_swatch", secondary_color_swatch)
-        setattr(self, f"{tab_key}_secondary_color_group", secondary_color_group)
-
-        # Accent Color
-        accent_color_group = QGroupBox("Accent Color")
-        accent_color_group.setObjectName(f"{tab_key}_accent_color_group")
-        accent_layout = QFormLayout(accent_color_group)
-        accent_color_btn = QPushButton("Choose Accent Color")
-        accent_color_swatch = QLabel()
-        accent_color_btn.clicked.connect(lambda: self._pick_color(tab_key, "accent"))
-        accent_layout.addRow(accent_color_btn, accent_color_swatch)
-        layout.addWidget(accent_color_group)
-        setattr(self, f"{tab_key}_accent_color_btn", accent_color_btn)
-        setattr(self, f"{tab_key}_accent_color_swatch", accent_color_swatch)
-        setattr(self, f"{tab_key}_accent_color_group", accent_color_group)
-
-        layout.addStretch()
-
-    def _on_theme_preset_selected(self, name: str):
-        """Handles selection of a theme preset from the ComboBox."""
-        self.current_theme_name = name
-        self.settings.setValue("theme/name", name)  # Save selected preset name
-
-        if name != "Custom":
-            preset_colors = self.themes.get(
-                name, self.themes["Neon Blue"]
-            )  # Fallback to Neon Blue
-            for tab_key in ["safari", "bookmarks", "theme_settings"]:
-                for color_key in ["primary", "secondary", "accent"]:
-                    color_val = preset_colors.get(tab_key, {}).get(color_key, "#ffffff")
-                    self.current_theme[tab_key][color_key] = color_val
-                    self.settings.setValue(
-                        f"theme/custom_{tab_key}_{color_key}", color_val
-                    )
-        else:
-            # If "Custom" is selected, ensure current_theme reflects saved custom values
-            for tab_key in ["safari", "bookmarks", "theme_settings"]:
-                for color_key in ["primary", "secondary", "accent"]:
-                    default_val = (
-                        self.themes["Neon Blue"]
-                        .get(tab_key, {})
-                        .get(color_key, "#ffffff")
-                    )
-                    self.current_theme[tab_key][color_key] = str(
-                        self.settings.value(
-                            f"theme/custom_{tab_key}_{color_key}", default_val
-                        )
-                    )
-
-        self._apply_theme()  # Apply the newly selected theme
-
-    def _pick_color(self, tab_key: str, color_key: str):
-        """Opens a color dialog to pick a custom color for a theme component."""
-        current_color = self.current_theme[tab_key][color_key]
-        color = QColorDialog.getColor(QColor(current_color), self)
-        if color.isValid():
-            self.current_theme[tab_key][color_key] = (
-                color.name()
-            )  # Update current theme colors
-            self.settings.setValue(
-                f"theme/custom_{tab_key}_{color_key}", color.name()
-            )  # Save custom color
-
-            # Set theme to "Custom" if a color is manually picked
-            self.current_theme_name = "Custom"
-            self.theme_combo.setCurrentText("Custom")
-            self.settings.setValue("theme/name", "Custom")
-
-            self._apply_theme()  # Re-apply theme with new custom color
 
     def _apply_theme(self):
-        """Applies the current theme to all UI elements."""
-        # Get colors for each main tab
-        safari_colors = self.current_theme["safari"]
-        bookmarks_colors = self.current_theme["bookmarks"]
-        theme_settings_colors = self.current_theme["theme_settings"]
+        """Glass Noir theme is static - no dynamic theming needed."""
+        # The Glass Noir design uses fixed colors defined inline in _setup_ui
+        # This method is kept for compatibility but does nothing significant
+        pass
 
-        # Determine primary color for the currently selected main tab for the QTabBar outline
-        current_tab_index = self.tabs.currentIndex()
-        if current_tab_index == 0:  # Safari tab
-            main_tab_primary = safari_colors["primary"]
-        elif current_tab_index == 1:  # Bookmarks tab
-            main_tab_primary = bookmarks_colors["primary"]
-        else:  # Theme settings tab
-            main_tab_primary = theme_settings_colors["primary"]
 
-        # Update color swatches in settings tab
-        for tab_key in ["safari", "bookmarks", "theme_settings"]:
-            for color_key in ["primary", "secondary", "accent"]:
-                swatch = getattr(self, f"{tab_key}_{color_key}_color_swatch")
-                color_val = self.current_theme[tab_key][color_key]
-                swatch.setFixedSize(24, 24)
-                swatch.setStyleSheet(
-                    f"background-color: {color_val}; border-radius: 12px; border: 1px solid #fff;"
-                )
-                # Update the group box title color to match the swatch
-                group_box = getattr(self, f"{tab_key}_{color_key}_color_group")
-                color_name = color_key.capitalize()
-                group_box.setStyleSheet(
-                    f"QGroupBox {{ color: {color_val}; font-weight: bold; font-size: 14px; }}"
-                )
-                group_box.setTitle(f"{color_name} Color")
-
-        # QTabWidget and QTabBar styling for the neon outline effect
-        self.tabs.setStyleSheet(
-            f"""
-            QTabWidget::pane {{
-                border: none; /* The GlassPanel handles the main border */
-                background-color: transparent; /* Allow GlassPanel to manage its own background */
-            }}
-            QTabBar::tab {{
-                background: #1e1e1e; /* Dark background for inactive tabs */
-                color: #aaa; /* Grey text for inactive tabs */
-                padding: 18px 35px; /* Increased padding for bigger tabs */
-                margin: 6px; /* Increased margin for more spacing */
-                font-weight: bold;
-                font-size: 18px; /* Larger font */
-                border-radius: 12px; /* Slightly larger border radius */
-                border: 2px solid #444; /* Dark grey outline for inactive tabs */
-            }}
-            QTabBar::tab:hover {{
-                background: #2a2a2a; /* Slightly lighter on hover */
-            }}
-            QTabBar::tab:selected {{
-                border: 2px solid {main_tab_primary}; /* Neon outline for selected tab */
-                color: {main_tab_primary}; /* Neon text for selected tab */
-            }}
-            #inner_theme_tabs::pane {{
-                border: none;
-                background-color: transparent;
-            }}
-            #inner_theme_tabs QTabBar::tab {{
-                background: #2a2a2a;
-                color: #888;
-                padding: 10px 20px; /* Increased padding for inner tabs */
-                margin: 3px; /* Increased margin for inner tabs */
-                border-radius: 8px; /* Larger border radius for inner tabs */
-                font-size: 14px; /* Larger font for inner tabs */
-                border: 1px solid #555;
-                min-width: 180px; /* Ensure tab text is not cut off */
-            }}
-            #inner_theme_tabs QTabBar::tab:selected {{
-                border: 1px solid {theme_settings_colors["primary"]};
-                color: {theme_settings_colors["primary"]};
-            }}
-        """
-        )
-
-        # Update GlassPanel outlines for each tab
-        self.safari_panel.update_style(safari_colors["primary"])
-        self.bookmarks_panel.update_style(bookmarks_colors["primary"])
-        self.settings_panel.update_style(theme_settings_colors["primary"])
-
-        # Tab-specific component styling
-        # Safari Tab
-        self.safari_title.setStyleSheet(
-            f"color: {safari_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
-        )
-        self.url_table.setStyleSheet(
-            f"""
-            QTableWidget {{
-                background-color: #1e1e1e;
-                border: 2px solid {safari_colors["primary"]};
-                border-radius: 8px;
-                color: #aaa;
-                font-size: 14px;
-                gridline-color: #333;
-                selection-background-color: {safari_colors["secondary"]};
-            }}
-            QTableWidget::item {{
-                padding: 8px;
-                border-bottom: 1px solid #333;
-            }}
-            QTableWidget::item:selected {{
-                background-color: {safari_colors["secondary"]};
-                color: #000;
-            }}
-            QHeaderView::section {{
-                background-color: #2a2a2a;
-                color: #aaa;
-                padding: 8px;
-                border: 1px solid #444;
-                font-weight: bold;
-            }}
-        """
-        )
-        self.url_counter_label.setStyleSheet(
-            f"color: {safari_colors['primary']}; font-size: 16px; padding: 10px;"
-        )
-        self.run_btn.update_style(safari_colors["primary"])
-        self.save_btn.update_style(
-            safari_colors["secondary"]
-        )  # Using secondary for save
-        self.organize_btn.update_style(
-            safari_colors["accent"]
-        )  # Organize button uses accent color
-        self.private_mode_btn.update_style(
-            safari_colors["secondary"]
-        )  # Private mode button uses secondary color
-        self.clear_btn.update_style(
-            safari_colors["accent"]
-        )  # Clear button also uses accent color
-
-        # Bookmarks Tab
-        self.bookmarks_title.setStyleSheet(
-            f"color: {bookmarks_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
-        )
-        self.bookmark_tree.setStyleSheet(
-            f"""
-            QTreeWidget {{
-                background-color: #1e1e1e;
-                border: 2px solid {bookmarks_colors["primary"]}; /* Neon outline for the bookmark tree */
-                border-radius: 8px;
-                color: #fff;
-            }}
-            QTreeWidget::item {{
-                padding: 10px; /* Increased padding for spacing */
-                font-size: 16px; /* Larger font size */
-                font-weight: bold; /* Bolder font */
-                border-bottom: 1px solid #333; /* Separator line */
-            }}
-            QTreeWidget::item:hover {{
-                background-color: rgba({QColor(bookmarks_colors["secondary"]).red()},{QColor(bookmarks_colors["secondary"]).green()},{QColor(bookmarks_colors["secondary"]).blue()},0.1);
-            }}
-            QTreeWidget::item:selected {{
-                background-color: {bookmarks_colors["primary"]};
-                color: #000; /* Black text on selected item for contrast */
-            }}
-        """
-        )
-        self.add_folder_btn.update_style(bookmarks_colors["primary"])
-        self.add_link_btn.update_style(bookmarks_colors["secondary"])
-        self.export_btn.update_style(bookmarks_colors["accent"])
-
-        # Settings Tab
-        self.settings_title.setStyleSheet(
-            f"color: {theme_settings_colors['primary']}; font-size: 24px; font-weight: bold; margin: 20px;"
-        )
-
-        # Styling for the QGroupBoxes in Settings (Preset Group)
-        self.preset_group.setStyleSheet(
-            f"""
-            QGroupBox {{
-                color: #fff;
-                border: 2px solid {theme_settings_colors["primary"]}; /* Outline for preset group */
-                border-radius: 8px;
-                padding: 10px;
-                margin-top: 10px;
-                font-weight: bold;
-            }}
-            QGroupBox::title {{
-                subcontrol-position: top center;
-                color: {theme_settings_colors["primary"]}; /* Title color matches outline */
-                padding: 0 5px;
-            }}
-        """
-        )
-
-        self.theme_combo.setStyleSheet(
-            f"""
-            QComboBox {{
-                border: 1px solid {theme_settings_colors["primary"]}; /* ComboBox border matches primary */
-                border-radius: 4px;
-                padding: 8px;
-                background: #1e1e1e;
-                color: {theme_settings_colors["primary"]}; /* ComboBox text color matches primary */
-                font-size: 16px;
-                min-width: 150px; /* Ensure combo box text is not cut off */
-            }}
-            QComboBox::drop-down {{ border: none; }}
-            QComboBox::down-arrow {{ border: none; }}
-        """
-        )
-
-        # Styling for the color pick buttons and group boxes within the inner tabs
-        for tab_key in ["safari", "bookmarks", "theme_settings"]:
-            colors = self.current_theme[tab_key]
-            # Group Boxes
-            getattr(self, f"{tab_key}_primary_color_group").setStyleSheet(
-                f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors["primary"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors["primary"]}; padding: 0 5px; }}
-            """
-            )
-            getattr(self, f"{tab_key}_secondary_color_group").setStyleSheet(
-                f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors["secondary"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors["secondary"]}; padding: 0 5px; }}
-            """
-            )
-            getattr(self, f"{tab_key}_accent_color_group").setStyleSheet(
-                f"""
-                QGroupBox {{ color: #fff; border: 2px solid {colors["accent"]}; border-radius: 8px; padding: 10px; margin-top: 10px; font-weight: bold; }}
-                QGroupBox::title {{ subcontrol-position: top center; color: {colors["accent"]}; padding: 0 5px; }}
-            """
-            )
-
-            # Buttons
-            getattr(self, f"{tab_key}_primary_color_btn").setStyleSheet(
-                f"""
-                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["primary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
-                QPushButton:hover {{ background-color: #444; }}
-            """
-            )
-            getattr(self, f"{tab_key}_secondary_color_btn").setStyleSheet(
-                f"""
-                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["secondary"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
-                QPushButton:hover {{ background-color: #444; }}
-            """
-            )
-            getattr(self, f"{tab_key}_accent_color_btn").setStyleSheet(
-                f"""
-                QPushButton {{ background-color: #333; color: #d0d0d0; border: 1px solid {colors["accent"]}; border-radius: 4px; padding: 5px 10px; font-size: 14px; }}
-                QPushButton:hover {{ background-color: #444; }}
-            """
-            )
 
     def _run_urls_in_safari(self):
         """Runs URLs from the table in Safari with status tracking and privacy settings."""
@@ -2596,7 +2498,19 @@ def main():
     app.setApplicationName(Config.APP_NAME)
 
     window = MainWindow()
+
+    # Ensure window is visible and on screen
     window.show()
+    window.raise_()
+    window.activateWindow()
+
+    # Center window on screen
+    screen = app.primaryScreen().geometry()
+    window.move(
+        (screen.width() - window.width()) // 2,
+        (screen.height() - window.height()) // 2
+    )
+
     sys.exit(app.exec())
 
 
