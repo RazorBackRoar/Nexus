@@ -1736,18 +1736,19 @@ class MainWindow(QMainWindow):
         sidebar_layout.setContentsMargins(16, 20, 16, 20)
         sidebar_layout.setSpacing(12)
 
-        # Sidebar title with accent color
+        # Sidebar title with cyan accent (centered)
         sidebar_title = QLabel("BOOKMARKS")
+        sidebar_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_title.setStyleSheet("""
             QLabel {
-                color: #a78bfa;
-                font-size: 12px;
+                color: #00f5ff;
+                font-size: 14px;
                 font-weight: 700;
-                letter-spacing: 2px;
-                padding: 0 4px 8px 4px;
+                letter-spacing: 3px;
+                padding: 4px 8px 12px 8px;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+                border-bottom: 1px solid rgba(0, 245, 255, 0.3);
             }
         """)
         sidebar_layout.addWidget(sidebar_title)
@@ -1804,18 +1805,18 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title for URL area
+        # Section title for URL area (magenta accent)
         url_section_title = QLabel("URL MANAGER")
         url_section_title.setStyleSheet("""
             QLabel {
-                color: #a78bfa;
-                font-size: 12px;
+                color: #ff2d92;
+                font-size: 14px;
                 font-weight: 700;
-                letter-spacing: 2px;
-                padding-bottom: 8px;
+                letter-spacing: 3px;
+                padding: 4px 0 12px 0;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+                border-bottom: 1px solid rgba(255, 45, 146, 0.3);
             }
         """)
         main_content_layout.addWidget(url_section_title)
