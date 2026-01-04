@@ -1697,13 +1697,12 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # ===== HEADER: Centered NEXUS title with tagline =====
+        # ===== HEADER: Centered NEXUS title =====
         header_widget = QWidget()
-        header_widget.setFixedHeight(80)
+        header_widget.setFixedHeight(60)
         header_widget.setStyleSheet("background: transparent;")
-        header_layout = QVBoxLayout(header_widget)
-        header_layout.setContentsMargins(20, 15, 20, 5)
-        header_layout.setSpacing(4)
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(20, 15, 20, 10)
 
         self.title_label = QLabel("NEXUS")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1716,19 +1715,6 @@ class MainWindow(QMainWindow):
             }
         """)
         header_layout.addWidget(self.title_label)
-
-        # Pink tagline description
-        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
-        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        tagline.setStyleSheet("""
-            QLabel {
-                color: #ff2d92;
-                font-size: 12px;
-                font-weight: 500;
-                letter-spacing: 1px;
-            }
-        """)
-        header_layout.addWidget(tagline)
 
         main_layout.addWidget(header_widget)
 
@@ -1823,18 +1809,18 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title - Nexus tagline with gradient colors
-        url_section_title = QLabel("SAFARI URL PORTAL")
+        # Section title - Pink tagline
+        url_section_title = QLabel("Paste URLs. Open in Safari. Instantly.")
         url_section_title.setStyleSheet("""
             QLabel {
-                color: #00d4d4;
+                color: #ff2d92;
                 font-size: 14px;
-                font-weight: 700;
-                letter-spacing: 3px;
+                font-weight: 600;
+                letter-spacing: 2px;
                 padding: 4px 0 12px 0;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(0, 212, 212, 0.3);
+                border-bottom: 1px solid rgba(255, 45, 146, 0.3);
             }
         """)
         main_content_layout.addWidget(url_section_title)
