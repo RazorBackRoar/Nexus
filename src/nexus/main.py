@@ -1322,7 +1322,7 @@ class GlassButton(QPushButton):
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 16px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1345,7 +1345,7 @@ class GlassButton(QPushButton):
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 16px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1368,7 +1368,7 @@ class GlassButton(QPushButton):
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 16px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1386,12 +1386,13 @@ class GlassButton(QPushButton):
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
+        stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
                     color: #ffffff;
                     border: 1px solid rgba(139, 92, 246, 0.4);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 600;
-                    font-size: 15px;
+                    font-size: 16px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1702,24 +1703,39 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # ===== HEADER: Centered NEXUS title =====
+        # ===== HEADER: Centered NEXUS title + Tagline =====
         header_widget = QWidget()
-        header_widget.setFixedHeight(60)
+        header_widget.setFixedHeight(95)  # Increased height for tagline
         header_widget.setStyleSheet("background: transparent;")
-        header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(20, 15, 20, 10)
+        header_layout = QVBoxLayout(header_widget)  # Vertical layout
+        header_layout.setContentsMargins(20, 10, 20, 10)
+        header_layout.setSpacing(4)
 
         self.title_label = QLabel("NEXUS")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
                 color: #ffffff;
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: 300;
-                letter-spacing: 8px;
+                letter-spacing: 10px;
             }
         """)
         header_layout.addWidget(self.title_label)
+
+        # Pink tagline (now in header)
+        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tagline.setStyleSheet("""
+            QLabel {
+                color: #ff2d92;
+                font-size: 16px;
+                font-weight: 600;
+                font-style: italic;
+                letter-spacing: 1px;
+            }
+        """)
+        header_layout.addWidget(tagline)
 
         main_layout.addWidget(header_widget)
 
@@ -1813,24 +1829,7 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title - Pink tagline (centered)
-        url_section_title = QLabel("Paste URLs. Open in Safari. Instantly.")
-        url_section_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        url_section_title.setStyleSheet("""
-            QLabel {
-                color: #ff2d92;
-                font-size: 16px;
-                font-weight: 600;
-                font-style: italic;
-                letter-spacing: 1px;
-                padding: 8px 0 16px 0;
-                background: transparent;
-                border: none;
-                border-bottom: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(255, 45, 146, 0.6), stop:1 rgba(0, 180, 180, 0.3));
-            }
-        """)
-        main_content_layout.addWidget(url_section_title)
+        # (Tagline moved to header)
 
         # URL Table with enhanced styling and colored headers
         self.url_table = URLTableWidget()
@@ -1901,9 +1900,9 @@ class MainWindow(QMainWindow):
         """)
         main_content_layout.addWidget(self.url_counter_label)
 
-        # Action buttons row - Open All, Save, Private Browsing, then Clear on right
+        # Action buttons row - Distributed evenly (Space them out there are 4)
         button_row = QHBoxLayout()
-        button_row.setSpacing(14)
+        button_row.setSpacing(10) # Using stretch instead for even spacing
 
         self.run_btn = GlassButton("🚀 Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
@@ -1919,10 +1918,15 @@ class MainWindow(QMainWindow):
         self.clear_btn = GlassButton("🗑 Clear", "danger")
         self.clear_btn.clicked.connect(self._clear_all_data)
 
+        # Distribute buttons evenly: Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch
+        # Or simpler: Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn
+
         button_row.addWidget(self.run_btn)
+        button_row.addStretch()
         button_row.addWidget(self.save_btn)
+        button_row.addStretch()
         button_row.addWidget(self.private_mode_btn)
-        button_row.addStretch()  # Push Clear to the right
+        button_row.addStretch()
         button_row.addWidget(self.clear_btn)
 
         main_content_layout.addLayout(button_row)
