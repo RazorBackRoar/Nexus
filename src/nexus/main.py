@@ -1034,10 +1034,10 @@ class BookmarkManager:
     def _create_default_bookmarks(self) -> List[BookmarkNode]:
         """Creates default bookmark folders for common categories."""
         return [
-            BookmarkNode(name="Github", type="folder", children=[]),
-            BookmarkNode(name="Apple", type="folder", children=[]),
-            BookmarkNode(name="AI News", type="folder", children=[]),
-            BookmarkNode(name="Google", type="folder", children=[]),
+            BookmarkFolder(name="Github", children=[]),
+            BookmarkFolder(name="Apple", children=[]),
+            BookmarkFolder(name="AI News", children=[]),
+            BookmarkFolder(name="Google", children=[]),
         ]
 
 
