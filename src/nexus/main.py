@@ -1812,6 +1812,7 @@ class MainWindow(QMainWindow):
         # Section title - Pink tagline (centered)
         url_section_title = QLabel("Paste URLs. Open in Safari. Instantly.")
         url_section_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        url_section_title.setStyleSheet("""
             QLabel {
                 color: #ff2d92;
                 font-size: 14px;
