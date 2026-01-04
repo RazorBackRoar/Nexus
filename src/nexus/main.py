@@ -1307,69 +1307,72 @@ class GlassButton(QPushButton):
     def _apply_variant_style(self):
         """Apply styling based on variant - using icon colors (cyan, magenta, green)."""
         if self.variant == "primary":
-            # Primary: Cyan/Teal gradient (matches icon)
+            # Primary: Cyan/Teal with slight transparency
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #00f5ff, stop:1 #00d4aa);
+                        stop:0 rgba(0, 245, 255, 0.85), stop:1 rgba(0, 212, 170, 0.85));
                     color: #000000;
-                    border: none;
+                    border: 1px solid rgba(0, 245, 255, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 14px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #33f7ff, stop:1 #33e0bb);
+                        stop:0 rgba(51, 247, 255, 0.95), stop:1 rgba(51, 224, 187, 0.95));
+                    border: 1px solid rgba(0, 245, 255, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #00c4cc, stop:1 #00a488);
+                        stop:0 rgba(0, 196, 204, 0.9), stop:1 rgba(0, 164, 136, 0.9));
                 }
             """)
         elif self.variant == "secondary":
-            # Secondary: Magenta/Pink (matches icon)
+            # Secondary: Magenta/Pink with slight transparency
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #ff2d92, stop:1 #cc0066);
+                        stop:0 rgba(255, 45, 146, 0.85), stop:1 rgba(204, 0, 102, 0.85));
                     color: #ffffff;
-                    border: none;
+                    border: 1px solid rgba(255, 45, 146, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 14px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #ff5aab, stop:1 #e6007a);
+                        stop:0 rgba(255, 90, 171, 0.95), stop:1 rgba(230, 0, 122, 0.95));
+                    border: 1px solid rgba(255, 45, 146, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #cc2475, stop:1 #990052);
+                        stop:0 rgba(204, 36, 117, 0.9), stop:1 rgba(153, 0, 82, 0.9));
                 }
             """)
         elif self.variant == "tertiary":
-            # Tertiary: Neon Green (matches icon)
+            # Tertiary: Neon Green with slight transparency
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #39ff14, stop:1 #00cc00);
+                        stop:0 rgba(57, 255, 20, 0.85), stop:1 rgba(0, 204, 0, 0.85));
                     color: #000000;
-                    border: none;
+                    border: 1px solid rgba(57, 255, 20, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
-                    font-size: 14px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #66ff44, stop:1 #33dd33);
+                        stop:0 rgba(102, 255, 68, 0.95), stop:1 rgba(51, 221, 51, 0.95));
+                    border: 1px solid rgba(57, 255, 20, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #2ecc11, stop:1 #009900);
+                        stop:0 rgba(46, 204, 17, 0.9), stop:1 rgba(0, 153, 0, 0.9));
                 }
             """)
         else:  # danger/delete style
@@ -1382,7 +1385,7 @@ class GlassButton(QPushButton):
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 600;
-                    font-size: 14px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: rgba(255, 100, 100, 0.2);
