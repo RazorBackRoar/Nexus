@@ -1320,9 +1320,10 @@ class GlassButton(QPushButton):
                     color: #ffffff;
                     border: 1px solid rgba(50, 100, 180, 0.6);
                     border-radius: 12px;
-                    padding: 14px 28px;
+                    padding: 14px 0; /* Reduced horizontal padding, rely on width */
+                    min-width: 140px; /* Enforce minimum width for uniformity */
                     font-weight: 700;
-                    font-size: 16px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1344,8 +1345,9 @@ class GlassButton(QPushButton):
                     border: 1px solid rgba(255, 45, 146, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
+                    min-width: 140px;
                     font-weight: 700;
-                    font-size: 16px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1367,8 +1369,9 @@ class GlassButton(QPushButton):
                     border: 1px solid rgba(57, 255, 20, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
+                    min-width: 140px;
                     font-weight: 700;
-                    font-size: 16px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1391,8 +1394,9 @@ class GlassButton(QPushButton):
                     border: 1px solid rgba(139, 92, 246, 0.4);
                     border-radius: 12px;
                     padding: 14px 28px;
+                    min-width: 140px;
                     font-weight: 600;
-                    font-size: 16px;
+                    font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1844,7 +1848,7 @@ class MainWindow(QMainWindow):
                 border: 1px solid rgba(0, 180, 180, 0.25);
                 border-radius: 12px;
                 color: #e0e0e0;
-                font-size: 14px;
+                font-size: 15px; /* Increased row text size */
                 gridline-color: rgba(0, 180, 180, 0.1);
                 selection-background-color: rgba(0, 180, 180, 0.3);
             }
@@ -1867,7 +1871,7 @@ class MainWindow(QMainWindow):
                 border: none;
                 border-bottom: 1px solid rgba(0, 212, 212, 0.4);
                 font-weight: 700;
-                font-size: 12px;
+                font-size: 14px; /* Increased header text size */
                 letter-spacing: 1px;
             }
             QScrollBar:vertical {
