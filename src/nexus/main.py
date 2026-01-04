@@ -1751,13 +1751,13 @@ class MainWindow(QMainWindow):
         sidebar_title.setStyleSheet("""
             QLabel {
                 color: #00f5ff;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 700;
-                letter-spacing: 3px;
-                padding: 4px 8px 12px 8px;
+                letter-spacing: 4px;
+                padding: 8px 8px 16px 8px;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(0, 245, 255, 0.3);
+                border-bottom: 2px solid rgba(0, 245, 255, 0.4);
             }
         """)
         sidebar_layout.addWidget(sidebar_title)
@@ -1773,20 +1773,20 @@ class MainWindow(QMainWindow):
                 background: transparent;
                 border: none;
                 color: #ffffff;
-                font-size: 15px;
+                font-size: 16px;
                 font-weight: 600;
             }
             QTreeWidget::item {
-                padding: 10px 12px;
-                border-radius: 8px;
-                margin: 2px 0;
+                padding: 14px 20px;
+                border-radius: 10px;
+                margin: 6px 8px;
                 background: transparent;
             }
             QTreeWidget::item:hover {
-                background: rgba(255, 255, 255, 0.08);
+                background: rgba(255, 255, 255, 0.06);
             }
             QTreeWidget::item:selected {
-                background: rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.1);
             }
         """)
         sidebar_layout.addWidget(self.bookmark_tree, 1)
