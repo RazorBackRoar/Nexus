@@ -1307,13 +1307,13 @@ class GlassButton(QPushButton):
     def _apply_variant_style(self):
         """Apply styling based on variant - using icon colors (cyan, magenta, green)."""
         if self.variant == "primary":
-            # Primary: Cyan/Teal with slight transparency
+            # Primary: Deeper Teal with WHITE text
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(0, 245, 255, 0.85), stop:1 rgba(0, 212, 170, 0.85));
-                    color: #000000;
-                    border: 1px solid rgba(0, 245, 255, 0.5);
+                        stop:0 rgba(0, 180, 180, 0.9), stop:1 rgba(0, 140, 140, 0.9));
+                    color: #ffffff;
+                    border: 1px solid rgba(0, 200, 200, 0.6);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 700;
@@ -1321,16 +1321,16 @@ class GlassButton(QPushButton):
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(51, 247, 255, 0.95), stop:1 rgba(51, 224, 187, 0.95));
-                    border: 1px solid rgba(0, 245, 255, 0.8);
+                        stop:0 rgba(0, 210, 210, 0.95), stop:1 rgba(0, 170, 170, 0.95));
+                    border: 1px solid rgba(0, 230, 230, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(0, 196, 204, 0.9), stop:1 rgba(0, 164, 136, 0.9));
+                        stop:0 rgba(0, 150, 150, 0.95), stop:1 rgba(0, 120, 120, 0.95));
                 }
             """)
         elif self.variant == "secondary":
-            # Secondary: Magenta/Pink with slight transparency
+            # Secondary: Magenta/Pink with white text
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -1353,12 +1353,12 @@ class GlassButton(QPushButton):
                 }
             """)
         elif self.variant == "tertiary":
-            # Tertiary: Neon Green with slight transparency
+            # Tertiary: Neon Green with WHITE text
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(57, 255, 20, 0.85), stop:1 rgba(0, 204, 0, 0.85));
-                    color: #000000;
+                        stop:0 rgba(0, 180, 0, 0.85), stop:1 rgba(0, 140, 0, 0.85));
+                    color: #ffffff;
                     border: 1px solid rgba(57, 255, 20, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
@@ -1367,33 +1367,36 @@ class GlassButton(QPushButton):
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(102, 255, 68, 0.95), stop:1 rgba(51, 221, 51, 0.95));
+                        stop:0 rgba(40, 210, 40, 0.95), stop:1 rgba(30, 170, 30, 0.95));
                     border: 1px solid rgba(57, 255, 20, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(46, 204, 17, 0.9), stop:1 rgba(0, 153, 0, 0.9));
+                        stop:0 rgba(0, 150, 0, 0.9), stop:1 rgba(0, 120, 0, 0.9));
                 }
             """)
-        else:  # danger/delete style
-            # Danger: Dark subtle for delete/clear
+        else:  # danger/delete style - Purple accent
+            # Clear: Purple accent style
             self.setStyleSheet("""
                 QPushButton {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #aaaaaa;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
+                    color: #a78bfa;
+                    border: 1px solid rgba(139, 92, 246, 0.4);
                     border-radius: 12px;
                     padding: 14px 28px;
                     font-weight: 600;
                     font-size: 15px;
                 }
                 QPushButton:hover {
-                    background: rgba(255, 100, 100, 0.2);
-                    color: #ff6666;
-                    border: 1px solid rgba(255, 100, 100, 0.4);
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 rgba(139, 92, 246, 0.5), stop:1 rgba(99, 102, 241, 0.5));
+                    color: #ffffff;
+                    border: 1px solid rgba(139, 92, 246, 0.7);
                 }
                 QPushButton:pressed {
-                    background: rgba(255, 50, 50, 0.3);
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 rgba(139, 92, 246, 0.6), stop:1 rgba(99, 102, 241, 0.6));
                 }
             """)
 
@@ -1808,23 +1811,23 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title for URL area (magenta accent)
-        url_section_title = QLabel("URL MANAGER")
+        # Section title - Nexus tagline with gradient colors
+        url_section_title = QLabel("SAFARI URL PORTAL")
         url_section_title.setStyleSheet("""
             QLabel {
-                color: #ff2d92;
+                color: #00d4d4;
                 font-size: 14px;
                 font-weight: 700;
                 letter-spacing: 3px;
                 padding: 4px 0 12px 0;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(255, 45, 146, 0.3);
+                border-bottom: 1px solid rgba(0, 212, 212, 0.3);
             }
         """)
         main_content_layout.addWidget(url_section_title)
 
-        # URL Table with enhanced styling
+        # URL Table with enhanced styling and colored headers
         self.url_table = URLTableWidget()
         self.url_table.itemChanged.connect(self._update_url_counter)
         self.url_table.model().rowsInserted.connect(self._update_url_counter)
@@ -1834,33 +1837,33 @@ class MainWindow(QMainWindow):
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 rgba(15, 15, 25, 0.8),
                     stop:1 rgba(10, 10, 20, 0.9));
-                border: 1px solid rgba(139, 92, 246, 0.2);
+                border: 1px solid rgba(0, 180, 180, 0.25);
                 border-radius: 12px;
                 color: #e0e0e0;
-                font-size: 13px;
-                gridline-color: rgba(139, 92, 246, 0.1);
-                selection-background-color: rgba(139, 92, 246, 0.3);
+                font-size: 14px;
+                gridline-color: rgba(0, 180, 180, 0.1);
+                selection-background-color: rgba(0, 180, 180, 0.3);
             }
             QTableWidget::item {
                 padding: 12px 10px;
-                border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+                border-bottom: 1px solid rgba(0, 180, 180, 0.08);
             }
             QTableWidget::item:hover {
-                background: rgba(139, 92, 246, 0.1);
+                background: rgba(0, 180, 180, 0.1);
             }
             QTableWidget::item:selected {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(139, 92, 246, 0.35), stop:1 rgba(99, 102, 241, 0.35));
+                    stop:0 rgba(0, 180, 180, 0.35), stop:1 rgba(255, 45, 146, 0.35));
             }
             QHeaderView::section {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(139, 92, 246, 0.15), stop:1 rgba(99, 102, 241, 0.1));
-                color: #a78bfa;
-                padding: 12px 10px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(0, 180, 180, 0.2), stop:1 rgba(255, 45, 146, 0.15));
+                color: #00e5e5;
+                padding: 14px 12px;
                 border: none;
-                border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+                border-bottom: 1px solid rgba(0, 212, 212, 0.4);
                 font-weight: 700;
-                font-size: 11px;
+                font-size: 12px;
                 letter-spacing: 1px;
             }
             QScrollBar:vertical {
@@ -1869,12 +1872,12 @@ class MainWindow(QMainWindow):
                 border-radius: 4px;
             }
             QScrollBar::handle:vertical {
-                background: rgba(139, 92, 246, 0.4);
+                background: rgba(0, 180, 180, 0.4);
                 border-radius: 4px;
                 min-height: 30px;
             }
             QScrollBar::handle:vertical:hover {
-                background: rgba(139, 92, 246, 0.6);
+                background: rgba(0, 180, 180, 0.6);
             }
         """)
         main_content_layout.addWidget(self.url_table, 1)
