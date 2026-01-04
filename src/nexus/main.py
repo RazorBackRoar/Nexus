@@ -1813,17 +1813,17 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title - Pink tagline (left-aligned)
+        # Section title - Pink tagline (centered)
         url_section_title = QLabel("Paste URLs. Open in Safari. Instantly.")
-        url_section_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        url_section_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         url_section_title.setStyleSheet("""
             QLabel {
                 color: #ff2d92;
-                font-size: 15px;
+                font-size: 16px;
                 font-weight: 600;
                 font-style: italic;
                 letter-spacing: 1px;
-                padding: 8px 0 16px 4px;
+                padding: 8px 0 16px 0;
                 background: transparent;
                 border: none;
                 border-bottom: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -2218,8 +2218,8 @@ class MainWindow(QMainWindow):
     ) -> QTreeWidgetItem:
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
-        prefix = "📁" if is_folder else "🔗"
-        item = QTreeWidgetItem([f"{prefix} {data['name']}"])
+        # No icons - just clean text
+        item = QTreeWidgetItem([data['name']])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
 
         # Color palette for folders (rotates through these)
@@ -2231,10 +2231,10 @@ class MainWindow(QMainWindow):
             "#ff9500",  # Orange
         ]
 
-        # Apply font styling directly to the item
+        # Apply font styling directly to the item - bigger text
         font = item.font(0)
         font.setBold(is_folder)
-        font.setPointSize(16 if is_folder else 14)  # Larger font sizes
+        font.setPointSize(18 if is_folder else 14)  # Much larger for folders
         item.setFont(0, font)
 
         # Apply color to folders based on index with glassmorphism pill backgrounds
