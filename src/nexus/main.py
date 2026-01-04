@@ -1809,19 +1809,21 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
 
-        # Section title - Pink tagline (centered)
+        # Section title - Pink tagline (left-aligned)
         url_section_title = QLabel("Paste URLs. Open in Safari. Instantly.")
-        url_section_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        url_section_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
         url_section_title.setStyleSheet("""
             QLabel {
                 color: #ff2d92;
-                font-size: 14px;
+                font-size: 15px;
                 font-weight: 600;
-                letter-spacing: 2px;
-                padding: 4px 0 12px 0;
+                font-style: italic;
+                letter-spacing: 1px;
+                padding: 8px 0 16px 4px;
                 background: transparent;
                 border: none;
-                border-bottom: 1px solid rgba(255, 45, 146, 0.3);
+                border-bottom: 2px solid qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(255, 45, 146, 0.6), stop:1 rgba(0, 180, 180, 0.3));
             }
         """)
         main_content_layout.addWidget(url_section_title)
