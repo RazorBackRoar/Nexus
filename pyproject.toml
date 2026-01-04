@@ -1,6 +1,6 @@
 [project]
 name = "Nexus"
-version = "5.2.0"
+version = "5.3.0"
 description = "Nexus Application"
 authors = [
     {name = "RazorBackRoar"}
