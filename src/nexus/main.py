@@ -60,8 +60,9 @@ from PySide6.QtCore import (
     QEasingCurve,
     QByteArray,
     QMimeData,
+    QPoint,
 )
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QDrag, QPixmap
 
 # Add src directory to Python path to allow 'nexus' package imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1034,10 +1035,12 @@ class BookmarkManager:
     def _create_default_bookmarks(self) -> List[BookmarkNode]:
         """Creates default bookmark folders for common categories."""
         return [
-            BookmarkFolder(name="Github", children=[]),
+            BookmarkFolder(name="News", children=[]),
             BookmarkFolder(name="Apple", children=[]),
-            BookmarkFolder(name="AI News", children=[]),
+            BookmarkFolder(name="Misc", children=[]),
             BookmarkFolder(name="Google", children=[]),
+            BookmarkFolder(name="Github", children=[]),
+            BookmarkFolder(name="Fun", children=[]),
         ]
 
 
@@ -1344,8 +1347,7 @@ class GlassButton(QPushButton):
                     color: #ffffff;
                     border: 1px solid rgba(255, 45, 146, 0.5);
                     border-radius: 12px;
-                    padding: 14px 28px;
-                    min-width: 140px;
+                    padding: 14px 20px;
                     font-weight: 700;
                     font-size: 15px;
                 }
@@ -1383,29 +1385,27 @@ class GlassButton(QPushButton):
                         stop:0 rgba(0, 150, 0, 0.9), stop:1 rgba(0, 120, 0, 0.9));
                 }
             """)
-        else:  # danger/delete style - Purple accent with WHITE text
-            # Clear: Purple accent style with white text
+        else:  # danger/delete style - RED
             self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
-        stop:0 rgba(139, 92, 246, 0.3), stop:1 rgba(99, 102, 241, 0.3));
+                        stop:0 rgba(255, 59, 48, 0.4), stop:1 rgba(200, 40, 40, 0.4));
                     color: #ffffff;
-                    border: 1px solid rgba(139, 92, 246, 0.4);
+                    border: 1px solid rgba(255, 59, 48, 0.5);
                     border-radius: 12px;
                     padding: 14px 28px;
-                    min-width: 140px;
+                    min-width: 100px;
                     font-weight: 600;
                     font-size: 15px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(139, 92, 246, 0.5), stop:1 rgba(99, 102, 241, 0.5));
-                    border: 1px solid rgba(139, 92, 246, 0.7);
+                        stop:0 rgba(255, 59, 48, 0.6), stop:1 rgba(200, 40, 40, 0.6));
+                    border: 1px solid rgba(255, 59, 48, 0.8);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(139, 92, 246, 0.6), stop:1 rgba(99, 102, 241, 0.6));
+                        stop:0 rgba(255, 59, 48, 0.7), stop:1 rgba(200, 40, 40, 0.7));
                 }
             """)
 
@@ -1795,11 +1795,12 @@ class MainWindow(QMainWindow):
                 color: #ffffff;
                 font-size: 16px;
                 font-weight: 600;
+                outline: none;
             }
             QTreeWidget::item {
                 padding: 14px 20px;
                 border-radius: 10px;
-                margin: 6px 8px;
+                margin: 4px 6px;
                 background: transparent;
             }
             QTreeWidget::item:hover {
@@ -1808,7 +1809,50 @@ class MainWindow(QMainWindow):
             QTreeWidget::item:selected {
                 background: rgba(255, 255, 255, 0.1);
             }
+            QTreeWidget::branch {
+                background: transparent;
+                image: none;
+                border: none;
+            }
+            QTreeWidget::branch:has-children:open,
+            QTreeWidget::branch:has-children:closed {
+                background: transparent;
+                border: none;
+                image: none;
+            }
+            QTreeWidget:focus {
+                outline: none;
+                border: none;
+            }
+            QTreeWidget::item:focus {
+                outline: none;
+                border: none;
+            }
+            QScrollBar:vertical {
+                background: transparent;
+                width: 8px;
+                border-radius: 4px;
+                margin: 4px 2px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
         """)
+        self.bookmark_tree.setRootIsDecorated(False) # Hide root decoration to remove 'grey bars' indentation
+        self.bookmark_tree.setItemsExpandable(True)
+        self.bookmark_tree.setIndentation(10) # Minimal indentation
+        self.bookmark_tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # Remove focus indicator
         sidebar_layout.addWidget(self.bookmark_tree, 1)
 
         # Add folder button with icon styling
@@ -1919,7 +1963,7 @@ class MainWindow(QMainWindow):
         self.private_mode_btn.setChecked(Config.DEFAULT_PRIVATE_MODE)
         self.private_mode_btn.clicked.connect(self._toggle_private_mode)
 
-        self.clear_btn = GlassButton("🗑 Clear", "danger")
+        self.clear_btn = GlassButton("Clear", "danger")
         self.clear_btn.clicked.connect(self._clear_all_data)
 
         # Distribute buttons evenly: Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch
@@ -2197,6 +2241,28 @@ class MainWindow(QMainWindow):
         elif data.get("type") == "folder":
             item.setExpanded(not item.isExpanded())
 
+    def _on_bookmarks_reordered(self):
+        """Called when bookmarks are reordered via drag & drop. Saves the new order."""
+        self._sync_tree_to_data()
+        self.bookmark_manager.save_bookmarks(self.bookmarks)
+        logger.info("Bookmarks reordered and saved.")
+
+    def _sync_tree_to_data(self):
+        """Rebuilds self.bookmarks from the current tree widget state."""
+        def item_to_node(item: QTreeWidgetItem) -> BookmarkNode:
+            data = item.data(0, Qt.ItemDataRole.UserRole)
+            if data.get("type") == "folder":
+                children = []
+                for i in range(item.childCount()):
+                    children.append(item_to_node(item.child(i)))
+                return BookmarkFolder(name=data["name"], children=children)
+            else:
+                return Bookmark(name=data["name"], url=data.get("url", ""))
+
+        self.bookmarks = []
+        for i in range(self.bookmark_tree.topLevelItemCount()):
+            self.bookmarks.append(item_to_node(self.bookmark_tree.topLevelItem(i)))
+
     def _get_selected_parent_item(self) -> Optional[QTreeWidgetItem]:
         """Returns the currently selected folder item, or its parent if a bookmark is selected."""
         current_item = self.bookmark_tree.currentItem()
@@ -2230,36 +2296,48 @@ class MainWindow(QMainWindow):
         item = QTreeWidgetItem([data['name']])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
 
-        # Color palette for folders (rotates through these)
-        folder_colors = [
-            "#ff2d92",  # Pink/Magenta
-            "#00e5e5",  # Cyan
-            "#39ff14",  # Neon Green
-            "#a78bfa",  # Purple
-            "#ff9500",  # Orange
-        ]
+        input_name = data['name']
+        # Normalize name for color lookup (case insensitive)
+        norm_name = input_name.lower()
+
+        # Color mapping based on user request
+        # Default rotation colors if not specified
+        default_colors = ["#ff2d92", "#00e5e5", "#39ff14", "#a78bfa", "#ff9500"]
+
+        # Specific color overrides
+        specific_colors = {
+            "news": "#ff3b30",      # Red
+            "ai news": "#ff3b30",   # Red (legacy)
+            "apple": "#ffffff",     # White
+            "misc": "#00f5ff",      # Blue
+            "google": "#39ff14",    # Green
+            "github": "#bd93f9",    # Purple
+            "fun": "#ffff00",       # Yellow
+        }
 
         # Apply font styling directly to the item - bigger text
         font = item.font(0)
         font.setBold(is_folder)
-        font.setPointSize(18 if is_folder else 14)  # Much larger for folders
+        font.setPointSize(18 if is_folder else 14)  # Larger font sizes
         item.setFont(0, font)
 
-        # Apply color to folders based on index with glassmorphism pill backgrounds
+        # Apply color to folders
         if is_folder:
-            # Get folder index for color rotation
-            if not hasattr(self, '_folder_color_index'):
-                self._folder_color_index = 0
-            color = folder_colors[self._folder_color_index % len(folder_colors)]
-            self._folder_color_index += 1
+            if norm_name in specific_colors:
+                color = specific_colors[norm_name]
+            else:
+                # Get folder index for color rotation
+                if not hasattr(self, '_folder_color_index'):
+                    self._folder_color_index = 0
+                color = default_colors[self._folder_color_index % len(default_colors)]
+                self._folder_color_index += 1
 
-            # Set text color only - no background box
             item.setForeground(0, QColor(color))
-
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # Folders not editable inline
         else:
-            # Bookmarks stay default color, not editable
-            item.setForeground(0, QColor("#c0c0c0"))
+            # Bookmarks are gray
+            item.setForeground(0, QColor("#aaaaaa"))
+            # Make sure bookmarks are NOT editable
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
         if parent:
@@ -2267,6 +2345,7 @@ class MainWindow(QMainWindow):
         else:
             self.bookmark_tree.addTopLevelItem(item)
 
+        # Recursively create children
         if is_folder and "children" in data:
             for child_data in data["children"]:
                 self._create_tree_item(child_data, item)
@@ -2295,6 +2374,28 @@ class MainWindow(QMainWindow):
         """Loads the hierarchical bookmark structure from file and populates the tree."""
         self.bookmark_tree.clear()
         bookmark_nodes = self.bookmark_manager.load_bookmarks()
+
+        # Migration: Rename "AI News" to "News" if it exists
+        ai_news_node = next((n for n in bookmark_nodes if isinstance(n, BookmarkFolder) and n.name == "AI News"), None)
+        if ai_news_node:
+            ai_news_node.name = "News"
+            self.bookmark_manager.save_bookmarks(bookmark_nodes)
+
+        # Ensure all required default folders exist
+        required_folders = ["News", "Apple", "Misc", "Google", "Github", "Fun"]
+        existing_names = {n.name for n in bookmark_nodes if isinstance(n, BookmarkFolder)}
+
+        folders_added = False
+        for req_name in required_folders:
+            if req_name not in existing_names:
+                bookmark_nodes.append(BookmarkFolder(name=req_name, children=[]))
+                folders_added = True
+
+        if folders_added:
+             self.bookmark_manager.save_bookmarks(bookmark_nodes)
+
+        # Sort bookmarks alphabetically by name
+        bookmark_nodes.sort(key=lambda x: x.name.lower())
         for node in bookmark_nodes:
             node_data = self.bookmark_manager._serialize_node(node)
             item = self._create_tree_item(node_data)
