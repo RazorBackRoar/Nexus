@@ -133,3 +133,4 @@ Nexus runs 100% locally. No telemetry, no analytics. Only uses AppleScript to co
 GitHub: [@RazorBackRoar](https://github.com/RazorBackRoar)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# README
