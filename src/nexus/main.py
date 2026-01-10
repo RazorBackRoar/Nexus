@@ -1347,7 +1347,7 @@ class GlassButton(QPushButton):
                     color: #ffffff;
                     border: 1px solid rgba(255, 45, 146, 0.5);
                     border-radius: 12px;
-                    padding: 14px 20px;
+                    padding: 10px 8px;
                     font-weight: 700;
                     font-size: 15px;
                 }
