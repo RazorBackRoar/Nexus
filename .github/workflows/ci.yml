@@ -10,3 +10,4 @@ on:
 jobs:
   ci:
     uses: RazorBackRoar/Nexus/.github/workflows/shared-ci.yml@main
+    secrets: inherit
