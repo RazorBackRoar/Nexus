@@ -2,135 +2,90 @@
 
 [![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![Pylint](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml)
-[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![Version](https://img.shields.io/badge/version-5.4.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![macOS](https://img.shields.io/badge/macOS-13+-blue.svg)](https://www.apple.com/macos)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
-[![Python](https://img.shields.io/badge/Python-3.13-blueviolet.svg)](https://www.python.org/)
-[![PyInstaller](https://img.shields.io/badge/PyInstaller-bundler-informational.svg)](https://pyinstaller.org/)
 
-```
+```text
 ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
 ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
 ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗
 ██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║
 ██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║
 ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-
-
-## Nexus — Safari Bookmark & URL Manager for macOS
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## ⚡ About
-
-Nexus is a powerful native macOS application for managing Safari bookmarks and batch-opening URLs. Features a beautiful neon-themed dark interface with hierarchical bookmark organization.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## ✨ Highlights
-
-- 🌐 **Safari Integration** – Batch open URLs in Safari with one click via AppleScript
-- 📑 **Hierarchical Bookmarks** – Organize bookmarks in folders and subfolders
-- 🎨 **Neon-Themed UI** – Customizable dark interface with vibrant accent colors
-- 🔒 **Private Browsing** – Support for stealth/private browsing mode
-- ✨ **Smart URL Processing** – Intelligent URL extraction and validation from raw text
-- 📦 **Export/Import** – Save and load bookmark collections as JSON
-- 🔍 **URL Extraction** – Paste messy text and extract all valid URLs automatically
-- 📋 **Batch Operations** – Open, copy, or export multiple URLs at once
-- 🖥️ **Apple Silicon Native** – Optimized for M1/M2/M3/M4 chips
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 📦 Installation
-
-1. Download the latest `Nexus.dmg` from [Releases](https://github.com/RazorBackRoar/Nexus/releases)
-2. Mount the DMG → drag `Nexus.app` into `/Applications` → eject
-3. First launch (Gatekeeper):
-
-   - **Method A:** Right-click `Nexus.app` → _Open_ → confirm
-   - **Method B:**
-
-     ```bash
-     sudo xattr -cr /Applications/Nexus.app
-     ```
-
-4. **Grant Permissions:** Nexus needs permission to control Safari
-   - Go to **System Settings → Privacy & Security → Automation**
-   - Enable **Safari** for Nexus
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 🚀 Usage
-
-1. **Add Bookmarks:** Click "+" or paste URLs directly
-2. **Organize:** Create folders, drag and drop to rearrange
-3. **Batch Open:** Select multiple bookmarks → Click "Open in Safari"
-4. **Extract URLs:** Paste any text containing URLs → Nexus finds them all
-5. **Export:** Save your collection as JSON for backup or sharing
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 💻 Requirements
-
-- macOS 11.0 (Big Sur) or later
-- Safari (for URL opening feature)
-- ~2 GB free disk space
-- No Python install needed
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 🔧 Troubleshooting
-
-- **"App is damaged / Cannot be opened"** – Use the Gatekeeper override above
-- **Safari not opening URLs** – Grant Automation permission in System Settings
-- **URLs not extracting** – Ensure the text contains valid http:// or https:// links
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 🛠️ Building from Source
-
-```bash
-# Clone repository
-git clone https://github.com/RazorBackRoar/Nexus.git
-cd Nexus
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run from source
-python src/nexus/main.py
-
-# Build app
-./build/scripts/build.sh
 ```
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+> **Native macOS Safari bookmark manager and batch URL opener**
+> Organize bookmarks, batch open URLs, and manage your browsing workflow with a modern, neon-themed interface.
+
+---
+
+## ✨ Features
+
+- 🌐 **Safari Integration** – Batch open URLs in Safari with AppleScript
+- 📑 **Hierarchical Bookmarks** – Drag-and-drop folder organization
+- 🎨 **Neon-Themed UI** – Customizable dark interface with vibrant accents
+- 🔒 **Private Browsing** – One-click stealth/private mode support
+- ✨ **Smart URL Extraction** – Find valid links in any pasted text
+- 📦 **Export/Import** – Backup collections as JSON
+- 🖥️ **Apple Silicon Native** – Optimized for M1/M2/M3 chips
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+1. Download the latest `Nexus.dmg` from [Releases](https://github.com/RazorBackRoar/Nexus/releases)
+2. Drag `Nexus.app` to `/Applications`
+3. **First Launch**:
+   ```bash
+   # If prompted with "App is damaged":
+   sudo xattr -cr /Applications/Nexus.app
+   ```
+4. **Grant Permissions**:
+   - Go to **System Settings → Privacy & Security → Automation**
+   - Enable **Safari** for Nexus (required for opening tabs)
+
+### Usage
+
+1. **Add Bookmarks**: Click "+" or paste URLs directly
+2. **Organize**: Create folders, drag and drop to rearrange
+3. **Batch Open**: Select multiple bookmarks → Click "Open in Safari"
+4. **Extract URLs**: Paste any text containing URLs → Nexus finds them all
+
+---
+
+## 🛠️ Development
+
+This project uses `.razorcore` for build tooling.
+
+### Prerequisites
+- Python 3.10+
+- macOS 11.0+
+
+### Setup
+```bash
+git clone https://github.com/RazorBackRoar/Nexus.git
+cd Nexus
+pip install -r requirements.txt
+pip install -e ../.razorcore  # Install build tools
+```
+
+### Build & Release
+```bash
+# Build app and create DMG
+razorcore build Nexus
+
+# Create release (auto-commits & tags)
+razorcore save Nexus
+```
+
+---
 
 ## 📜 License
 
-MIT License – see `LICENSE.txt`
+MIT License - see [LICENSE](LICENSE) for details.
+Copyright © 2026 RazorBackRoar
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 🐞 Support
-
-- Issues: <https://github.com/RazorBackRoar/Nexus/issues>
-- Source: <https://github.com/RazorBackRoar/Nexus>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 🔐 Privacy
-
-Nexus runs 100% locally. No telemetry, no analytics. Only uses AppleScript to communicate with Safari for URL opening.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-## 👤 Author
-
-**RazorBackRoar**
-
-GitHub: [@RazorBackRoar](https://github.com/RazorBackRoar)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# README
