@@ -2,7 +2,7 @@
 
 ## Project Overview
 - **Type**: Native macOS Desktop App (Safari Bookmark Manager)
-- **Stack**: Python 3.10+, PySide6 (Qt6)
+- **Stack**: Python 3.13+, PySide6 (Qt6)
 - **Architecture**: `.razorcore` shared library architecture
 - **Build System**: PyInstaller (managed via `razorcore build`)
 - **Target**: macOS ARM64 (Apple Silicon)
@@ -14,6 +14,20 @@
 2. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
 3. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
 4. **Versioning**: Single source of truth is `pyproject.toml`.
+
+## ⚠️ LOCKED DMG SETTINGS - DO NOT MODIFY
+These settings are standardized across ALL apps (4Charm, Nexus, Papyrus):
+
+| Setting | Value |
+|---------|-------|
+| Window Size | 500×320 |
+| Window Position | (200, 200) |
+| Icon Size | 96px |
+| Text Size | 14 |
+| App Icon Position | (135, 130) |
+| Applications Position | (375, 130) |
+
+**Source**: `.razorcore/DMG_CONFIG.md` and `.razorcore/universal-build.sh` (lines 367-412)
 
 ## File Structure
 - `pyproject.toml`       # Metadata & Version
