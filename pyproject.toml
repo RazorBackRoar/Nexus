@@ -1,6 +1,6 @@
 [project]
 name = "Nexus"
-version = "5.6.0"
+version = "5.7.0"
 description = "Native macOS Safari bookmark manager and batch URL opener"
 authors = [
     {name = "RazorBackRoar"}
