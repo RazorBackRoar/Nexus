@@ -12,7 +12,7 @@ python src/nexus/main.py
 pytest tests/
 
 # Build
-razorcore build Nexus
+razorbuild Nexus
 ```
 
 ## Architecture
@@ -39,7 +39,7 @@ razorcore build Nexus
 - **Cmd+V**: Paste URLs into table
 
 ## Rules
-1. Build with `razorcore build Nexus`
+1. Build with `razorbuild Nexus`
 2. Version lives in `pyproject.toml`
 3. Requires Automation permission for Safari
 4. Use AsyncWorker for background tasks

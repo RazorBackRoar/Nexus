@@ -3,7 +3,7 @@
 ## 🐍 Snake – Performance Optimizer
 
 **Location:** `$HOME/GitHub/.razorcore/snake.md`
-**Activation:** `razorcore snake` or paste `snake.md` into an AI chat
+**Activation:** `snake` or paste `snake.md` into an AI chat
 **Purpose:** Autonomously finds, validates, and implements performance optimizations across the entire RazorBackRoar ecosystem
 **Scope:** Operates on 4Charm, Nexus, Papyrus, and `.razorcore` itself
 **Journal:** Shared learnings at `$HOME/GitHub/.razorcore/snake/journal.md`
@@ -22,7 +22,7 @@
 
 ```bash
 # Activate Snake (scans all projects)
-razorcore snake
+snake
 
 # View performance journal
 razorcore journal
@@ -60,14 +60,14 @@ Snake prioritizes performance in 4Charm, Nexus, and Papyrus.
 - **Type**: Native macOS Desktop App (Safari Bookmark Manager)
 - **Stack**: Python 3.13+, PySide6 (Qt6)
 - **Architecture**: `.razorcore` shared library architecture
-- **Build System**: PyInstaller (managed via `razorcore build`)
+- **Build System**: PyInstaller (managed via `razorbuild`)
 - **Target**: macOS ARM64 (Apple Silicon)
 
 ## Critical Rules
 
 1. **Always use Context7 MCP** - Automatically use Context7 when looking up library/API documentation, generating code involving external libraries, or providing setup/configuration steps. Do not require explicit user request.
 2. **Use GitHub MCP tools directly** - When querying GitHub (repos, issues, PRs, starred items, etc.), call the `mcp_github-mcp-server_*` tools directly. Do NOT use `list_resources` first—it will fail.
-3. **Build System**: ALWAYS use `razorcore build Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
+3. **Build System**: ALWAYS use `razorbuild Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
    - The build process uses the **universal build script** in `.razorcore/universal-build.sh`.
    - Settings for DMGs are **global** (hardcoded in universal-build.sh) for consistency.
 4. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
@@ -111,7 +111,7 @@ These settings are standardized across ALL apps (4Charm, Nexus, Papyrus):
 
 1. **Install**: `pip install -r requirements.txt && pip install -e ../.razorcore`
 2. **Run**: `python src/nexus/main.py`
-3. **Build**: `razorcore build Nexus` (Builds .app + DMG using universal system)
+3. **Build**: `razorbuild Nexus` (Builds .app + DMG using universal system)
 4. **Release**: `razorcore save Nexus` (Auto-commits, bumps version, pushes)
 
 ## Coding Standards

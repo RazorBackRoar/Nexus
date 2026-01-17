@@ -76,7 +76,7 @@ pip install -e ../.razorcore  # Install build tools
 ### Build & Release
 ```bash
 # Build app and create DMG
-razorcore build Nexus
+razorbuild Nexus
 
 # Create release (auto-commits & tags)
 razorcore save Nexus
