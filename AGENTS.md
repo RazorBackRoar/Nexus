@@ -9,6 +9,7 @@
 **Journal:** Shared learnings at `$HOME/GitHub/.razorcore/snake/journal.md`
 
 ### What Snake Does
+
 - Scans all codebases for performance bottlenecks
 - Prioritizes optimizations by **user-visible impact**
 - Implements **one optimization at a time**
@@ -18,6 +19,7 @@
 - Records learnings in the shared journal
 
 ### Quick Start
+
 ```bash
 # Activate Snake (scans all projects)
 razorcore snake
@@ -37,21 +39,23 @@ Snake prioritizes performance in 4Charm, Nexus, and Papyrus.
 .razorcore is treated as stable infrastructure and is optimized only when it measurably impacts application behavior.
 
 ### Performance Goals
+
 - **Startup Time:** Fast and predictable launches
 - **Bundle Size:** Lean distributions
 - **Memory Usage:** Efficient steady-state behavior
 - **RazorCore Import Cost:** Minimal overhead
 
 ### Journal Learning Examples
+
 - "QListWidget → QListView reduced 4Charm memory usage by ~60%"
 - "Lazy icon loading in Nexus improved cold start by ~40%"
 - "Debounced search in Papyrus reduced API calls by ~80%"
 
 ---
 
-# Agent Instructions for Nexus
+## Agent Instructions for Nexus
 
-## Project Overview
+### Project Overview
 
 - **Type**: Native macOS Desktop App (Safari Bookmark Manager)
 - **Stack**: Python 3.13+, PySide6 (Qt6)
@@ -61,12 +65,13 @@ Snake prioritizes performance in 4Charm, Nexus, and Papyrus.
 
 ## Critical Rules
 
-1. **Build System**: ALWAYS use `razorcore build Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
+1. **Always use Context7 MCP** - Automatically use Context7 when looking up library/API documentation, generating code involving external libraries, or providing setup/configuration steps. Do not require explicit user request.
+2. **Build System**: ALWAYS use `razorcore build Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
    - The build process uses the **universal build script** in `.razorcore/universal-build.sh`.
    - Settings for DMGs are **global** (hardcoded in universal-build.sh) for consistency.
-2. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
-3. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
-4. **Versioning**: Single source of truth is `pyproject.toml`.
+3. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
+4. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
+5. **Versioning**: Single source of truth is `pyproject.toml`.
 
 ## ⚠️ LOCKED DMG SETTINGS - DO NOT MODIFY
 
