@@ -1,3 +1,54 @@
+# Agents
+
+## 🐍 Snake – Performance Optimizer
+
+**Location:** `$HOME/GitHub/.razorcore/snake.md`
+**Activation:** `razorcore snake` or paste `snake.md` into an AI chat
+**Purpose:** Autonomously finds, validates, and implements performance optimizations across the entire RazorBackRoar ecosystem
+**Scope:** Operates on 4Charm, Nexus, Papyrus, and `.razorcore` itself
+**Journal:** Shared learnings at `$HOME/GitHub/.razorcore/snake/journal.md`
+
+### What Snake Does
+- Scans all codebases for performance bottlenecks
+- Prioritizes optimizations by **user-visible impact**
+- Implements **one optimization at a time**
+- Measures before and after metrics
+- Runs tests and verification
+- Produces a PR with justification and data
+- Records learnings in the shared journal
+
+### Quick Start
+```bash
+# Activate Snake (scans all projects)
+razorcore snake
+
+# View performance journal
+razorcore journal
+
+# Establish or compare performance baseline
+razorcore baseline
+```
+
+### Philosophy
+
+"Optimize where users feel it."
+
+Snake prioritizes performance in 4Charm, Nexus, and Papyrus.
+.razorcore is treated as stable infrastructure and is optimized only when it measurably impacts application behavior.
+
+### Performance Goals
+- **Startup Time:** Fast and predictable launches
+- **Bundle Size:** Lean distributions
+- **Memory Usage:** Efficient steady-state behavior
+- **RazorCore Import Cost:** Minimal overhead
+
+### Journal Learning Examples
+- "QListWidget → QListView reduced 4Charm memory usage by ~60%"
+- "Lazy icon loading in Nexus improved cold start by ~40%"
+- "Debounced search in Papyrus reduced API calls by ~80%"
+
+---
+
 # Agent Instructions for Nexus
 
 ## Project Overview
