@@ -66,12 +66,13 @@ Snake prioritizes performance in 4Charm, Nexus, and Papyrus.
 ## Critical Rules
 
 1. **Always use Context7 MCP** - Automatically use Context7 when looking up library/API documentation, generating code involving external libraries, or providing setup/configuration steps. Do not require explicit user request.
-2. **Build System**: ALWAYS use `razorcore build Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
+2. **Use GitHub MCP tools directly** - When querying GitHub (repos, issues, PRs, starred items, etc.), call the `mcp_github-mcp-server_*` tools directly. Do NOT use `list_resources` first—it will fail.
+3. **Build System**: ALWAYS use `razorcore build Nexus`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
    - The build process uses the **universal build script** in `.razorcore/universal-build.sh`.
    - Settings for DMGs are **global** (hardcoded in universal-build.sh) for consistency.
-3. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
-4. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
-5. **Versioning**: Single source of truth is `pyproject.toml`.
+4. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
+5. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
+6. **Versioning**: Single source of truth is `pyproject.toml`.
 
 ## ⚠️ LOCKED DMG SETTINGS - DO NOT MODIFY
 
