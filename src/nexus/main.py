@@ -49,6 +49,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QAbstractItemView,
+    QLineEdit,
 )
 from PySide6.QtCore import (
     Qt,
@@ -1782,6 +1783,26 @@ class MainWindow(QMainWindow):
         """)
         sidebar_layout.addWidget(sidebar_title)
 
+        # Search bar for bookmarks
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Search bookmarks...")
+        self.search_bar.textChanged.connect(self._filter_bookmarks)
+        self.search_bar.setStyleSheet("""
+            QLineEdit {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(0, 245, 255, 0.3);
+                border-radius: 8px;
+                color: #e0e0e0;
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border: 1px solid rgba(0, 245, 255, 0.7);
+                background: rgba(255, 255, 255, 0.1);
+            }
+        """)
+        sidebar_layout.addWidget(self.search_bar)
+
         # Bookmark tree with improved styling
         self.bookmark_tree = QTreeWidget()
         self.bookmark_tree.setHeaderHidden(True)
@@ -2147,10 +2168,55 @@ class MainWindow(QMainWindow):
             folder_item.setExpanded(True)
 
         self.save_bookmarks()
-        self.tabs.setCurrentIndex(1)  # Switch to Bookmarks tab
+        # self.tabs.setCurrentIndex(1)  # Switch to Bookmarks tab
         self._show_message(
             f"Successfully saved {len(urls)} URLs organized by domain!", "info"
         )
+
+    def _filter_bookmarks(self, text: str):
+        """Filters the bookmark tree based on search text."""
+        search_text = text.lower().strip()
+        root = self.bookmark_tree.invisibleRootItem()
+
+        for i in range(root.childCount()):
+            folder_item = root.child(i)
+            folder_matches = search_text in folder_item.text(0).lower()
+            folder_has_visible_children = False
+
+            # Check children
+            for j in range(folder_item.childCount()):
+                bookmark_item = folder_item.child(j)
+                bookmark_matches = False
+
+                bookmark_data = bookmark_item.data(0, Qt.ItemDataRole.UserRole)
+                if bookmark_data:
+                    name = bookmark_data.get("name", "").lower()
+                    url = bookmark_data.get("url", "").lower()
+
+                    if search_text in name or search_text in url:
+                        bookmark_matches = True
+
+                # Show bookmark if:
+                # 1. Search is empty (handled by setHidden check later, but here logic is specific)
+                # 2. Bookmark matches
+                # 3. Parent folder matches (show all content of matched folder)
+                should_show_bookmark = bookmark_matches or folder_matches or (search_text == "")
+
+                bookmark_item.setHidden(not should_show_bookmark)
+
+                if should_show_bookmark:
+                    folder_has_visible_children = True
+
+            # Show folder if:
+            # 1. Search is empty
+            # 2. Folder matches
+            # 3. Folder has visible children
+            should_show_folder = folder_matches or folder_has_visible_children or (search_text == "")
+            folder_item.setHidden(not should_show_folder)
+
+            # Expand folder if we are searching and it is visible
+            if search_text and should_show_folder:
+                folder_item.setExpanded(True)
 
     def _organize_urls_in_input(self):  # NEW method
         """Extracts, cleans, sorts, and reformats URLs in the table."""
