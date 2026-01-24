@@ -31,9 +31,13 @@ URLProcessor
 **Current Issues Identified:**
 
 1. Regex pattern in `__init__()` may miss URLs that are concatenated without
+
    spaces
+
 2. `sanitize_text_for_extraction()` removes too many characters that might be
+
    part of valid URLs
+
 3. No handling for URLs that are split across lines or have embedded whitespace
 4. Limited support for various URL formats and edge cases
 

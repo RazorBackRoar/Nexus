@@ -4,7 +4,9 @@
   - Create multiple specialized regex patterns for different URL formats
   - Implement concatenated URL detection logic
   - Improve sanitize_text_for_extraction method to preserve URL-relevant
+
     characters
+
   - Add support for URLs with missing protocols and trailing punctuation
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3_
 

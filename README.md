@@ -40,7 +40,9 @@ modern, neon-themed interface.
 ### Installation
 
 1. Download the latest `Nexus.dmg` from
+
    [Releases](https://github.com/RazorBackRoar/Nexus/releases)
+
 2. Drag `Nexus.app` to `/Applications`
 3. **First Launch**:
 

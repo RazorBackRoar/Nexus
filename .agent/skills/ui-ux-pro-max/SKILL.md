@@ -21,16 +21,19 @@ python3 --version || python --version
 If Python is not installed, install it based on user's OS:
 
 **macOS:**
+
 ```bash
 brew install python3
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update && sudo apt install python3
 ```
 
 **Windows:**
+
 ```powershell
 winget install Python.Python.3.12
 ```
@@ -68,6 +71,7 @@ This command:
 4. Includes anti-patterns to avoid
 
 **Example:**
+
 ```bash
 python3 skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness service" --design-system -p "Serenity Spa"
 ```
@@ -87,6 +91,7 @@ This creates:
 - `design-system/pages/` — Folder for page-specific overrides
 
 **With page-specific override:**
+
 ```bash
 python3 skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system --persist -p "Project Name" --page "dashboard"
 ```
@@ -98,7 +103,9 @@ This also creates:
 **How hierarchical retrieval works:**
 
 1. When building a specific page (e.g., "Checkout"), first check
+
    `design-system/pages/checkout.md`
+
 2. If the page file exists, its rules **override** the Master file
 3. If not, use `design-system/MASTER.md` exclusively
 
@@ -228,7 +235,9 @@ python3 skills/ui-ux-pro-max/scripts/search.py "fintech crypto" --design-system 
 2. **Search multiple times** - Different keywords reveal different insights
 3. **Combine domains** - Style + Typography + Color = Complete design system
 4. **Always check UX** - Search "animation", "z-index", "accessibility" for
+
    common issues
+
 5. **Use stack flag** - Get implementation-specific best practices
 6. **Iterate** - If first search doesn't match, try different keywords
 
