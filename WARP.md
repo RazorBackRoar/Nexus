@@ -6,16 +6,16 @@ Apple Silicon.
 ## Quick Commands
 
 ```bash
-# Run
+## Run
 python src/nexus/main.py
 
-# Test
+## Test
 pytest tests/
 
-# Build (full DMG)
+## Build (full DMG)
 nexusbuild
 
-# Build (fast .app only)
+## Build (fast .app only)
 nexustest
 ```
 

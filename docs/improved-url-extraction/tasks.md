@@ -5,12 +5,14 @@
   - Implement concatenated URL detection logic
   - Improve sanitize_text_for_extraction method to preserve URL-relevant
 
-    characters
+```text
+characters
+```
 
   - Add support for URLs with missing protocols and trailing punctuation
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3_
 
-- [ ] 1.1 Update URLProcessor.__init__ with enhanced regex patterns
+- [ ] 1.1 Update URLProcessor.**init** with enhanced regex patterns
   - Replace single regex with multiple specialized patterns
   - Add pattern for concatenated URLs without spaces
   - Add pattern for URLs with various protocols
@@ -19,7 +21,7 @@
 
 - [ ] 1.2 Implement _split_concatenated_urls method
   - Create new method to detect and split stacked URLs
-  - Handle cases like "https://site1.comhttps://site2.com"
+  - Handle cases like "<https://site1.comhttps://site2.com">
   - Use domain boundary detection logic
   - _Requirements: 1.2_
 

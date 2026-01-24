@@ -192,10 +192,10 @@ effects, and anti-patterns.
 ### Step 3: Supplement with Detailed Searches (as needed) (2)
 
 ```bash
-# Get UX guidelines for animation and accessibility
+## Get UX guidelines for animation and accessibility
 python3 .shared/ui-ux-pro-max/scripts/search.py "animation accessibility" --domain ux
 
-# Get alternative typography options if needed
+## Get alternative typography options if needed
 python3 .shared/ui-ux-pro-max/scripts/search.py "elegant luxury serif" --domain typography
 ```
 
@@ -214,10 +214,10 @@ python3 .shared/ui-ux-pro-max/scripts/search.py "layout responsive form" --stack
 The `--design-system` flag supports two output formats:
 
 ```bash
-# ASCII box (default) - best for terminal display
+## ASCII box (default) - best for terminal display
 python3 .shared/ui-ux-pro-max/scripts/search.py "fintech crypto" --design-system
 
-# Markdown - best for documentation
+## Markdown - best for documentation
 python3 .shared/ui-ux-pro-max/scripts/search.py "fintech crypto" --design-system -f markdown
 ```
 

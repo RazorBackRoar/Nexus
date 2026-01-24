@@ -15,7 +15,7 @@ structure but improve its internal methods:
 
 ```text
 URLProcessor
-├── __init__() - Enhanced regex patterns
+├── **init**() - Enhanced regex patterns
 ├── sanitize_text_for_extraction() - Improved text preprocessing
 ├── extract_urls() - Enhanced extraction logic
 ├── _filter_and_validate_urls() - Better validation and deduplication
@@ -30,7 +30,7 @@ URLProcessor
 
 **Current Issues Identified:**
 
-1. Regex pattern in `__init__()` may miss URLs that are concatenated without
+1. Regex pattern in `**init**()` may miss URLs that are concatenated without
 
    spaces
 

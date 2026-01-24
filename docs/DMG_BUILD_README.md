@@ -26,7 +26,7 @@ Edit `dmg-config.json` to customize:
 ```bash
 mkdir test-layout
 cd test-layout
-# Add your files and arrange them
+## Add your files and arrange them
 cd ..
 cp test-layout/.DS_Store dmg-template/.DS_Store
 rm -rf test-layout
