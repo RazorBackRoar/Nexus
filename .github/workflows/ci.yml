@@ -2,12 +2,30 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
-    tags: [ "v*" ]
+    branches: [main]
+    tags: ["v*"]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  ci:
-    uses: RazorBackRoar/Nexus/.github/workflows/shared-ci.yml@main
-    secrets: inherit
+  test:
+    name: Test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          # Create empty requirements if missing to prevent fail
+          touch requirements.txt
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: pytest
