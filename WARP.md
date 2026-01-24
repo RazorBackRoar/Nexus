@@ -1,6 +1,7 @@
 # WARP.md — Nexus
 
-> Safari bookmark manager & batch URL opener for macOS. Python 3.13+ / PySide6 / Apple Silicon.
+> Safari bookmark manager & batch URL opener for macOS. Python 3.13+ / PySide6 /
+Apple Silicon.
 
 ## Quick Commands
 
@@ -21,7 +22,7 @@ nexustest
 ## Architecture
 
 | Component | Location | Purpose |
-| ----------- | ---------- | --------- |
+| --- | --- | --- |
 | **MainWindow** | `main.py` | Glass Noir UI, sidebar, URL table |
 | **URLProcessor** | `main.py` | URL extraction, validation, normalization |
 | **SafariController** | `main.py` | AppleScript automation with stealth mode |

@@ -2,13 +2,18 @@
 
 ## Overview
 
-This design enhances the existing URLProcessor class in Nexus.py to provide more robust and accurate URL extraction from various text formats. The solution focuses on improving the regex patterns, text preprocessing, and post-processing logic to handle edge cases that currently cause URLs to be missed or incorrectly parsed.
+This design enhances the existing URLProcessor class in Nexus.py to provide more
+robust and accurate URL extraction from various text formats. The solution
+focuses on improving the regex patterns, text preprocessing, and post-processing
+logic to handle edge cases that currently cause URLs to be missed or incorrectly
+parsed.
 
 ## Architecture
 
-The enhanced URL extraction system will maintain the existing URLProcessor class structure but improve its internal methods:
+The enhanced URL extraction system will maintain the existing URLProcessor class
+structure but improve its internal methods:
 
-```
+```text
 URLProcessor
 ├── __init__() - Enhanced regex patterns
 ├── sanitize_text_for_extraction() - Improved text preprocessing
@@ -25,8 +30,10 @@ URLProcessor
 
 **Current Issues Identified:**
 
-1. Regex pattern in `__init__()` may miss URLs that are concatenated without spaces
-2. `sanitize_text_for_extraction()` removes too many characters that might be part of valid URLs
+1. Regex pattern in `__init__()` may miss URLs that are concatenated without
+   spaces
+2. `sanitize_text_for_extraction()` removes too many characters that might be
+   part of valid URLs
 3. No handling for URLs that are split across lines or have embedded whitespace
 4. Limited support for various URL formats and edge cases
 
@@ -158,7 +165,9 @@ class URLProcessingConfig:
 
 ## Backward Compatibility
 
-The enhanced URLProcessor will maintain the same public interface as the current implementation, ensuring no breaking changes to existing code. All improvements will be internal to the class methods.
+The enhanced URLProcessor will maintain the same public interface as the current
+implementation, ensuring no breaking changes to existing code. All improvements
+will be internal to the class methods.
 
 ## Configuration Options
 

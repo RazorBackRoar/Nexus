@@ -9,6 +9,7 @@
 ## Configuration
 
 Edit `dmg-config.json` to customize:
+
 - Window size and position
 - Icon positions
 - Background image

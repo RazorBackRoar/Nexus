@@ -4,7 +4,8 @@
 [![Pylint](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml)
 [![Version](https://img.shields.io/badge/version-5.4.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![Apple
+Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
 
 ```text
@@ -17,7 +18,8 @@
 ```
 
 > **Native macOS Safari bookmark manager and batch URL opener**
-> Organize bookmarks, batch open URLs, and manage your browsing workflow with a modern, neon-themed interface.
+> Organize bookmarks, batch open URLs, and manage your browsing workflow with a
+modern, neon-themed interface.
 
 ---
 
@@ -37,13 +39,16 @@
 
 ### Installation
 
-1. Download the latest `Nexus.dmg` from [Releases](https://github.com/RazorBackRoar/Nexus/releases)
+1. Download the latest `Nexus.dmg` from
+   [Releases](https://github.com/RazorBackRoar/Nexus/releases)
 2. Drag `Nexus.app` to `/Applications`
 3. **First Launch**:
-   ```bash
+
+```bash
    # If prompted with "App is damaged":
    sudo xattr -cr /Applications/Nexus.app
-   ```
+```
+
 4. **Grant Permissions**:
    - Go to **System Settings → Privacy & Security → Automation**
    - Enable **Safari** for Nexus (required for opening tabs)
@@ -62,10 +67,12 @@
 This project uses `.razorcore` for build tooling.
 
 ### Prerequisites
+
 - Python 3.10+
 - macOS 11.0+
 
 ### Setup
+
 ```bash
 git clone https://github.com/RazorBackRoar/Nexus.git
 cd Nexus
@@ -74,6 +81,7 @@ pip install -e ../.razorcore  # Install build tools
 ```
 
 ### Build & Release
+
 ```bash
 # Build app and create DMG
 razorbuild Nexus
