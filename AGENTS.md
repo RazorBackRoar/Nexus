@@ -5,7 +5,7 @@
 ## 🏁 GLOBAL AUTHORITY
 
 Standard patterns must follow:
-👉 `/Users/home/Workspace/Apps/complete_repository_guide.md`
+👉 `/Users/home/Workspace/Apps/workspace_guide.md`
 
 ## 🧪 Nexus Specifics
 
