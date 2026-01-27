@@ -1,7 +1,7 @@
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
-**Package:** `nexus`  
-**Version:** 5.14.6  
+**Package:** `nexus`
+**Version:** 5.14.6
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -26,6 +26,13 @@ This file contains **Nexus-specific** overrides and critical implementation deta
 
 ## ⚡ Critical Nexus-Specific Rules
 
+### ⚡ Performance Optimization (Bolt)
+
+- **Agent:** Bolt ⚡
+- **Activation:** `razorcore bolt`
+- **Goal:** < 2s startup, < 50MB bundle
+- **Journal:** `.razorcore/bolt/journal.md`
+
 ### 1. macOS Permissions (MANDATORY - App Won't Work Without This)
 
 **Full Disk Access is REQUIRED:**
@@ -37,12 +44,14 @@ This file contains **Nexus-specific** overrides and critical implementation deta
    - ✅ `Nexus.app` (after building)
 
 **Why:** Safari's `Bookmarks.plist` is protected by macOS security. Without FDA, you'll get:
+
 ```python
-PermissionError: [Errno 1] Operation not permitted: 
+PermissionError: [Errno 1] Operation not permitted:
 '/Users/home/Library/Safari/Bookmarks.plist'
 ```
 
 **Verification:**
+
 ```bash
 # Test if FDA is working
 ls -la ~/Library/Safari/Bookmarks.plist
@@ -58,15 +67,19 @@ from pathlib import Path
 import plistlib
 
 class BookmarkManager:
-    """Handles Safari bookmark file access."""
-    
+
+```
+"""Handles Safari bookmark file access."""
+
+```text
+
     # Modern macOS (Ventura 13.0+)
     BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
-    
+
     def load_bookmarks(self) -> dict:
         """
         Load Safari bookmarks from binary plist.
-        
+
         ⚠️ CRITICAL: Must open in binary mode ('rb')
         Modern macOS uses binary plist format, not XML.
         """
@@ -83,7 +96,7 @@ class BookmarkManager:
                 "Permission denied. Grant Full Disk Access:\n"
                 "System Settings → Privacy & Security → Full Disk Access"
             )
-    
+
     def save_bookmarks(self, data: dict):
         """Save modified bookmarks back to Safari."""
         # ⚠️ Close Safari before saving to prevent conflicts
@@ -92,13 +105,14 @@ class BookmarkManager:
 ```
 
 **Plist Structure:**
+
 ```python
 {
     'Children': [
         {
             'Title': 'BookmarksBar',
             'Children': [
-                {'URLString': 'https://example.com', 'URIDictionary': {...}},
+                {'URLString': '<https://example.com',> 'URIDictionary': {...}},
                 {'Title': 'Folder', 'Children': [...]}  # Nested folders
             ]
         },
@@ -121,11 +135,11 @@ class Bookmark:
     title: str
     url: str
     uuid: str = None  # Auto-generate if not provided
-    
+
     def __post_init__(self):
         if self.uuid is None:
             self.uuid = str(uuid4())
-    
+
     def to_dict(self) -> dict:
         """Convert to Safari plist format."""
         return {
@@ -141,11 +155,11 @@ class BookmarkFolder:
     title: str
     children: List[Union['Bookmark', 'BookmarkFolder']]
     uuid: str = None
-    
+
     def __post_init__(self):
         if self.uuid is None:
             self.uuid = str(uuid4())
-    
+
     def to_dict(self) -> dict:
         """Convert to Safari plist format."""
         return {
@@ -164,11 +178,11 @@ from typing import List
 
 class SafariBridge:
     """Controls Safari via AppleScript."""
-    
+
     def open_urls(self, urls: List[str], new_window: bool = False):
         """
         Open URLs in Safari.
-        
+
         Args:
             urls: List of URLs to open
             new_window: If True, opens in new Safari window
@@ -189,7 +203,7 @@ class SafariBridge:
                 open location "{urls[0]}"
             end tell
             '''
-        
+
         # Execute AppleScript
         result = subprocess.run(
             ['osascript', '-e', script],
@@ -197,10 +211,10 @@ class SafariBridge:
             text=True,
             timeout=5
         )
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"AppleScript failed: {result.stderr}")
-    
+
     def get_current_url(self) -> str:
         """Get URL of current Safari tab."""
         script = '''
@@ -220,7 +234,7 @@ class SafariBridge:
 
 ## 🏗️ Nexus Project Structure
 
-```
+```text
 Nexus/
 ├── src/nexus/
 │   ├── __init__.py              # Contains __version__
@@ -271,7 +285,7 @@ razorcheck
 
 ### ❌ Error: "PermissionError: Operation not permitted"
 
-**Cause:** Missing Full Disk Access  
+**Cause:** Missing Full Disk Access
 **Fix:**
 1. System Settings → Privacy & Security → Full Disk Access
 2. Add Terminal.app, VS Code.app, Nexus.app
@@ -279,13 +293,14 @@ razorcheck
 
 ### ❌ Error: "FileNotFoundError: Bookmarks.plist"
 
-**Cause:** Safari has never been launched on this Mac  
+**Cause:** Safari has never been launched on this Mac
 **Fix:** Open Safari once to initialize bookmark file
 
 ### ❌ Error: "Invalid plist format" or "UnicodeDecodeError"
 
-**Cause:** Opening binary plist in text mode  
+**Cause:** Opening binary plist in text mode
 **Fix:**
+
 ```python
 # ❌ WRONG
 with open(path, 'r') as f:
@@ -298,8 +313,9 @@ with open(path, 'rb') as f:  # Binary mode!
 
 ### ❌ AppleScript Timeout or "Application isn't running"
 
-**Cause:** Safari not running when automation attempted  
+**Cause:** Safari not running when automation attempted
 **Fix:**
+
 ```python
 # Check if Safari is running first
 result = subprocess.run(
@@ -315,15 +331,16 @@ if 'true' not in result.stdout:
 
 ### ❌ Bookmarks Disappear After Save
 
-**Cause:** Safari was running when plist was modified (file conflict)  
+**Cause:** Safari was running when plist was modified (file conflict)
 **Fix:**
+
 ```python
 def save_bookmarks(self, data: dict):
     """Always close Safari before saving."""
     # Warn user to close Safari
     subprocess.run(['osascript', '-e', 'tell application "Safari" to quit'])
     time.sleep(0.5)
-    
+
     # Now safe to save
     with open(self.BOOKMARKS_PATH, 'wb') as f:
         plistlib.dump(data, f)
@@ -331,8 +348,9 @@ def save_bookmarks(self, data: dict):
 
 ### ❌ ModuleNotFoundError in Built .app
 
-**Cause:** Missing `hiddenimports` in `Nexus.spec`  
+**Cause:** Missing `hiddenimports` in `Nexus.spec`
 **Fix:** Add to spec file:
+
 ```python
 hiddenimports=[
     'razorcore.styling',
@@ -373,7 +391,7 @@ pytest tests/test_safari_bridge.py -v
 ## 🎯 When to Use What
 
 | Scenario | Command/Pattern |
-|----------|----------------|
+| --- | --- |
 | Testing bookmark parsing | `python src/nexus/main.py` |
 | Quick .app build for testing | `nexustest` |
 | Release to production | `nexusbuild` |

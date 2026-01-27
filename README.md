@@ -76,7 +76,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone https://github.com/RazorBackRoar/Nexus.git
+git clone <https://github.com/RazorBackRoar/Nexus.git>
 cd Nexus
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
@@ -98,4 +98,3 @@ razorcore save Nexus
 
 MIT License - see [LICENSE](LICENSE) for details.
 Copyright © 2026 RazorBackRoar
-

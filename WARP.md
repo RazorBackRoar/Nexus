@@ -6,7 +6,7 @@
 ## ⚡ Quick Commands
 
 | Action | Command | Notes |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | **Push** | `razorpush Nexus` | Commit and save Nexus only |
 | **Build (Release)** | `nexusbuild` | Full .app + DMG (~2m) |
 | **Build (Test)** | `nexustest` | Fast .app only (~30s) |
@@ -15,7 +15,7 @@
 ## 🏗️ Architecture
 
 | Component | Location | Purpose |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | **MainWindow** | `src/nexus/main.py` | Glass Noir UI, sidebar, URL table (Inherits SpaceBarAboutMixin) |
 | **URLProcessor** | `src/nexus/core/processor.py` | URL extraction, validation, normalization |
 | **SafariController** | `src/nexus/core/safari.py` | AppleScript automation with stealth mode |
