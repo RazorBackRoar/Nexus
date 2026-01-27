@@ -69,9 +69,14 @@ def sanitize_text_for_extraction(self, text: str) -> str:
 
 ```python
 def _split_concatenated_urls(self, text: str) -> List[str]:
-    # Detect and split URLs that are stacked together
-    # Handle cases like "<https://site1.comhttps://site2.com">
-    # Use domain boundary detection
+
+```
+# Detect and split URLs that are stacked together
+# Handle cases like "<<https://site1.comhttps://site2.com">>
+# Use domain boundary detection
+
+```text
+
 ```
 
 #### 4. Improved Validation and Normalization

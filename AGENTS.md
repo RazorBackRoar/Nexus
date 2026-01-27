@@ -73,8 +73,11 @@ class BookmarkManager:
 
 ```text
 
-    # Modern macOS (Ventura 13.0+)
-    BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
+```
+# Modern macOS (Ventura 13.0+)
+BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
+
+```text
 
     def load_bookmarks(self) -> dict:
         """
@@ -112,7 +115,7 @@ class BookmarkManager:
         {
             'Title': 'BookmarksBar',
             'Children': [
-                {'URLString': '<https://example.com',> 'URIDictionary': {...}},
+                {'URLString': '<<https://example.com',>> 'URIDictionary': {...}},
                 {'Title': 'Folder', 'Children': [...]}  # Nested folders
             ]
         },
