@@ -1,53 +1,40 @@
 # WARP.md — Nexus
 
-> Safari bookmark manager & batch URL opener for macOS. Python 3.13+ / PySide6 /
-Apple Silicon.
+> **⭐ MASTER GUIDE (SSOT):** [/Users/home/Workspace/Apps/workspace_guide.md](file:///Users/home/Workspace/Apps/workspace_guide.md)
+> **Agent Context:** [/Users/home/Workspace/Apps/Nexus/AGENTS.md](file:///Users/home/Workspace/Apps/Nexus/AGENTS.md)
 
-## Quick Commands
+## ⚡ Quick Commands
 
-```bash
-## Run
-python src/nexus/main.py
+| Action | Command | Notes |
+| :--- | :--- | :--- |
+| **Push** | `razorpush Nexus` | Commit and save Nexus only |
+| **Build (Release)** | `nexusbuild` | Full .app + DMG (~2m) |
+| **Build (Test)** | `nexustest` | Fast .app only (~30s) |
+| **Run** | `python src/nexus/main.py` | Dev run |
 
-## Test
-pytest tests/
-
-## Build (full DMG)
-nexusbuild
-
-## Build (fast .app only)
-nexustest
-```
-
-## Architecture
+## 🏗️ Architecture
 
 | Component | Location | Purpose |
-| --- | --- | --- |
-| **MainWindow** | `main.py` | Glass Noir UI, sidebar, URL table |
-| **URLProcessor** | `main.py` | URL extraction, validation, normalization |
-| **SafariController** | `main.py` | AppleScript automation with stealth mode |
-| **BookmarkManager** | `main.py` | JSON hierarchical storage with backups |
+| :--- | :--- | :--- |
+| **MainWindow** | `src/nexus/main.py` | Glass Noir UI, sidebar, URL table (Inherits SpaceBarAboutMixin) |
+| **URLProcessor** | `src/nexus/core/processor.py` | URL extraction, validation, normalization |
+| **SafariController** | `src/nexus/core/safari.py` | AppleScript automation with stealth mode |
+| **BookmarkManager** | `src/nexus/core/bookmarks.py` | JSON hierarchical storage with backups |
 
-## Key Features
+## 🔑 Key Features
 
-- Glass Noir dark theme with neon accents
-- AppleScript Safari automation
-- Stealth mode: domain grouping, staggered delays
-- Private browsing support
-- Drag-drop and paste URL handling
+- **Glass Noir**: Dark theme with neon accents
+- **Automation**: AppleScript Safari control (Stealth mode supported)
+- **Shortcuts**: `Cmd+V` (Paste URLs), `Space` (About)
 
-## Data Storage
+## 💾 Data & Permissions
 
-- Bookmarks: `~/Library/Application Support/Nexus/`
-- Settings: QSettings (window state, theme)
+- **Storage**: `~/Library/Application Support/Nexus/`
+- **Requires**: **Full Disk Access** (to read `~/Library/Safari/Bookmarks.plist`) & **Automation** permission.
 
-## Shortcuts
+## 🚨 Rules
 
-- **Cmd+V**: Paste URLs into table
-
-## Rules
-
-1. Build with `nexusbuild` (or `nexustest` for fast .app only)
-2. Version lives in `pyproject.toml`
-3. Requires Automation permission for Safari
-4. Use AsyncWorker for background tasks
+1.  **Python Lock**: **STRICTLY 3.13.x**.
+2.  **Imports**: Absolute ONLY (`from nexus.core import X`).
+3.  **Threading**: Use `BaseWorker` (from `razorcore.threading`).
+4.  **Version**: Read from `pyproject.toml` (SSOT).
