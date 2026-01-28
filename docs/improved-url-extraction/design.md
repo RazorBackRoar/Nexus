@@ -72,7 +72,7 @@ def _split_concatenated_urls(self, text: str) -> List[str]:
 
 ```
 # Detect and split URLs that are stacked together
-# Handle cases like "<<https://site1.comhttps://site2.com">>
+# Handle cases like "<<<https://site1.comhttps://site2.com">>>
 # Use domain boundary detection
 
 ```text
@@ -83,9 +83,14 @@ def _split_concatenated_urls(self, text: str) -> List[str]:
 
 ```python
 def _enhanced_url_validation(self, url: str) -> bool:
-    # More comprehensive URL validation
-    # Handle edge cases and malformed URLs
-    # Support for various protocols and formats
+
+```
+# More comprehensive URL validation
+# Handle edge cases and malformed URLs
+# Support for various protocols and formats
+
+```text
+
 ```
 
 ## Data Models

@@ -36,3 +36,49 @@ classifiers = [
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["nexus*"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "UP",  # pyupgrade
+    "D",   # pydocstyle
+    "S",   # flake8-bandit
+    "B",   # flake8-bugbear
+    "C90", # mccabe
+    "N",   # pep8-naming
+    "PL",  # pylint
+]
+ignore = [
+    "D105",  # Missing docstring in magic method
+    "D107",  # Missing docstring in __init__
+    "PLR0912",  # Too many branches
+    "PLR0913",  # Too many arguments
+    "PLR0915",  # Too many statements
+    "S311",   # Standard pseudo-random generators
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pylint]
+max-args = 10
+max-branches = 15
+max-returns = 8
+max-statements = 60
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+split-on-trailing-comma = false
+known-first-party = ["nexus"]
+known-third-party = ["PySide6", "razorcore"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"

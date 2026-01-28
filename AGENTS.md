@@ -79,9 +79,12 @@ BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
 
 ```text
 
-    def load_bookmarks(self) -> dict:
-        """
-        Load Safari bookmarks from binary plist.
+```
+def load_bookmarks(self) -> dict:
+"""
+Load Safari bookmarks from binary plist.
+
+```text
 
         ⚠️ CRITICAL: Must open in binary mode ('rb')
         Modern macOS uses binary plist format, not XML.
@@ -115,7 +118,7 @@ BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
         {
             'Title': 'BookmarksBar',
             'Children': [
-                {'URLString': '<<https://example.com',>> 'URIDictionary': {...}},
+                {'URLString': '<<<https://example.com',>>> 'URIDictionary': {...}},
                 {'Title': 'Folder', 'Children': [...]}  # Nested folders
             ]
         },
