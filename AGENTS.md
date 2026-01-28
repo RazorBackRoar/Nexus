@@ -403,3 +403,5 @@ pytest tests/test_safari_bridge.py -v
 | Modify bookmarks | Close Safari first, then save |
 | Control Safari | Use `SafariBridge` AppleScript wrapper |
 | Display bookmark tree | Use `BookmarkFolder` recursive model |
+
+<!-- verification check Tue Jan 27 23:52:04 MST 2026 -->
