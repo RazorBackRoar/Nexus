@@ -106,11 +106,15 @@ raise RuntimeError(
 
 ```text
 
-    def save_bookmarks(self, data: dict):
-        """Save modified bookmarks back to Safari."""
-        # ⚠️ Close Safari before saving to prevent conflicts
-        with open(self.BOOKMARKS_PATH, 'wb') as f:  # 'wb' not 'w'!
-            plistlib.dump(data, f)
+```
+def save_bookmarks(self, data: dict):
+"""Save modified bookmarks back to Safari."""
+# ⚠️ Close Safari before saving to prevent conflicts
+with open(self.BOOKMARKS_PATH, 'wb') as f:  # 'wb' not 'w'!
+plistlib.dump(data, f)
+
+```text
+
 ```
 
 **Plist Structure:**
@@ -121,7 +125,7 @@ raise RuntimeError(
         {
             'Title': 'BookmarksBar',
             'Children': [
-                {'URLString': '<<<<https://example.com',>>>> 'URIDictionary': {...}},
+                {'URLString': '<<<<<https://example.com',>>>>> 'URIDictionary': {...}},
                 {'Title': 'Folder', 'Children': [...]}  # Nested folders
             ]
         },

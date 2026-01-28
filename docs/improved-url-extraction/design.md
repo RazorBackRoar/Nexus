@@ -72,7 +72,7 @@ def _split_concatenated_urls(self, text: str) -> List[str]:
 
 ```
 # Detect and split URLs that are stacked together
-# Handle cases like "<<<<https://site1.comhttps://site2.com">>>>
+# Handle cases like "<<<<<https://site1.comhttps://site2.com">>>>>
 # Use domain boundary detection
 
 ```text
@@ -117,11 +117,16 @@ extraction_stats: Dict[str, int]
 ```python
 @dataclass
 class URLProcessingConfig:
-    enable_concatenated_splitting: bool = True
-    auto_add_protocol: bool = True
-    remove_duplicates: bool = True
-    max_url_length: int = 2048
-    supported_protocols: List[str] = field(default_factory=lambda: ['http', 'https', 'ftp'])
+
+```
+enable_concatenated_splitting: bool = True
+auto_add_protocol: bool = True
+remove_duplicates: bool = True
+max_url_length: int = 2048
+supported_protocols: List[str] = field(default_factory=lambda: ['http', 'https', 'ftp'])
+
+```text
+
 ```
 
 ## Error Handling

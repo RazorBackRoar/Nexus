@@ -1,84 +1,155 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+# ============================================================================
+# Nexus - MACOS APPLICATION
+# ============================================================================
+# This pyproject.toml follows RazorBackRoar workspace standards
+# Last Updated: 2026-01-28
+# Python Version: 3.13.x (STRICT LOCK - never upgrade to 3.14+)
+# ============================================================================
+# USAGE: Copy this template and replace:
+# - Nexus with "4Charm", "Nexus", or "Papyrus"
+# - nexus with "four_charm", "nexus", or "papyrus" 
+# - Update dependencies section with app-specific requirements
+# ============================================================================
 
 [project]
-name = "Nexus"
-version = "5.14.12"
-description = "Native macOS Safari bookmark manager and batch URL opener"
-authors = [
-    {name = "RazorBackRoar"}
-]
-requires-python = ">=3.13"
-keywords = [
-    "Python",
-    "PySide6",
-    "Qt",
-    "macOS",
-    "Apple-Silicon",
-    "Safari",
-    "Automation",
-    "Bookmarks",
-    "Productivity"
-]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: MacOS X :: Cocoa",
-    "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: MacOS :: MacOS X",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Internet :: WWW/HTTP :: Browsers",
-    "Topic :: Utilities"
+name = "nexus"
+version = "1.0.0"
+description = "Nexus - macOS application"
+requires-python = ">=3.13,<3.14"
+# WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
+
+dependencies = [
+    "PySide6>=6.6.0",
+    "razorcore",  # Shared foundation library
+    # Add app-specific dependencies here
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["nexus*"]
+# ============================================================================
+# RUFF CONFIGURATION - STANDARDIZED ACROSS ALL RAZORBACKROAR PROJECTS
+# ============================================================================
+# This exact configuration should be mirrored in:
+# - /Users/home/Workspace/Apps/.razorcore/pyproject.toml
+# - /Users/home/Workspace/Apps/4Charm/pyproject.toml
+# - /Users/home/Workspace/Apps/Nexus/pyproject.toml
+# - /Users/home/Workspace/Apps/Papyrus/pyproject.toml
+#
+# CRITICAL: Any changes to Ruff config must be synchronized across all 4 files
+# WHY: Ensures consistent code style across entire RazorBackRoar workspace
+# ============================================================================
 
 [tool.ruff]
+# Line length matches PEP 8 and Black defaults
+line-length = 88
+
+# Target Python 3.13 specifically
 target-version = "py313"
-line-length = 120
+
+# Source code locations (adjust per project)
+src = ["src"]
+
+# Exclude common directories that should never be linted
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "*.pyc",
+    ".pytest_cache",
+    ".ruff_cache",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".DS_Store",
+]
+
+# ============================================================================
+# RULE SELECTION
+# ============================================================================
+# Starting with essential rules, expand gradually as team agrees
+# WHY: Too many rules at once = developer frustration and ignored warnings
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "UP",  # pyupgrade
-    "D",   # pydocstyle
-    "S",   # flake8-bandit
-    "B",   # flake8-bugbear
-    "C90", # mccabe
-    "N",   # pep8-naming
-    "PL",  # pylint
+    # ESSENTIAL RULES - Always enforce these
+    "E",      # pycodestyle errors (PEP 8 violations)
+    "F",      # pyflakes (undefined names, unused imports, etc.)
+    "I",      # isort (import sorting)
+    
+    # CODE QUALITY - Catch common bugs
+    "B",      # flake8-bugbear (likely bugs and design problems)
+    "C4",     # flake8-comprehensions (better list/dict/set comprehensions)
+    "UP",     # pyupgrade (modernize Python code for your version)
+    
+    # STYLE - Keep code readable
+    "N",      # pep8-naming (function/variable naming conventions)
+    "W",      # pycodestyle warnings
+    
+    # DOCUMENTATION - Enforce good practices
+    "D",      # pydocstyle (docstring conventions)
 ]
+
+# Rules to ignore (with explanations)
 ignore = [
-    "D105",  # Missing docstring in magic method
-    "D107",  # Missing docstring in __init__
-    "PLR0912",  # Too many branches
-    "PLR0913",  # Too many arguments
-    "PLR0915",  # Too many statements
-    "S311",   # Standard pseudo-random generators
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package
+    "D107",   # Missing docstring in __init__
+    # WHY: Docstrings are good but enforcing them everywhere is overwhelming
+    # TODO: Remove these ignores gradually as documentation improves
+    
+    "E501",   # Line too long
+    # WHY: Ruff's formatter handles this automatically
 ]
+
+# ============================================================================
+# SPECIFIC RULE CONFIGURATIONS
+# ============================================================================
+
+[tool.ruff.lint.per-file-ignores]
+# Test files don't need docstrings and can use assert statements
+"tests/**/*.py" = ["D", "S101"]
+
+# __init__.py files often just import for convenience
+"__init__.py" = ["F401"]
 
 [tool.ruff.lint.pydocstyle]
+# Use Google-style docstrings (most popular in Python community)
 convention = "google"
-
-[tool.ruff.lint.pylint]
-max-args = 10
-max-branches = 15
-max-returns = 8
-max-statements = 60
+# WHY: Google style is clean and widely recognized
 
 [tool.ruff.lint.isort]
-combine-as-imports = true
-split-on-trailing-comma = false
-known-first-party = ["nexus"]
-known-third-party = ["PySide6", "razorcore"]
+# Organize imports consistently
+known-first-party = ["nexus", "razorcore"]
+# WHY: Tells isort which imports are your code vs third-party libraries
+# IMPORTANT: Replace nexus with your actual module name
+
+# Separate import groups with a blank line
+lines-after-imports = 2
 
 [tool.ruff.format]
-quote-style = "single"
+# Use double quotes for strings (Python community standard)
+quote-style = "double"
+
+# Use spaces for indentation (never tabs)
 indent-style = "space"
-line-ending = "auto"
+
+# Keep line endings Unix-style (LF not CRLF)
+line-ending = "lf"
+# WHY: macOS uses Unix-style line endings
+
+# ============================================================================
+# MIGRATION NOTES
+# ============================================================================
+# HISTORY: Migrated from Pylint to Ruff (2025)
+# REASON: Ruff is 10-100x faster, combines multiple tools (Pylint, Black,
+#         isort, Flake8, pyupgrade), and has better IDE integration
+#
+# REPLACED TOOLS:
+# - Pylint → Ruff (linting)
+# - Black → Ruff (formatting)
+# - isort → Ruff (import sorting)
+# - Flake8 → Ruff (style checking)
+# - pyupgrade → Ruff (syntax modernization)
+# ============================================================================
