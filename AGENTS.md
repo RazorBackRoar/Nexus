@@ -86,22 +86,25 @@ Load Safari bookmarks from binary plist.
 
 ```text
 
-        ⚠️ CRITICAL: Must open in binary mode ('rb')
-        Modern macOS uses binary plist format, not XML.
-        """
-        try:
-            with open(self.BOOKMARKS_PATH, 'rb') as f:  # 'rb' not 'r'!
-                return plistlib.load(f)
-        except FileNotFoundError:
-            raise RuntimeError(
-                "Safari bookmarks not found. "
-                "Launch Safari at least once to create the file."
-            )
-        except PermissionError:
-            raise RuntimeError(
-                "Permission denied. Grant Full Disk Access:\n"
-                "System Settings → Privacy & Security → Full Disk Access"
-            )
+```
+⚠️ CRITICAL: Must open in binary mode ('rb')
+Modern macOS uses binary plist format, not XML.
+"""
+try:
+with open(self.BOOKMARKS_PATH, 'rb') as f:  # 'rb' not 'r'!
+return plistlib.load(f)
+except FileNotFoundError:
+raise RuntimeError(
+"Safari bookmarks not found. "
+"Launch Safari at least once to create the file."
+)
+except PermissionError:
+raise RuntimeError(
+"Permission denied. Grant Full Disk Access:\n"
+"System Settings → Privacy & Security → Full Disk Access"
+)
+
+```text
 
     def save_bookmarks(self, data: dict):
         """Save modified bookmarks back to Safari."""
@@ -118,7 +121,7 @@ Load Safari bookmarks from binary plist.
         {
             'Title': 'BookmarksBar',
             'Children': [
-                {'URLString': '<<<https://example.com',>>> 'URIDictionary': {...}},
+                {'URLString': '<<<<https://example.com',>>>> 'URIDictionary': {...}},
                 {'Title': 'Folder', 'Children': [...]}  # Nested folders
             ]
         },
