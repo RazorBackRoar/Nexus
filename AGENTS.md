@@ -121,17 +121,22 @@ plistlib.dump(data, f)
 
 ```python
 {
-    'Children': [
-        {
-            'Title': 'BookmarksBar',
-            'Children': [
-                {'URLString': '<<<<<https://example.com',>>>>> 'URIDictionary': {...}},
-                {'Title': 'Folder', 'Children': [...]}  # Nested folders
-            ]
-        },
-        {'Title': 'BookmarksMenu', 'Children': [...]},
-        {'Title': 'com.apple.ReadingList', 'Children': [...]}
-    ]
+
+```
+'Children': [
+{
+'Title': 'BookmarksBar',
+'Children': [
+{'URLString': '<<<<<<https://example.com',>>>>>> 'URIDictionary': {...}},
+{'Title': 'Folder', 'Children': [...]}  # Nested folders
+]
+},
+{'Title': 'BookmarksMenu', 'Children': [...]},
+{'Title': 'com.apple.ReadingList', 'Children': [...]}
+]
+
+```text
+
 }
 ```
 
