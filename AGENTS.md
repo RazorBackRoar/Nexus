@@ -127,7 +127,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<https://example.com',>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<https://example.com',>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -149,10 +149,14 @@ from uuid import uuid4
 
 @dataclass
 class Bookmark:
-    """Individual bookmark item."""
-    title: str
-    url: str
-    uuid: str = None  # Auto-generate if not provided
+
+```
+"""Individual bookmark item."""
+title: str
+url: str
+uuid: str = None  # Auto-generate if not provided
+
+```text
 
     def __post_init__(self):
         if self.uuid is None:

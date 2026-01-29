@@ -7,13 +7,13 @@
 # ============================================================================
 # USAGE: Copy this template and replace:
 # - Nexus with "4Charm", "Nexus", or "Papyrus"
-# - nexus with "four_charm", "nexus", or "papyrus" 
+# - nexus with "four_charm", "nexus", or "papyrus"
 # - Update dependencies section with app-specific requirements
 # ============================================================================
 
 [project]
 name = "nexus"
-version = "1.0.2"
+version = "5.14.6"
 description = "Nexus - macOS application"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
@@ -74,16 +74,16 @@ select = [
     "E",      # pycodestyle errors (PEP 8 violations)
     "F",      # pyflakes (undefined names, unused imports, etc.)
     "I",      # isort (import sorting)
-    
+
     # CODE QUALITY - Catch common bugs
     "B",      # flake8-bugbear (likely bugs and design problems)
     "C4",     # flake8-comprehensions (better list/dict/set comprehensions)
     "UP",     # pyupgrade (modernize Python code for your version)
-    
+
     # STYLE - Keep code readable
     "N",      # pep8-naming (function/variable naming conventions)
     "W",      # pycodestyle warnings
-    
+
     # DOCUMENTATION - Enforce good practices
     "D",      # pydocstyle (docstring conventions)
 ]
@@ -98,7 +98,7 @@ ignore = [
     "D107",   # Missing docstring in __init__
     # WHY: Docstrings are good but enforcing them everywhere is overwhelming
     # TODO: Remove these ignores gradually as documentation improves
-    
+
     "E501",   # Line too long
     # WHY: Ruff's formatter handles this automatically
 ]
