@@ -127,7 +127,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<https://example.com',>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<https://example.com',>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -159,20 +159,23 @@ uuid: str = None  # Auto-generate if not provided
 ```text
 
 ```
-def __post_init__(self):
+def **post_init**(self):
 if self.uuid is None:
 self.uuid = str(uuid4())
 
 ```text
 
-    def to_dict(self) -> dict:
-        """Convert to Safari plist format."""
-        return {
-            'URLString': self.url,
-            'URIDictionary': {'title': self.title},
-            'WebBookmarkUUID': self.uuid,
-            'WebBookmarkType': 'WebBookmarkTypeLeaf'
-        }
+```
+def to_dict(self) -> dict:
+"""Convert to Safari plist format."""
+return {
+'URLString': self.url,
+'URIDictionary': {'title': self.title},
+'WebBookmarkUUID': self.uuid,
+'WebBookmarkType': 'WebBookmarkTypeLeaf'
+}
+
+```text
 
 @dataclass
 class BookmarkFolder:
