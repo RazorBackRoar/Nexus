@@ -51,7 +51,7 @@ modern, neon-themed interface.
    sudo xattr -cr /Applications/Nexus.app
 ```
 
-4. **Grant Permissions**:
+1. **Grant Permissions**:
    - Go to **System Settings → Privacy & Security → Automation**
    - Enable **Safari** for Nexus (required for opening tabs)
 
@@ -76,7 +76,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>
+git clone <<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>
 cd Nexus
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools

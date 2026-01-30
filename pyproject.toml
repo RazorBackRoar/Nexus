@@ -1,27 +1,21 @@
 # ============================================================================
-# Nexus - MACOS APPLICATION
+# RAZORCORE - SHARED FOUNDATION LIBRARY
 # ============================================================================
 # This pyproject.toml follows RazorBackRoar workspace standards
 # Last Updated: 2026-01-28
 # Python Version: 3.13.x (STRICT LOCK - never upgrade to 3.14+)
 # ============================================================================
-# USAGE: Copy this template and replace:
-# - Nexus with "4Charm", "Nexus", or "Papyrus"
-# - nexus with "four_charm", "nexus", or "papyrus"
-# - Update dependencies section with app-specific requirements
-# ============================================================================
 
 [project]
-name = "nexus"
-version = "5.14.11"
-description = "Nexus - macOS application"
+name = "razorcore"
+version = "1.26.0"
+description = "Shared foundation library for RazorBackRoar applications"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
 
 dependencies = [
     "PySide6>=6.6.0",
-    "razorcore",  # Shared foundation library
-    # Add app-specific dependencies here
+    # Add other razorcore dependencies here
 ]
 
 # ============================================================================
@@ -32,9 +26,6 @@ dependencies = [
 # - /Users/home/Workspace/Apps/4Charm/pyproject.toml
 # - /Users/home/Workspace/Apps/Nexus/pyproject.toml
 # - /Users/home/Workspace/Apps/Papyrus/pyproject.toml
-#
-# CRITICAL: Any changes to Ruff config must be synchronized across all 4 files
-# WHY: Ensures consistent code style across entire RazorBackRoar workspace
 # ============================================================================
 
 [tool.ruff]
@@ -118,15 +109,28 @@ ignore = [
 # Use Google-style docstrings (most popular in Python community)
 convention = "google"
 # WHY: Google style is clean and widely recognized
+# Example:
+# def function(param1: str, param2: int) -> bool:
+#     """Brief description.
+#
+#     Longer description if needed.
+#
+#     Args:
+#         param1: Description of param1.
+#         param2: Description of param2.
+#
+#     Returns:
+#         Description of return value.
+#     """
 
 [tool.ruff.lint.isort]
 # Organize imports consistently
-known-first-party = ["nexus", "razorcore"]
-# WHY: Tells isort which imports are your code vs third-party libraries
-# IMPORTANT: Replace nexus with your actual module name
+known-first-party = ["razorcore"]
+# WHY: This tells isort that razorcore is your code, not a third-party library
 
 # Separate import groups with a blank line
 lines-after-imports = 2
+# WHY: Makes import section clearly separated from code
 
 [tool.ruff.format]
 # Use double quotes for strings (Python community standard)
