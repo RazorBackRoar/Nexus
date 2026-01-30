@@ -127,7 +127,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<https://example.com',>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<https://example.com',>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -188,9 +188,12 @@ uuid: str = None
 
 ```text
 
-    def __post_init__(self):
-        if self.uuid is None:
-            self.uuid = str(uuid4())
+```
+def __post_init__(self):
+if self.uuid is None:
+self.uuid = str(uuid4())
+
+```text
 
     def to_dict(self) -> dict:
         """Convert to Safari plist format."""

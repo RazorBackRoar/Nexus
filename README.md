@@ -1,7 +1,7 @@
 # Nexus
 
 [![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
-[![Pylint](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/pylint.yml)
+[![Ruff](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml)
 [![Version](https://img.shields.io/badge/version-5.4.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
@@ -76,7 +76,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>
+git clone <<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>
 cd Nexus
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
