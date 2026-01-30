@@ -127,7 +127,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<https://example.com',>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<https://example.com',>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -179,10 +179,14 @@ return {
 
 @dataclass
 class BookmarkFolder:
-    """Folder containing bookmarks/subfolders."""
-    title: str
-    children: List[Union['Bookmark', 'BookmarkFolder']]
-    uuid: str = None
+
+```
+"""Folder containing bookmarks/subfolders."""
+title: str
+children: List[Union['Bookmark', 'BookmarkFolder']]
+uuid: str = None
+
+```text
 
     def __post_init__(self):
         if self.uuid is None:
