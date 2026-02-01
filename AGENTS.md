@@ -1,7 +1,7 @@
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
 **Package:** `nexus`
-**Version:** 5.14.6
+**Version:** 1.26.1
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -127,7 +127,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<https://example.com',>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -216,7 +216,11 @@ import subprocess
 from typing import List
 
 class SafariBridge:
-    """Controls Safari via AppleScript."""
+
+```
+"""Controls Safari via AppleScript."""
+
+```text
 
     def open_urls(self, urls: List[str], new_window: bool = False):
         """
