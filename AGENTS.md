@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -266,8 +266,11 @@ timeout=5
 
 ```text
 
-        if result.returncode != 0:
-            raise RuntimeError(f"AppleScript failed: {result.stderr}")
+```
+if result.returncode != 0:
+raise RuntimeError(f"AppleScript failed: {result.stderr}")
+
+```text
 
     def get_current_url(self) -> str:
         """Get URL of current Safari tab."""
