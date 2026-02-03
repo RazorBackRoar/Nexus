@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -231,26 +231,29 @@ Open URLs in Safari.
 
 ```text
 
-        Args:
-            urls: List of URLs to open
-            new_window: If True, opens in new Safari window
-        """
-        # Build AppleScript
-        if new_window:
-            script = f'''
-            tell application "Safari"
-                activate
-                make new document
-                set URL of current tab of front window to "{urls[0]}"
-            end tell
-            '''
-        else:
-            script = f'''
-            tell application "Safari"
-                activate
-                open location "{urls[0]}"
-            end tell
-            '''
+```
+Args:
+urls: List of URLs to open
+new_window: If True, opens in new Safari window
+"""
+# Build AppleScript
+if new_window:
+script = f'''
+tell application "Safari"
+activate
+make new document
+set URL of current tab of front window to "{urls[0]}"
+end tell
+'''
+else:
+script = f'''
+tell application "Safari"
+activate
+open location "{urls[0]}"
+end tell
+'''
+
+```text
 
         # Execute AppleScript
         result = subprocess.run(
