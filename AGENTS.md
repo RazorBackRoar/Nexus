@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -255,13 +255,16 @@ end tell
 
 ```text
 
-        # Execute AppleScript
-        result = subprocess.run(
-            ['osascript', '-e', script],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+```
+# Execute AppleScript
+result = subprocess.run(
+['osascript', '-e', script],
+capture_output=True,
+text=True,
+timeout=5
+)
+
+```text
 
         if result.returncode != 0:
             raise RuntimeError(f"AppleScript failed: {result.stderr}")
