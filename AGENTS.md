@@ -1,3 +1,5 @@
+Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
+
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
 **Package:** `nexus`
@@ -127,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -222,9 +224,12 @@ class SafariBridge:
 
 ```text
 
-    def open_urls(self, urls: List[str], new_window: bool = False):
-        """
-        Open URLs in Safari.
+```
+def open_urls(self, urls: List[str], new_window: bool = False):
+"""
+Open URLs in Safari.
+
+```text
 
         Args:
             urls: List of URLs to open

@@ -1,6 +1,1 @@
-from importlib.metadata import version, PackageNotFoundError
-
-try:
-    __version__ = version("Nexus")
-except PackageNotFoundError:
-    __version__ = "unknown"
+__version__ = "1.26.1"
