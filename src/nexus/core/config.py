@@ -1,12 +1,12 @@
-"""
-Configuration and Logging setup for Nexus.
-"""
-import sys
-import os
+"""Configuration and Logging setup for Nexus."""
 import logging
+import sys
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
 from pathlib import Path
-from importlib.metadata import PackageNotFoundError, version as pkg_version
+
 from PySide6.QtCore import QStandardPaths
+
 
 try:
     import tomllib
@@ -30,7 +30,7 @@ def resolve_version(default: str = "0.0.0") -> str:
     return default
 
 class Config:
-    """Application configuration constants"""
+    """Application configuration constants."""
 
     APP_NAME = "Nexus"
     APP_VERSION = resolve_version("5.0.0")

@@ -1,12 +1,11 @@
-"""
-Data models for Nexus.
-"""
+"""Data models for Nexus."""
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import Union
+
 
 @dataclass
 class Bookmark:
-    """Represents a single bookmark with name and URL"""
+    """Represents a single bookmark with name and URL."""
 
     name: str
     url: str
@@ -15,10 +14,10 @@ class Bookmark:
 
 @dataclass
 class BookmarkFolder:
-    """Represents a folder that can contain bookmarks or other folders"""
+    """Represents a folder that can contain bookmarks or other folders."""
 
     name: str
-    children: List[Union["BookmarkFolder", "Bookmark"]] = field(default_factory=list)
+    children: list[Union["BookmarkFolder", "Bookmark"]] = field(default_factory=list)
     type: str = "folder"  # Used for serialization/deserialization
 
 

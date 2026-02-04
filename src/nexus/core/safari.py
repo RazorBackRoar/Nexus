@@ -1,12 +1,10 @@
-"""
-Safari Automation Controller.
-"""
+"""Safari Automation Controller."""
 import asyncio
 import random
-from typing import List, Dict
 from urllib.parse import urlparse
 
 from nexus.core.config import Config, logger
+
 
 class SafariController:
     """Manages all interaction with Safari via AppleScript with anti-detection features."""
@@ -43,13 +41,13 @@ class SafariController:
                 await asyncio.sleep(2.0)
 
             return True
-        except (OSError, asyncio.TimeoutError) as e:
+        except (TimeoutError, OSError) as e:
             logger.error("Failed to check/launch Safari: %s", e)
             return False
 
     @staticmethod
     async def open_urls(
-        urls: List[str],
+        urls: list[str],
         max_batch_size: int = 20,
         use_stealth: bool = True,
         private_mode: bool = True,
@@ -88,12 +86,12 @@ class SafariController:
                         )
                         await asyncio.sleep(delay)
                 return True
-        except (OSError, asyncio.TimeoutError) as e:
+        except (TimeoutError, OSError) as e:
             logger.error("Failed to open URLs in Safari: %s", e)
             return False
 
     @staticmethod
-    def _group_urls_by_domain(urls: List[str]) -> Dict[str, List[str]]:
+    def _group_urls_by_domain(urls: list[str]) -> dict[str, list[str]]:
         """Group URLs by domain for targeted anti-detection strategies."""
         domain_groups = {}
         for url in urls:
@@ -106,7 +104,7 @@ class SafariController:
 
     @staticmethod
     async def _open_urls_with_stealth(
-        domain_groups: Dict[str, List[str]], private_mode: bool = True
+        domain_groups: dict[str, list[str]], private_mode: bool = True
     ) -> bool:
         """Opens URLs with domain-specific anti-detection strategies in single window."""
         overall_success = True
@@ -148,7 +146,7 @@ class SafariController:
 
     @staticmethod
     async def _open_domain_urls_staggered(
-        urls: List[str],
+        urls: list[str],
         domain: str,
         is_first_domain: bool = False,
         private_mode: bool = True,
@@ -207,7 +205,7 @@ class SafariController:
 
     @staticmethod
     async def _open_url_batch_with_stealth(
-        urls: List[str], is_first: bool = False, private_mode: bool = True
+        urls: list[str], is_first: bool = False, private_mode: bool = True
     ) -> bool:
         """Opens a batch of URLs using AppleScript."""
         if not urls:
@@ -268,6 +266,6 @@ class SafariController:
             return False
 
     @staticmethod
-    async def _open_url_batch(urls: List[str], private_mode: bool = True) -> bool:
+    async def _open_url_batch(urls: list[str], private_mode: bool = True) -> bool:
         """Legacy batch opener."""
         return await SafariController._open_url_batch_with_stealth(urls, is_first=True, private_mode=private_mode)

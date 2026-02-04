@@ -1,33 +1,31 @@
-"""
-Custom UI widgets for the Nexus application.
-"""
+"""Custom UI widgets for the Nexus application."""
 import asyncio
 import re
-from typing import List, Optional
 
-from PySide6.QtWidgets import (
-    QApplication,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
-    QAbstractItemView,
-    QPushButton,
-    QGraphicsDropShadowEffect,
-    QLabel,
-    QWidget,
-)
 from PySide6.QtCore import (
-    Qt,
-    QPropertyAnimation,
-    QThread,
-    Signal,
     QEasingCurve,
     QMimeData,
+    QPropertyAnimation,
+    Qt,
+    QThread,
+    Signal,
 )
-from PySide6.QtGui import QColor, QPainter, QPen, QPainterPath
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QGraphicsDropShadowEffect,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
 
 from nexus.core.config import Config, logger
 from nexus.utils.url_processor import URLProcessor
+
 
 class AsyncWorker(QThread):
     """Generic QThread worker for running asynchronous tasks off the main UI thread."""
@@ -94,7 +92,7 @@ class URLTableWidget(QTableWidget):
         )  # Enable editing to show cursor
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
-    def add_urls(self, urls: List[str]):
+    def add_urls(self, urls: list[str]):
         """Add URLs to the table with automatic numbering."""
         for url in urls:
             self.url_counter += 1
@@ -129,7 +127,7 @@ class URLTableWidget(QTableWidget):
             if status_item:
                 status_item.setText("✅" if success else "❌")
 
-    def get_all_urls(self) -> List[str]:
+    def get_all_urls(self) -> list[str]:
         """Get all URLs from the table."""
         urls = []
         for row in range(self.rowCount()):
@@ -279,8 +277,7 @@ class GlassButton(QPushButton):
     """A modern glass-styled button for the Glass Noir theme."""
 
     def __init__(self, text: str = "", variant: str = "primary"):
-        """
-        Initialize GlassButton.
+        """Initialize GlassButton.
 
         Args:
             text: Button text

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-UI/UX Pro Max Search - BM25 search engine for UI/UX style guides
+"""UI/UX Pro Max Search - BM25 search engine for UI/UX style guides
 Usage: python search.py "<query>" [--domain <domain>] [--stack <stack>] [--max-results 3]
        python search.py "<query>" --design-system [-p "Project Name"]
        python search.py "<query>" --design-system --persist [-p "Project Name"] [--page "dashboard"]
@@ -15,8 +13,9 @@ Persistence (Master + Overrides pattern):
 """
 
 import argparse
-from core import CSV_CONFIG, AVAILABLE_STACKS, MAX_RESULTS, search, search_stack
-from design_system import generate_design_system, persist_design_system
+
+from core import AVAILABLE_STACKS, CSV_CONFIG, MAX_RESULTS, search, search_stack
+from design_system import generate_design_system
 
 
 def format_output(result):
@@ -26,10 +25,10 @@ def format_output(result):
 
     output = []
     if result.get("stack"):
-        output.append(f"## UI Pro Max Stack Guidelines")
+        output.append("## UI Pro Max Stack Guidelines")
         output.append(f"**Stack:** {result['stack']} | **Query:** {result['query']}")
     else:
-        output.append(f"## UI Pro Max Search Results")
+        output.append("## UI Pro Max Search Results")
         output.append(f"**Domain:** {result['domain']} | **Query:** {result['query']}")
     output.append(f"**Source:** {result['file']} | **Found:** {result['count']} results\n")
 
@@ -66,15 +65,15 @@ if __name__ == "__main__":
     # Design system takes priority
     if args.design_system:
         result = generate_design_system(
-            args.query, 
-            args.project_name, 
+            args.query,
+            args.project_name,
             args.format,
             persist=args.persist,
             page=args.page,
             output_dir=args.output_dir
         )
         print(result)
-        
+
         # Print persistence confirmation
         if args.persist:
             project_slug = args.project_name.lower().replace(' ', '-') if args.project_name else "default"
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                 print(f"   📄 design-system/{project_slug}/pages/{page_filename}.md (Page Overrides)")
             print("")
             print(f"📖 Usage: When building a page, check design-system/{project_slug}/pages/[page].md first.")
-            print(f"   If exists, its rules override MASTER.md. Otherwise, use MASTER.md.")
+            print("   If exists, its rules override MASTER.md. Otherwise, use MASTER.md.")
             print("=" * 60)
     # Stack search
     elif args.stack:

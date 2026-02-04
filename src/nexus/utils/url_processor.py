@@ -1,10 +1,9 @@
-"""
-URL Processing Utilities.
-"""
+"""URL Processing Utilities."""
 import re
-from typing import List, Optional
 from urllib.parse import urlparse
+
 from nexus.core.config import Config, logger
+
 
 class URLProcessor:
     """Handles all logic for extracting, cleaning, and validating URLs with enhanced accuracy."""
@@ -111,7 +110,7 @@ class URLProcessor:
 
         return text.strip()
 
-    def extract_urls(self, text: str) -> List[str]:
+    def extract_urls(self, text: str) -> list[str]:
         """Extract and clean URLs from text with enhanced accuracy and multiple patterns."""
         if not isinstance(text, str) or not text.strip():
             return []
@@ -134,7 +133,7 @@ class URLProcessor:
             logger.error("URL extraction failed, falling back to basic method: %s", e)
             return self._extract_urls_fallback(text)
 
-    def _extract_urls_enhanced(self, text: str) -> List[str]:
+    def _extract_urls_enhanced(self, text: str) -> list[str]:
         """Enhanced URL extraction using multiple specialized patterns."""
         cleaned_text = self.sanitize_text_for_extraction(text)
         all_urls = set()
@@ -171,7 +170,7 @@ class URLProcessor:
         # Filter and validate all found URLs
         return self._filter_and_validate_urls(filtered_urls)
 
-    def _remove_shortened_url_substrings(self, urls: List[str]) -> List[str]:
+    def _remove_shortened_url_substrings(self, urls: list[str]) -> list[str]:
         """Remove URLs that are substrings of other URLs to avoid duplicates."""
         # Sort URLs by length (longest first) to process longer URLs first
         sorted_urls = sorted(urls, key=len, reverse=True)
@@ -200,13 +199,13 @@ class URLProcessor:
 
         return filtered_urls
 
-    def _extract_urls_fallback(self, text: str) -> List[str]:
+    def _extract_urls_fallback(self, text: str) -> list[str]:
         """Fallback URL extraction using the original method."""
         cleaned_text = self.sanitize_text_for_extraction(text)
         urls = set(self.fallback_pattern.findall(cleaned_text))
         return self._filter_and_validate_urls(list(urls))
 
-    def _split_concatenated_urls(self, text: str) -> List[str]:
+    def _split_concatenated_urls(self, text: str) -> list[str]:
         """Detect and split URLs that are concatenated without spaces."""
         concatenated_urls = []
 
@@ -253,7 +252,7 @@ class URLProcessor:
 
         return concatenated_urls
 
-    def _filter_and_validate_urls(self, urls: List[str]) -> List[str]:
+    def _filter_and_validate_urls(self, urls: list[str]) -> list[str]:
         """Enhanced filtering, normalization, and validation of URLs."""
         valid_urls = set()
         invalid_count = 0
@@ -287,7 +286,7 @@ class URLProcessor:
         logger.info(
             "Extracted %d valid URLs from %d candidates", len(valid_urls), len(urls)
         )
-        return sorted(list(valid_urls))
+        return sorted(valid_urls)
 
     def _should_filter_by_extension(self, url: str) -> bool:
         """Check if URL should be filtered based on file extension."""
@@ -358,7 +357,7 @@ class URLProcessor:
 
         return True
 
-    def _normalize_url(self, url: str) -> Optional[str]:
+    def _normalize_url(self, url: str) -> str | None:
         """Enhanced URL normalization with better error handling."""
         if not url:
             return None

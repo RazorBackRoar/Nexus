@@ -1,5 +1,7 @@
 import unittest
+
 from nexus.utils.url_processor import URLProcessor
+
 
 class TestURLProcessor(unittest.TestCase):
 

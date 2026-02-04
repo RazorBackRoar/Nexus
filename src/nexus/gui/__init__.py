@@ -1,3 +1,1 @@
-"""
-Nexus GUI package.
-"""
+"""Nexus GUI package."""

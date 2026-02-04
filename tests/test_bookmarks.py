@@ -4,10 +4,7 @@ These tests verify the core bookmark management features including
 plist parsing, bookmark data models, and folder hierarchy.
 """
 
-import pytest
-from pathlib import Path
 import plistlib
-from datetime import datetime
 
 
 def test_bookmark_data_structure():

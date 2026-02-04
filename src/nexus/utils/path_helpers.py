@@ -1,10 +1,10 @@
 
-import sys
 import os
+import sys
+
 
 def get_resource_path(relative_path_from_project_root):
-    """
-    Get absolute path to resource, works for dev and for PyInstaller bundled app.
+    """Get absolute path to resource, works for dev and for PyInstaller bundled app.
     Assumes 'assets', 'docs', 'build', 'src' are at the project root.
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):

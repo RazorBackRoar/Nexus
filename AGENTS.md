@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -272,19 +272,23 @@ raise RuntimeError(f"AppleScript failed: {result.stderr}")
 
 ```text
 
-    def get_current_url(self) -> str:
-        """Get URL of current Safari tab."""
-        script = '''
-        tell application "Safari"
-            return URL of current tab of front window
-        end tell
-        '''
-        result = subprocess.run(
-            ['osascript', '-e', script],
-            capture_output=True,
-            text=True
-        )
-        return result.stdout.strip()
+```
+def get_current_url(self) -> str:
+"""Get URL of current Safari tab."""
+script = '''
+tell application "Safari"
+return URL of current tab of front window
+end tell
+'''
+result = subprocess.run(
+['osascript', '-e', script],
+capture_output=True,
+text=True
+)
+return result.stdout.strip()
+
+```text
+
 ```
 
 ---

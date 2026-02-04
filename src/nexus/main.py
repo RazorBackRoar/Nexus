@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""
-Nexus
+"""Nexus
 A fully themeable, production-ready PySide6 app with a "neon outline" aesthetic,
 hierarchical bookmarks, and powerful Safari automation.
 """
 
-import sys
 import os
+import sys
+
 from PySide6.QtWidgets import QApplication
+
 
 # Add src directory to Python path to allow 'nexus' package imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,7 @@ if src_dir not in sys.path:
 
 from nexus.core.config import Config
 from nexus.gui.main_window import MainWindow
+
 
 def main():
     app = QApplication(sys.argv)

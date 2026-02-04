@@ -1,51 +1,49 @@
-"""
-Main Application Window for Nexus.
-"""
-import json
+"""Main Application Window for Nexus."""
 import asyncio
-from typing import Dict, Any, List, Optional
+import json
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
+from PySide6.QtCore import (
+    QByteArray,
+    QSettings,
+    QStandardPaths,
+    Qt,
+)
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
+    QFileDialog,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMenu,
     QMessageBox,
     QTreeWidget,
     QTreeWidgetItem,
-    QInputDialog,
-    QMenu,
-    QFileDialog,
-    QLineEdit,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import (
-    Qt,
-    QSettings,
-    QStandardPaths,
-    QByteArray,
-)
-from PySide6.QtGui import QColor
 
-from nexus.core.config import Config, logger, cleanup_logs
+from nexus.core.bookmarks import BookmarkManager
+from nexus.core.config import Config, cleanup_logs, logger
 from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
 from nexus.core.safari import SafariController
-from nexus.core.bookmarks import BookmarkManager
-from nexus.utils.url_processor import URLProcessor
 from nexus.gui.widgets import (
     AsyncWorker,
-    URLTableWidget,
     GlassButton,
+    URLTableWidget,
 )
+from nexus.utils.url_processor import URLProcessor
 
 
 class MainWindow(QMainWindow):
     """The main application window with hierarchical bookmark support."""
 
     def __init__(self):
-        """Initialize with default theme"""
+        """Initialize with default theme."""
         super().__init__()
         self._setup_themes()  # Define themes
         self.settings = QSettings()
@@ -202,7 +200,7 @@ class MainWindow(QMainWindow):
             # Load preset colors and save them as custom for editing
             theme_name = str(self.current_theme_name)
             preset_colors_raw = self.themes.get(theme_name, default_theme_colors)
-            preset_colors: Dict[str, Any] = (
+            preset_colors: dict[str, Any] = (
                 preset_colors_raw
                 if isinstance(preset_colors_raw, dict)
                 else default_theme_colors
@@ -646,7 +644,7 @@ class MainWindow(QMainWindow):
             self._show_message("No URLs found to launch.", "warning")
 
     async def _open_urls_with_tracking(
-        self, urls: List[str], private_mode: bool = True
+        self, urls: list[str], private_mode: bool = True
     ) -> bool:
         """Opens URLs in Safari and tracks success/failure with privacy settings."""
         try:
@@ -660,7 +658,7 @@ class MainWindow(QMainWindow):
                 self.url_table.update_status(row, success)
 
             return success
-        except (OSError, asyncio.TimeoutError) as e:
+        except (TimeoutError, OSError) as e:
             logger.error("Error in URL tracking: %s", e)
             # Mark all as failed on error
             for row in range(self.url_table.rowCount()):
@@ -863,7 +861,7 @@ class MainWindow(QMainWindow):
         for i in range(self.bookmark_tree.topLevelItemCount()):
             self.bookmarks.append(item_to_node(self.bookmark_tree.topLevelItem(i)))
 
-    def _get_selected_parent_item(self) -> Optional[QTreeWidgetItem]:
+    def _get_selected_parent_item(self) -> QTreeWidgetItem | None:
         """Returns the currently selected folder item, or its parent if a bookmark is selected."""
         current_item = self.bookmark_tree.currentItem()
         if not current_item:
@@ -888,7 +886,7 @@ class MainWindow(QMainWindow):
             self.save_bookmarks()
 
     def _create_tree_item(
-        self, data: Dict[str, Any], parent: Optional[QTreeWidgetItem] = None
+        self, data: dict[str, Any], parent: QTreeWidgetItem | None = None
     ) -> QTreeWidgetItem:
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
@@ -961,7 +959,7 @@ class MainWindow(QMainWindow):
         bookmark_nodes = [self.bookmark_manager._deserialize_node(d) for d in data]
         self.bookmark_manager.save_bookmarks(bookmark_nodes)
 
-    def _serialize_item(self, item: QTreeWidgetItem) -> Dict[str, Any]:
+    def _serialize_item(self, item: QTreeWidgetItem) -> dict[str, Any]:
         """Recursively converts a tree item back into a dictionary for saving."""
         data = item.data(0, Qt.ItemDataRole.UserRole).copy()
         if data.get("type") == "folder":
@@ -1061,7 +1059,7 @@ class MainWindow(QMainWindow):
                 self.worker.start()
 
     async def _open_bookmark_in_existing_window(
-        self, urls: List[str], private_mode: bool = True
+        self, urls: list[str], private_mode: bool = True
     ) -> bool:
         """Opens bookmark URLs in Safari, creating window if needed."""
         if not urls:
@@ -1110,11 +1108,11 @@ class MainWindow(QMainWindow):
                 return True
             logger.error("Safari AppleScript error: %s", stderr.decode())
             return False
-        except (OSError, asyncio.TimeoutError) as e:
+        except (TimeoutError, OSError) as e:
             logger.error("Error opening bookmark URLs: %s", e)
             return False
 
-    def _add_bookmark_link(self, parent_item: Optional[QTreeWidgetItem] = None):
+    def _add_bookmark_link(self, parent_item: QTreeWidgetItem | None = None):
         """Prompts for bookmark details and adds a new bookmark."""
         current_item = self.bookmark_tree.currentItem()
         if not parent_item and current_item:
