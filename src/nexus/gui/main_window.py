@@ -1239,7 +1239,7 @@ class MainWindow(QMainWindow):
         if isinstance(state_data, QByteArray):
             self.restoreState(state_data)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # noqa: N802 - Qt override
         """Saves window state before closing."""
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())

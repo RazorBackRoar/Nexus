@@ -143,7 +143,7 @@ class URLTableWidget(QTableWidget):
         self.setRowCount(0)
         self.url_counter = 0
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event):  # noqa: N802 - Qt override
         """Accept drag events with URLs or text."""
         if (
             event.mimeData().hasUrls()
@@ -152,13 +152,13 @@ class URLTableWidget(QTableWidget):
         ):
             event.acceptProposedAction()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event):  # noqa: N802 - Qt override
         """Handle dropped content."""
         mime_data = event.mimeData()
         self._process_mime_data(mime_data)
         event.acceptProposedAction()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event):  # noqa: N802 - Qt override
         """Handle keyboard events for pasting."""
         if (
             event.key() == Qt.Key.Key_V
@@ -199,7 +199,7 @@ class URLTableWidget(QTableWidget):
         if urls_to_add:
             self.add_urls(urls_to_add)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # noqa: N802 - Qt override
         """Handle mouse press events to show cursor in URL cells."""
         super().mousePressEvent(event)
         item = self.itemAt(event.pos())
@@ -262,13 +262,13 @@ class NeonButton(QPushButton):
         self.glow_out_anim.setEndValue(0)
         self.glow_out_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def enterEvent(self, event):
+    def enterEvent(self, event):  # noqa: N802 - Qt override
         self.glow_out_anim.stop()
         self.glow_in_anim.setStartValue(self.shadow.blurRadius())
         self.glow_in_anim.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event):  # noqa: N802 - Qt override
         self.glow_in_anim.stop()
         self.glow_out_anim.setStartValue(self.shadow.blurRadius())
         self.glow_out_anim.start()
@@ -324,14 +324,14 @@ class GlassButton(QPushButton):
         self.glow_out.setEndValue(0)
         self.glow_out.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    def enterEvent(self, event):
+    def enterEvent(self, event):  # noqa: N802 - Qt override
         """Animate glow in on hover."""
         self.glow_out.stop()
         self.glow_in.setStartValue(self.shadow.blurRadius())
         self.glow_in.start()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event):  # noqa: N802 - Qt override
         """Animate glow out on leave."""
         self.glow_in.stop()
         self.glow_out.setStartValue(self.shadow.blurRadius())
@@ -445,7 +445,7 @@ class OutlinedLabel(QLabel):
         self.outline_color = QColor(0, 0, 0)  # Black outline
         self.outline_width = 2
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # noqa: N802 - Qt override
         """Custom paint event to draw outlined text."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

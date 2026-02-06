@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -383,7 +383,12 @@ data = plistlib.load(f)
 
 # ✅ CORRECT
 with open(path, 'rb') as f:  # Binary mode!
-    data = plistlib.load(f)
+
+```
+data = plistlib.load(f)
+
+```text
+
 ```
 
 ### ❌ AppleScript Timeout or "Application isn't running"

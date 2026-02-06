@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Nexus
+"""Nexus.
+
 A fully themeable, production-ready PySide6 app with a "neon outline" aesthetic,
 hierarchical bookmarks, and powerful Safari automation.
 """
@@ -16,8 +17,8 @@ src_dir = os.path.dirname(current_dir)
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from nexus.core.config import Config
-from nexus.gui.main_window import MainWindow
+from nexus.core.config import Config  # noqa: E402
+from nexus.gui.main_window import MainWindow  # noqa: E402
 
 
 def main():
