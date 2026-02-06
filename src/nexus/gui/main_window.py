@@ -943,19 +943,23 @@ class MainWindow(QMainWindow):
         # Normalize name for color lookup (case insensitive)
         norm_name = input_name.lower()
 
-        # Color mapping based on user request
+        # Color mapping based on user request (v1.27.1 palette)
         # Default rotation colors if not specified
-        default_colors = ["#ff2d92", "#00e5e5", "#39ff14", "#a78bfa", "#ff9500"]
+        default_colors = [
+            "#00E5FF",  # Personal (Cyan)
+            "#FF1744",  # YouTube (Red)
+            "#FFEA00",  # Guides (Yellow)
+            "#B388FF",  # GitHub (Purple)
+            "#00FF85",  # Random (Green)
+        ]
 
         # Specific color overrides (user-defined)
         specific_colors = {
-            "personal": "#00E5FF",  # Cyan
-            "youtube": "#FF1744",  # Red
-            "guides": "#FFEA00",  # Yellow
-            "github": "#B388FF",  # Purple
-            "random": "#00FF85",  # Green
-            "news": "#ff3b30",  # Red
-            "apple": "#ffffff",  # White
+            "personal": "#00E5FF",
+            "youtube": "#FF1744",
+            "guides": "#FFEA00",
+            "github": "#B388FF",
+            "random": "#00FF85",
         }
 
         # Apply font styling directly to the item - bigger text

@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -349,6 +349,7 @@ razorcheck
 - Build via `nexustest` / `nexusbuild` or `razorbuild Nexus`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
 - If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
+- **Always run the app after making changes** (`python -m nexus.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
 
 ---
 
@@ -409,9 +410,14 @@ text=True
 
 )
 if 'true' not in result.stdout:
-    # Launch Safari first
-    subprocess.run(['open', '-a', 'Safari'])
-    time.sleep(1)  # Wait for launch
+
+```
+# Launch Safari first
+subprocess.run(['open', '-a', 'Safari'])
+time.sleep(1)  # Wait for launch
+
+```text
+
 ```
 
 ### ❌ Bookmarks Disappear After Save
