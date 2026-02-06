@@ -6,14 +6,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from PySide6.QtCore import (
+from PySide6.QtCore import (  # type: ignore[import-not-found]
     QByteArray,
     QSettings,
     QStandardPaths,
     Qt,
 )
-from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (
+from PySide6.QtGui import QColor  # type: ignore[import-not-found]
+from PySide6.QtWidgets import (  # type: ignore[import-not-found]
     QFileDialog,
     QGraphicsDropShadowEffect,
     QHBoxLayout,

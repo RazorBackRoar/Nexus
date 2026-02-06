@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -399,9 +399,14 @@ data = plistlib.load(f)
 ```python
 # Check if Safari is running first
 result = subprocess.run(
-    ['osascript', '-e', 'tell application "System Events" to (name of processes) contains "Safari"'],
-    capture_output=True,
-    text=True
+
+```
+['osascript', '-e', 'tell application "System Events" to (name of processes) contains "Safari"'],
+capture_output=True,
+text=True
+
+```text
+
 )
 if 'true' not in result.stdout:
     # Launch Safari first

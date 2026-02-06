@@ -3,7 +3,7 @@
 import asyncio
 import re
 
-from PySide6.QtCore import (
+from PySide6.QtCore import (  # type: ignore[import-not-found]
     QEasingCurve,
     QMimeData,
     QPropertyAnimation,
@@ -11,8 +11,13 @@ from PySide6.QtCore import (
     QThread,
     Signal,
 )
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import (
+from PySide6.QtGui import (  # type: ignore[import-not-found]
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
+)
+from PySide6.QtWidgets import (  # type: ignore[import-not-found]
     QAbstractItemView,
     QApplication,
     QGraphicsDropShadowEffect,
