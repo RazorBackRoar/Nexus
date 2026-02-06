@@ -1,4 +1,5 @@
 """Main Application Window for Nexus."""
+
 import asyncio
 import json
 from pathlib import Path
@@ -14,6 +15,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -220,8 +222,8 @@ class MainWindow(QMainWindow):
 
     def _setup_window(self):
         """Sets up the main window properties with Glass Noir styling."""
-        self.setWindowTitle("")  # No title bar text - we show NEXUS in the UI
-        self.setGeometry(200, 200, 950, 650)
+        self.setWindowTitle("Nexus")  # Set title for Dock
+        self.setGeometry(200, 200, 1100, 650)  # Increased width for buttons
         # Glass Noir gradient background
         self.setStyleSheet("""
             QMainWindow {
@@ -253,11 +255,17 @@ class MainWindow(QMainWindow):
         self.title_label.setStyleSheet("""
             QLabel {
                 color: #ffffff;
-                font-size: 32px;
+                font-size: 36px;
                 font-weight: 300;
-                letter-spacing: 10px;
+                letter-spacing: 12px;
             }
         """)
+        # Add glow effect to title
+        title_glow = QGraphicsDropShadowEffect()
+        title_glow.setBlurRadius(30)
+        title_glow.setColor(QColor(0, 245, 255, 180))  # Cyan glow
+        title_glow.setOffset(0, 0)
+        self.title_label.setGraphicsEffect(title_glow)
         header_layout.addWidget(self.title_label)
 
         # Pink tagline (now in header)
@@ -288,12 +296,22 @@ class MainWindow(QMainWindow):
         self.sidebar.setStyleSheet("""
             QWidget {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(30, 30, 40, 0.9),
-                    stop:1 rgba(20, 20, 30, 0.95));
-                border: 1px solid rgba(139, 92, 246, 0.3);
+                    stop:0 rgba(25, 25, 35, 0.95),
+                    stop:0.5 rgba(20, 20, 30, 0.97),
+                    stop:1 rgba(15, 15, 25, 0.98));
+                border: 1px solid qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(139, 92, 246, 0.5),
+                    stop:0.5 rgba(0, 245, 255, 0.3),
+                    stop:1 rgba(139, 92, 246, 0.5));
                 border-radius: 16px;
             }
         """)
+        # Add subtle glow to sidebar
+        sidebar_glow = QGraphicsDropShadowEffect()
+        sidebar_glow.setBlurRadius(15)
+        sidebar_glow.setColor(QColor(139, 92, 246, 60))  # Purple glow
+        sidebar_glow.setOffset(0, 0)
+        self.sidebar.setGraphicsEffect(sidebar_glow)
         sidebar_layout = QVBoxLayout(self.sidebar)
         sidebar_layout.setContentsMargins(16, 20, 16, 20)
         sidebar_layout.setSpacing(12)
@@ -339,7 +357,9 @@ class MainWindow(QMainWindow):
         self.bookmark_tree = QTreeWidget()
         self.bookmark_tree.setHeaderHidden(True)
         self.bookmark_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.bookmark_tree.customContextMenuRequested.connect(self._show_bookmark_context_menu)
+        self.bookmark_tree.customContextMenuRequested.connect(
+            self._show_bookmark_context_menu
+        )
         self.bookmark_tree.itemDoubleClicked.connect(self._handle_item_double_click)
         self.bookmark_tree.setStyleSheet("""
             QTreeWidget {
@@ -402,10 +422,14 @@ class MainWindow(QMainWindow):
                 background: transparent;
             }
         """)
-        self.bookmark_tree.setRootIsDecorated(False) # Hide root decoration to remove 'grey bars' indentation
+        self.bookmark_tree.setRootIsDecorated(
+            False
+        )  # Hide root decoration to remove 'grey bars' indentation
         self.bookmark_tree.setItemsExpandable(True)
-        self.bookmark_tree.setIndentation(10) # Minimal indentation
-        self.bookmark_tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # Remove focus indicator
+        self.bookmark_tree.setIndentation(10)  # Minimal indentation
+        self.bookmark_tree.setFocusPolicy(
+            Qt.FocusPolicy.NoFocus
+        )  # Remove focus indicator
         sidebar_layout.addWidget(self.bookmark_tree, 1)
 
         # Add folder button with icon styling
@@ -420,12 +444,23 @@ class MainWindow(QMainWindow):
         main_content.setStyleSheet("""
             QWidget {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(25, 25, 35, 0.95),
-                    stop:1 rgba(15, 15, 25, 0.98));
-                border: 1px solid rgba(139, 92, 246, 0.25);
+                    stop:0 rgba(20, 20, 32, 0.97),
+                    stop:0.3 rgba(18, 18, 28, 0.98),
+                    stop:0.7 rgba(15, 15, 25, 0.98),
+                    stop:1 rgba(12, 12, 22, 0.99));
+                border: 1px solid qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(0, 180, 180, 0.4),
+                    stop:0.5 rgba(139, 92, 246, 0.3),
+                    stop:1 rgba(255, 45, 146, 0.3));
                 border-radius: 16px;
             }
         """)
+        # Add outer glow to main content
+        content_glow = QGraphicsDropShadowEffect()
+        content_glow.setBlurRadius(20)
+        content_glow.setColor(QColor(0, 180, 180, 40))  # Teal glow
+        content_glow.setOffset(0, 0)
+        main_content.setGraphicsEffect(content_glow)
         main_content_layout = QVBoxLayout(main_content)
         main_content_layout.setContentsMargins(24, 24, 24, 24)
         main_content_layout.setSpacing(20)
@@ -503,20 +538,20 @@ class MainWindow(QMainWindow):
 
         # Action buttons row - Distributed evenly (Space them out there are 4)
         button_row = QHBoxLayout()
-        button_row.setSpacing(10) # Using stretch instead for even spacing
+        button_row.setSpacing(10)  # Using stretch instead for even spacing
 
-        self.run_btn = GlassButton("🚀 Open All", "primary")
+        self.run_btn = GlassButton("🚀   Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
-        self.save_btn = GlassButton("🔖 Save", "secondary")
+        self.save_btn = GlassButton("🔖   Save", "secondary")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
-        self.private_mode_btn = GlassButton("🔒 Private", "tertiary")
+        self.private_mode_btn = GlassButton("🔓   Private Mode", "tertiary")
         self.private_mode_btn.setCheckable(True)
         self.private_mode_btn.setChecked(Config.DEFAULT_PRIVATE_MODE)
         self.private_mode_btn.clicked.connect(self._toggle_private_mode)
 
-        self.clear_btn = GlassButton("Clear", "danger")
+        self.clear_btn = GlassButton("🗑️   Clear", "danger")
         self.clear_btn.clicked.connect(self._clear_all_data)
 
         # Distribute buttons evenly: Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch
@@ -524,11 +559,11 @@ class MainWindow(QMainWindow):
 
         button_row.addWidget(self.run_btn)
         button_row.addStretch()
-        button_row.addWidget(self.save_btn)
+        button_row.addWidget(self.clear_btn)
         button_row.addStretch()
         button_row.addWidget(self.private_mode_btn)
         button_row.addStretch()
-        button_row.addWidget(self.clear_btn)
+        button_row.addWidget(self.save_btn)
 
         main_content_layout.addLayout(button_row)
 
@@ -560,8 +595,9 @@ class MainWindow(QMainWindow):
 
     def _update_private_mode_style(self):
         """Update private mode button appearance based on state."""
-        if hasattr(self, 'private_mode_btn'):
+        if hasattr(self, "private_mode_btn"):
             if self.private_mode_btn.isChecked():
+                self.private_mode_btn.setText("🔒   Private Mode")
                 self.private_mode_btn.setStyleSheet("""
                     QPushButton {
                         background: rgba(139, 92, 246, 0.2);
@@ -578,6 +614,7 @@ class MainWindow(QMainWindow):
                     }
                 """)
             else:
+                self.private_mode_btn.setText("🔓   Private Mode")
                 self.private_mode_btn.setStyleSheet("""
                     QPushButton {
                         background: rgba(255, 255, 255, 0.05);
@@ -594,26 +631,29 @@ class MainWindow(QMainWindow):
                     }
                 """)
 
-    def _populate_safari_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+    def _populate_safari_tab(
+        self, tab_widget: QWidget
+    ):  # Legacy - kept for compatibility
         """Legacy method - functionality moved to _setup_ui."""
         pass
 
-    def _populate_bookmarks_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+    def _populate_bookmarks_tab(
+        self, tab_widget: QWidget
+    ):  # Legacy - kept for compatibility
         """Legacy method - functionality moved to _setup_ui."""
         pass
 
-    def _populate_settings_tab(self, tab_widget: QWidget):  # Legacy - kept for compatibility
+    def _populate_settings_tab(
+        self, tab_widget: QWidget
+    ):  # Legacy - kept for compatibility
         """Legacy method - settings accessible via menu/dialog now."""
         pass
-
 
     def _apply_theme(self):
         """Glass Noir theme is static - no dynamic theming needed."""
         # The Glass Noir design uses fixed colors defined inline in _setup_ui
         # This method is kept for compatibility but does nothing significant
         pass
-
-
 
     def _run_urls_in_safari(self):
         """Runs URLs from the table in Safari with status tracking and privacy settings."""
@@ -732,7 +772,9 @@ class MainWindow(QMainWindow):
                 # 1. Search is empty (handled by setHidden check later, but here logic is specific)
                 # 2. Bookmark matches
                 # 3. Parent folder matches (show all content of matched folder)
-                should_show_bookmark = bookmark_matches or folder_matches or (search_text == "")
+                should_show_bookmark = (
+                    bookmark_matches or folder_matches or (search_text == "")
+                )
 
                 bookmark_item.setHidden(not should_show_bookmark)
 
@@ -743,7 +785,9 @@ class MainWindow(QMainWindow):
             # 1. Search is empty
             # 2. Folder matches
             # 3. Folder has visible children
-            should_show_folder = folder_matches or folder_has_visible_children or (search_text == "")
+            should_show_folder = (
+                folder_matches or folder_has_visible_children or (search_text == "")
+            )
             folder_item.setHidden(not should_show_folder)
 
             # Expand folder if we are searching and it is visible
@@ -847,6 +891,7 @@ class MainWindow(QMainWindow):
 
     def _sync_tree_to_data(self):
         """Rebuilds self.bookmarks from the current tree widget state."""
+
         def item_to_node(item: QTreeWidgetItem) -> BookmarkNode:
             data = item.data(0, Qt.ItemDataRole.UserRole)
             if data.get("type") == "folder":
@@ -891,10 +936,10 @@ class MainWindow(QMainWindow):
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
         # No icons - just clean text
-        item = QTreeWidgetItem([data['name']])
+        item = QTreeWidgetItem([data["name"]])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
 
-        input_name = data['name']
+        input_name = data["name"]
         # Normalize name for color lookup (case insensitive)
         norm_name = input_name.lower()
 
@@ -902,15 +947,15 @@ class MainWindow(QMainWindow):
         # Default rotation colors if not specified
         default_colors = ["#ff2d92", "#00e5e5", "#39ff14", "#a78bfa", "#ff9500"]
 
-        # Specific color overrides
+        # Specific color overrides (user-defined)
         specific_colors = {
-            "news": "#ff3b30",      # Red
-            "ai news": "#ff3b30",   # Red (legacy)
-            "apple": "#ffffff",     # White
-            "misc": "#00f5ff",      # Blue
-            "google": "#39ff14",    # Green
-            "github": "#bd93f9",    # Purple
-            "fun": "#ffff00",       # Yellow
+            "personal": "#00E5FF",  # Cyan
+            "youtube": "#FF1744",  # Red
+            "guides": "#FFEA00",  # Yellow
+            "github": "#B388FF",  # Purple
+            "random": "#00FF85",  # Green
+            "news": "#ff3b30",  # Red
+            "apple": "#ffffff",  # White
         }
 
         # Apply font styling directly to the item - bigger text
@@ -925,13 +970,15 @@ class MainWindow(QMainWindow):
                 color = specific_colors[norm_name]
             else:
                 # Get folder index for color rotation
-                if not hasattr(self, '_folder_color_index'):
+                if not hasattr(self, "_folder_color_index"):
                     self._folder_color_index = 0
                 color = default_colors[self._folder_color_index % len(default_colors)]
                 self._folder_color_index += 1
 
             item.setForeground(0, QColor(color))
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # Folders not editable inline
+            item.setFlags(
+                item.flags() & ~Qt.ItemFlag.ItemIsEditable
+            )  # Folders not editable inline
         else:
             # Bookmarks are gray
             item.setForeground(0, QColor("#aaaaaa"))
@@ -974,14 +1021,23 @@ class MainWindow(QMainWindow):
         bookmark_nodes = self.bookmark_manager.load_bookmarks()
 
         # Migration: Rename "AI News" to "News" if it exists
-        ai_news_node = next((n for n in bookmark_nodes if isinstance(n, BookmarkFolder) and n.name == "AI News"), None)
+        ai_news_node = next(
+            (
+                n
+                for n in bookmark_nodes
+                if isinstance(n, BookmarkFolder) and n.name == "AI News"
+            ),
+            None,
+        )
         if ai_news_node:
             ai_news_node.name = "News"
             self.bookmark_manager.save_bookmarks(bookmark_nodes)
 
         # Ensure all required default folders exist
         required_folders = ["News", "Apple", "Misc", "Google", "Github", "Fun"]
-        existing_names = {n.name for n in bookmark_nodes if isinstance(n, BookmarkFolder)}
+        existing_names = {
+            n.name for n in bookmark_nodes if isinstance(n, BookmarkFolder)
+        }
 
         folders_added = False
         for req_name in required_folders:
@@ -990,7 +1046,7 @@ class MainWindow(QMainWindow):
                 folders_added = True
 
         if folders_added:
-             self.bookmark_manager.save_bookmarks(bookmark_nodes)
+            self.bookmark_manager.save_bookmarks(bookmark_nodes)
 
         # Sort bookmarks alphabetically by name
         bookmark_nodes.sort(key=lambda x: x.name.lower())

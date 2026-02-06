@@ -1,4 +1,5 @@
 """Custom UI widgets for the Nexus application."""
+
 import asyncio
 import re
 
@@ -52,6 +53,7 @@ class AsyncWorker(QThread):
         finally:
             if loop and not loop.is_closed():
                 loop.close()
+
 
 class URLTableWidget(QTableWidget):
     """A custom table widget for displaying URLs with numbering and status tracking."""
@@ -232,7 +234,7 @@ class NeonButton(QPushButton):
         darker_color = QColor(self.color).darker(150).name()  # Darker by 50%
 
         self.setStyleSheet(
-            f'''
+            f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {self.color}, stop:1 {darker_color});
                 color: #d0d0d0;
@@ -246,7 +248,7 @@ class NeonButton(QPushButton):
             QPushButton:hover {{ /* Glow effect handled by QGraphicsDropShadowEffect */ }}
             QPushButton:pressed {{ background: {darker_color}; }}
             QPushButton:disabled {{ background: rgba(100,100,100,0.5); color: rgba(255,255,255,0.5); }}
-        '''
+        """
         )
 
     def _setup_animations(self):
@@ -274,116 +276,165 @@ class NeonButton(QPushButton):
 
 
 class GlassButton(QPushButton):
-    """A modern glass-styled button for the Glass Noir theme."""
+    """A modern glass-styled button with animated glow effects for the Glass Noir theme."""
 
     def __init__(self, text: str = "", variant: str = "primary"):
         """Initialize GlassButton.
 
         Args:
             text: Button text
-            variant: 'primary', 'secondary', or 'tertiary'
+            variant: 'primary', 'secondary', 'tertiary', or 'danger'
         """
         super().__init__(text)
         self.variant = variant
+        self._setup_glow_effect()
         self._apply_variant_style()
+        self._setup_animations()
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def _setup_glow_effect(self):
+        """Setup the drop shadow effect for glow."""
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(0)
+        self.shadow.setOffset(0, 0)
+        self.setGraphicsEffect(self.shadow)
+
+    def _get_glow_color(self) -> str:
+        """Get the glow color based on variant."""
+        colors = {
+            "primary": "#3b82f6",  # Blue glow
+            "secondary": "#ff2d92",  # Pink glow
+            "tertiary": "#22c55e",  # Green glow
+            "danger": "#ef4444",  # Red glow
+        }
+        return colors.get(self.variant, "#3b82f6")
+
+    def _setup_animations(self):
+        """Setup hover glow animations."""
+        glow_color = self._get_glow_color()
+        self.shadow.setColor(QColor(glow_color))
+
+        self.glow_in = QPropertyAnimation(self.shadow, b"blurRadius")
+        self.glow_in.setDuration(200)
+        self.glow_in.setEndValue(20)
+        self.glow_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.glow_out = QPropertyAnimation(self.shadow, b"blurRadius")
+        self.glow_out.setDuration(300)
+        self.glow_out.setEndValue(0)
+        self.glow_out.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+    def enterEvent(self, event):
+        """Animate glow in on hover."""
+        self.glow_out.stop()
+        self.glow_in.setStartValue(self.shadow.blurRadius())
+        self.glow_in.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Animate glow out on leave."""
+        self.glow_in.stop()
+        self.glow_out.setStartValue(self.shadow.blurRadius())
+        self.glow_out.start()
+        super().leaveEvent(event)
 
     def _apply_variant_style(self):
         """Apply styling based on variant - using icon colors (cyan, magenta, green)."""
         if self.variant == "primary":
             # Primary: Darker Blue with white text
-            self.setStyleSheet('''
+            self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(30, 80, 150, 0.9), stop:1 rgba(20, 60, 120, 0.9));
                     color: #ffffff;
                     border: 1px solid rgba(50, 100, 180, 0.6);
                     border-radius: 12px;
-                    padding: 14px 0; /* Reduced horizontal padding, rely on width */
-                    min-width: 140px; /* Enforce minimum width for uniformity */
+                    padding: 12px 24px;
+                    min-width: 120px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 14px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(40, 100, 180, 0.95), stop:1 rgba(30, 80, 150, 0.95));
-                    border: 1px solid rgba(60, 120, 200, 0.8);
+                        stop:0 rgba(50, 120, 200, 0.95), stop:1 rgba(40, 100, 170, 0.95));
+                    border: 1px solid rgba(80, 150, 230, 0.9);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(20, 60, 120, 0.95), stop:1 rgba(15, 50, 100, 0.95));
                 }
-            ''')
+            """)
         elif self.variant == "secondary":
             # Secondary: Magenta/Pink with white text
-            self.setStyleSheet('''
+            self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(255, 45, 146, 0.85), stop:1 rgba(204, 0, 102, 0.85));
                     color: #ffffff;
                     border: 1px solid rgba(255, 45, 146, 0.5);
                     border-radius: 12px;
-                    padding: 10px 8px;
+                    padding: 12px 24px;
+                    min-width: 120px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 14px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(255, 90, 171, 0.95), stop:1 rgba(230, 0, 122, 0.95));
-                    border: 1px solid rgba(255, 45, 146, 0.8);
+                        stop:0 rgba(255, 100, 180, 0.95), stop:1 rgba(240, 30, 140, 0.95));
+                    border: 1px solid rgba(255, 120, 200, 0.9);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(204, 36, 117, 0.9), stop:1 rgba(153, 0, 82, 0.9));
                 }
-            ''')
+            """)
         elif self.variant == "tertiary":
             # Tertiary: Neon Green with WHITE text
-            self.setStyleSheet('''
+            self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(0, 180, 0, 0.85), stop:1 rgba(0, 140, 0, 0.85));
                     color: #ffffff;
                     border: 1px solid rgba(57, 255, 20, 0.5);
                     border-radius: 12px;
-                    padding: 14px 28px;
-                    min-width: 140px;
+                    padding: 12px 24px;
+                    min-width: 120px;
                     font-weight: 700;
-                    font-size: 15px;
+                    font-size: 14px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(40, 210, 40, 0.95), stop:1 rgba(30, 170, 30, 0.95));
-                    border: 1px solid rgba(57, 255, 20, 0.8);
+                        stop:0 rgba(50, 220, 50, 0.95), stop:1 rgba(40, 180, 40, 0.95));
+                    border: 1px solid rgba(80, 255, 50, 0.9);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(0, 150, 0, 0.9), stop:1 rgba(0, 120, 0, 0.9));
                 }
-            ''')
+            """)
         else:  # danger/delete style - RED
-            self.setStyleSheet('''
+            self.setStyleSheet("""
                 QPushButton {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(255, 59, 48, 0.4), stop:1 rgba(200, 40, 40, 0.4));
                     color: #ffffff;
                     border: 1px solid rgba(255, 59, 48, 0.5);
                     border-radius: 12px;
-                    padding: 14px 28px;
-                    min-width: 100px;
-                    font-weight: 600;
-                    font-size: 15px;
+                    padding: 12px 24px;
+                    min-width: 120px;
+                    font-weight: 700;
+                    font-size: 14px;
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 rgba(255, 59, 48, 0.6), stop:1 rgba(200, 40, 40, 0.6));
-                    border: 1px solid rgba(255, 59, 48, 0.8);
+                        stop:0 rgba(255, 80, 70, 0.7), stop:1 rgba(220, 60, 60, 0.7));
+                    border: 1px solid rgba(255, 100, 90, 0.9);
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 rgba(200, 40, 40, 0.5), stop:1 rgba(150, 30, 30, 0.5));
                 }
-            ''')
+            """)
 
 
 class OutlinedLabel(QLabel):

@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -342,6 +342,16 @@ razorcheck
 
 ---
 
+## ✅ Required Workflows
+
+- Run `razorcheck` before committing or opening a PR.
+- Use `razorpush Nexus` (or `nexuspush`) for commit, version bump, tag, and push. Do not edit versions manually.
+- Build via `nexustest` / `nexusbuild` or `razorbuild Nexus`. **Never** run `universal-build.sh` directly.
+- Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
+- If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
+
+---
+
 ## 🚨 Common Pitfalls & Solutions
 
 ### ❌ Error: "PermissionError: Operation not permitted"
@@ -365,7 +375,11 @@ razorcheck
 ```python
 # ❌ WRONG
 with open(path, 'r') as f:
-    data = plistlib.load(f)
+
+```
+data = plistlib.load(f)
+
+```text
 
 # ✅ CORRECT
 with open(path, 'rb') as f:  # Binary mode!
