@@ -8,7 +8,7 @@
 
 [project]
 name = "razorcore"
-version = "1.26.0"
+version = "1.27.0"
 description = "Shared foundation library for RazorBackRoar applications"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
