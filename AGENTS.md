@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -452,9 +452,14 @@ plistlib.dump(data, f)
 
 ```python
 hiddenimports=[
-    'razorcore.styling',
-    'razorcore.threading',
-    'razorcore.appinfo',
+
+```
+'razorcore.styling',
+'razorcore.threading',
+'razorcore.appinfo',
+
+```text
+
 ]
 ```
 
