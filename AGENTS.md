@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
 **Package:** `nexus`
-**Version:** 1.26.1
+**Version:** 1.0.0
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -436,9 +436,13 @@ time.sleep(0.5)
 
 ```text
 
-    # Now safe to save
-    with open(self.BOOKMARKS_PATH, 'wb') as f:
-        plistlib.dump(data, f)
+```
+# Now safe to save
+with open(self.BOOKMARKS_PATH, 'wb') as f:
+plistlib.dump(data, f)
+
+```text
+
 ```
 
 ### ❌ ModuleNotFoundError in Built .app
@@ -495,5 +499,9 @@ pytest tests/test_safari_bridge.py -v
 | Modify bookmarks | Close Safari first, then save |
 | Control Safari | Use `SafariBridge` AppleScript wrapper |
 | Display bookmark tree | Use `BookmarkFolder` recursive model |
+
+## RazorCore Usage
+
+See `/Users/home/Workspace/Apps/.razorcore/AGENTS.md` for the complete public API and safety rules.
 
 <!-- verification check Tue Jan 27 23:52:04 MST 2026 -->
