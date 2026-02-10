@@ -5,6 +5,9 @@
 .AppleDouble
 .LSOverride
 
+# Workspace cache
+.code-analysis/
+
 # Python
 __pycache__/
 *.py[cod]
