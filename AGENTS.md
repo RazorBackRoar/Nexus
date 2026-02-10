@@ -11,7 +11,8 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 ## 🏁 GLOBAL AUTHORITY
 
 All standard patterns must follow:
-👉 **`/Users/home/Workspace/Apps/workspace_guide.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`**
 
 This file contains **Nexus-specific** overrides and critical implementation details.
 
@@ -129,7 +130,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -485,7 +486,8 @@ pytest tests/test_safari_bridge.py -v
 
 ## 📚 Related Documentation
 
-- **Master Guide:** `/Users/home/Workspace/Apps/workspace_guide.md`
+- **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
+- **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
 - **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
 - **Nexus Manual:** `/Users/home/Workspace/Apps/Guides/nexus_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
