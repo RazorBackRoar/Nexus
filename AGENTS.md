@@ -129,7 +129,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -427,10 +427,14 @@ time.sleep(1)  # Wait for launch
 
 ```python
 def save_bookmarks(self, data: dict):
-    """Always close Safari before saving."""
-    # Warn user to close Safari
-    subprocess.run(['osascript', '-e', 'tell application "Safari" to quit'])
-    time.sleep(0.5)
+
+```
+"""Always close Safari before saving."""
+# Warn user to close Safari
+subprocess.run(['osascript', '-e', 'tell application "Safari" to quit'])
+time.sleep(0.5)
+
+```text
 
     # Now safe to save
     with open(self.BOOKMARKS_PATH, 'wb') as f:
