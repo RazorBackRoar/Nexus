@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Comprehensive version synchronization script for Nexus
+"""Comprehensive version synchronization script for Nexus.
+
 Updates version in README.md, setup.py, src/Main.py, and build.sh automatically.
 """
 
@@ -24,6 +25,7 @@ def get_current_version():
 
 def increment_version(version):
     """Increment minor version, keep patch at 0.
+
     - x.y.0 -> x.(y+1).0
     - x.9.0 -> (x+1).0.0.
     """

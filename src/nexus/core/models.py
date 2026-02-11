@@ -1,6 +1,5 @@
 """Data models for Nexus."""
 from dataclasses import dataclass, field
-from typing import Union
 
 
 @dataclass
@@ -17,9 +16,9 @@ class BookmarkFolder:
     """Represents a folder that can contain bookmarks or other folders."""
 
     name: str
-    children: list[Union["BookmarkFolder", "Bookmark"]] = field(default_factory=list)
+    children: list["BookmarkFolder | Bookmark"] = field(default_factory=list)
     type: str = "folder"  # Used for serialization/deserialization
 
 
 # Union type for items that can exist in the bookmark tree
-BookmarkNode = Union[BookmarkFolder, Bookmark]
+BookmarkNode = BookmarkFolder | Bookmark

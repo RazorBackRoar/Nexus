@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""macOS Icon Generator for py2app
+"""macOS Icon Generator for py2app.
+
 Converts existing .icns file to proper format with all required sizes.
 """
 import os

@@ -5,6 +5,7 @@ plist parsing, bookmark data models, and folder hierarchy.
 """
 
 import plistlib
+from typing import Any
 
 
 def test_bookmark_data_structure():
@@ -43,19 +44,19 @@ def test_bookmark_folder_structure():
 def test_nested_bookmark_structure():
     """Test nested bookmark folder hierarchy."""
     # Create nested structure
-    child_bookmark = {
+    child_bookmark: dict[str, Any] = {
         'URLString': 'https://child.example.com',
         'URIDictionary': {'title': 'Child Site'},
         'WebBookmarkType': 'WebBookmarkTypeLeaf'
     }
 
-    parent_folder = {
+    parent_folder: dict[str, Any] = {
         'Title': 'Parent Folder',
         'Children': [child_bookmark],
         'WebBookmarkType': 'WebBookmarkTypeList'
     }
 
-    root = {
+    root: dict[str, Any] = {
         'Title': 'Root',
         'Children': [parent_folder],
         'WebBookmarkType': 'WebBookmarkTypeList'

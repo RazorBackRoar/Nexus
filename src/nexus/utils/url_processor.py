@@ -173,8 +173,8 @@ class URLProcessor:
     def _remove_shortened_url_substrings(self, urls: list[str]) -> list[str]:
         """Remove URLs that are substrings of other URLs to avoid duplicates."""
         # Sort URLs by length (longest first) to process longer URLs first
-        sorted_urls = sorted(urls, key=len, reverse=True)
-        filtered_urls = []
+        sorted_urls: list[str] = sorted(urls, key=lambda item: len(item), reverse=True)
+        filtered_urls: list[str] = []
 
         for url in sorted_urls:
             # Check if this URL is a substring of any already processed URL
