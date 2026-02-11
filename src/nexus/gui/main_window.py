@@ -6,14 +6,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from PySide6.QtCore import (  # type: ignore[import-not-found]
+from PySide6.QtCore import (
     QByteArray,
     QSettings,
     QStandardPaths,
     Qt,
 )
-from PySide6.QtGui import QColor  # type: ignore[import-not-found]
-from PySide6.QtWidgets import (  # type: ignore[import-not-found]
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFileDialog,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -904,7 +904,10 @@ class MainWindow(QMainWindow):
 
         self.bookmarks = []
         for i in range(self.bookmark_tree.topLevelItemCount()):
-            self.bookmarks.append(item_to_node(self.bookmark_tree.topLevelItem(i)))
+            top_level_item = self.bookmark_tree.topLevelItem(i)
+            if top_level_item is None:
+                continue
+            self.bookmarks.append(item_to_node(top_level_item))
 
     def _get_selected_parent_item(self) -> QTreeWidgetItem | None:
         """Returns the currently selected folder item, or its parent if a bookmark is selected."""

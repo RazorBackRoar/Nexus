@@ -7,15 +7,15 @@
 # ============================================================================
 
 [project]
-name = "razorcore"
+name = "nexus"
 version = "1.27.0"
-description = "Shared foundation library for RazorBackRoar applications"
+description = "Nexus desktop bookmark and URL manager"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
 
 dependencies = [
     "PySide6>=6.6.0",
-    # Add other razorcore dependencies here
+    "Pillow>=10.0.0",
 ]
 
 # ============================================================================
@@ -47,6 +47,8 @@ exclude = [
     "*.pyc",
     ".pytest_cache",
     ".ruff_cache",
+    ".agent",
+    ".shared",
     "build",
     "dist",
     "*.egg-info",
@@ -125,7 +127,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 # Organize imports consistently
-known-first-party = ["razorcore"]
+known-first-party = ["nexus"]
 # WHY: This tells isort that razorcore is your code, not a third-party library
 
 # Separate import groups with a blank line
@@ -157,3 +159,14 @@ line-ending = "lf"
 # - Flake8 → Ruff (style checking)
 # - pyupgrade → Ruff (syntax modernization)
 # ============================================================================
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ty.environment]
+extra-paths = [
+    "src",
+    "/Users/home/Library/Python/3.13/lib/python/site-packages",
+    "/opt/homebrew/lib/python3.13/site-packages",
+]

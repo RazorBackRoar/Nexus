@@ -3,7 +3,7 @@
 import asyncio
 import re
 
-from PySide6.QtCore import (  # type: ignore[import-not-found]
+from PySide6.QtCore import (
     QEasingCurve,
     QMimeData,
     QPropertyAnimation,
@@ -11,13 +11,14 @@ from PySide6.QtCore import (  # type: ignore[import-not-found]
     QThread,
     Signal,
 )
-from PySide6.QtGui import (  # type: ignore[import-not-found]
+from PySide6.QtGui import (
     QColor,
     QPainter,
     QPainterPath,
+    QPaintEvent,
     QPen,
 )
-from PySide6.QtWidgets import (  # type: ignore[import-not-found]
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QGraphicsDropShadowEffect,
@@ -450,7 +451,7 @@ class OutlinedLabel(QLabel):
         self.outline_color = QColor(0, 0, 0)  # Black outline
         self.outline_width = 2
 
-    def paintEvent(self, event):  # noqa: N802 - Qt override
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override  # ty: ignore[invalid-method-override]
         """Custom paint event to draw outlined text."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

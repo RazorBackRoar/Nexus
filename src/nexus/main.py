@@ -8,7 +8,7 @@ hierarchical bookmarks, and powerful Safari automation.
 import os
 import sys
 
-from PySide6.QtWidgets import QApplication  # type: ignore[import-not-found]
+from PySide6.QtWidgets import QApplication
 
 
 # Add src directory to Python path to allow 'nexus' package imports
@@ -32,7 +32,7 @@ def main():
         os.path.dirname(current_dir), "assets", "icons", "Nexus.icns"
     )
     if os.path.exists(icon_path):
-        from PySide6.QtGui import QIcon  # type: ignore[import-not-found]
+        from PySide6.QtGui import QIcon
 
         app.setWindowIcon(QIcon(icon_path))
 
