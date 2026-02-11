@@ -33,7 +33,7 @@ class Config:
     """Application configuration constants."""
 
     APP_NAME = "Nexus"
-    APP_VERSION = resolve_version("1.0.0")
+    APP_VERSION = resolve_version("3.0.0")
     ORGANIZATION = "Nexus"
     DOMAIN = "nexus.com"
 
