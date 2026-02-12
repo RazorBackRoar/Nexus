@@ -11,10 +11,18 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 ## 🏁 GLOBAL AUTHORITY
 
 All standard patterns must follow:
+👉 **`/Users/home/Workspace/Apps/MCP.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`**
 
 This file contains **Nexus-specific** overrides and critical implementation details.
+
+When opening this project/workspace, load context in this order:
+1. `/Users/home/Workspace/Apps/MCP.md`
+2. `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
+3. `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
+4. `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
 
 ---
 
@@ -23,7 +31,7 @@ This file contains **Nexus-specific** overrides and critical implementation deta
 - **Purpose:** Native macOS Safari bookmark manager with AppleScript automation
 - **Primary Tech:** PySide6, plistlib, AppleScript
 - **Key Modules:** `bookmarks.py`, `models.py`, `safari_bridge.py`
-- **Build Commands:** `nexustest` (fast), `nexusbuild` (release)
+- **Build Commands:** `nexusbuild` or `razorbuild Nexus`
 
 ---
 
@@ -325,11 +333,11 @@ Nexus/
 ## 🔧 Build & Deploy Commands
 
 ```bash
-# Fast dev iteration (app bundle only, ~45s)
-nexustest
-
 # Full release build (app + DMG + Git tag, ~3min)
 nexusbuild
+
+# Canonical build entry
+razorbuild Nexus
 
 # Push changes (auto-commit, auto-version, auto-tag)
 razorpush Nexus
@@ -347,7 +355,7 @@ razorcheck
 
 - Run `razorcheck` before committing or opening a PR.
 - Use `razorpush Nexus` (or `nexuspush`) for commit, version bump, tag, and push. Do not edit versions manually.
-- Build via `nexustest` / `nexusbuild` or `razorbuild Nexus`. **Never** run `universal-build.sh` directly.
+- Build via `nexusbuild` or `razorbuild Nexus`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
 - If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
 - **Always run the app after making changes** (`python -m nexus.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
@@ -488,7 +496,9 @@ pytest tests/test_safari_bridge.py -v
 
 - **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 - **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
+- **Code Analysis Agent Rules:** `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
 - **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
+- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Guides/cli_inventory.md`
 - **Nexus Manual:** `/Users/home/Workspace/Apps/Guides/nexus_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
 
@@ -499,7 +509,7 @@ pytest tests/test_safari_bridge.py -v
 | Scenario | Command/Pattern |
 | --- | --- |
 | Testing bookmark parsing | `python src/nexus/main.py` |
-| Quick .app build for testing | `nexustest` |
+| Quick .app build for testing | `razorbuild Nexus` |
 | Release to production | `nexusbuild` |
 | Save work with version bump | `razorpush Nexus` |
 | Read bookmarks | Use `plistlib.load()` with `'rb'` mode |
