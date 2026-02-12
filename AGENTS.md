@@ -40,7 +40,7 @@ When opening this project/workspace, load context in this order:
 ### ⚡ Performance Optimization (Bolt)
 
 - **Agent:** Bolt ⚡
-- **Activation:** `razorcore bolt`
+- **Activation:** `bolt` (alias `snake`) or `razorcore bolt`
 - **Goal:** < 2s startup, < 50MB bundle
 - **Journal:** `.razorcore/bolt/journal.md`
 
