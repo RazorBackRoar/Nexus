@@ -17,11 +17,12 @@ src_dir = os.path.dirname(current_dir)
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from nexus.core.config import Config  # noqa: E402
+from nexus.core.config import Config, setup_logging  # noqa: E402
 from nexus.gui.main_window import MainWindow  # noqa: E402
 
 
 def main():
+    setup_logging()
     app = QApplication(sys.argv)
     app.setOrganizationName(Config.ORGANIZATION)
     app.setOrganizationDomain(Config.DOMAIN)

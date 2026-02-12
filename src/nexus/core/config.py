@@ -1,5 +1,6 @@
 """Configuration and Logging setup for Nexus."""
 import logging
+import os
 import sys
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
@@ -77,44 +78,58 @@ class Config:
     SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "ftps"]  # Supported URL protocols
 
 
-def setup_logging() -> logging.Logger:
-    """Setup application logging to a standard, user-accessible location."""
-    # Skip file logging during tests to avoid permission errors
-    import os
-    if os.getenv("PYTEST_CURRENT_TEST"):
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
-            force=True
-        )
-        return logging.getLogger("nexus")
+_LOGGER_INITIALIZED = False
 
-    log_dir = Path(
+
+def _resolve_log_dir() -> Path:
+    """Resolve log directory, allowing test and CI overrides."""
+    override = os.getenv("NEXUS_LOG_DIR")
+    if override:
+        return Path(override).expanduser()
+    return Path(
         QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
     )
-    log_dir.mkdir(parents=True, exist_ok=True)
 
-    # Configure root logger
+
+def setup_logging(force: bool = False) -> logging.Logger:
+    """Configure application logging lazily at runtime."""
+    global _LOGGER_INITIALIZED
+    if _LOGGER_INITIALIZED and not force:
+        return logging.getLogger("nexus")
+
+    handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
+
+    explicit_log_dir = os.getenv("NEXUS_LOG_DIR")
+
+    # Skip file handler during tests unless explicitly configured.
+    if explicit_log_dir or not os.getenv("PYTEST_CURRENT_TEST"):
+        try:
+            log_dir = _resolve_log_dir()
+            log_dir.mkdir(parents=True, exist_ok=True)
+            handlers.insert(0, logging.FileHandler(log_dir / Config.LOG_FILE))
+        except OSError as exc:
+            print(f"Warning: could not initialize Nexus file logger: {exc}")
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_dir / Config.LOG_FILE),
-            logging.StreamHandler(sys.stdout),
-        ],
-        force=True # Ensure we override any existing config
+        handlers=handlers,
+        force=True,
     )
+    _LOGGER_INITIALIZED = True
+    return logging.getLogger("nexus")
+
+
+def get_logger() -> logging.Logger:
+    """Return the Nexus logger, initializing handlers on first use."""
+    if not _LOGGER_INITIALIZED:
+        setup_logging()
     return logging.getLogger("nexus")
 
 def cleanup_logs():
     """Remove all log files and clear browsing traces for privacy."""
     try:
-        log_dir = Path(
-            QStandardPaths.writableLocation(
-                QStandardPaths.StandardLocation.AppDataLocation
-            )
-        )
+        log_dir = _resolve_log_dir()
         log_file = log_dir / Config.LOG_FILE
 
         if log_file.exists():
@@ -137,5 +152,5 @@ def cleanup_logs():
     except OSError as e:
         print(f"Warning: Could not fully cleanup logs: {e}")
 
-# Create global logger instance for imports
-logger = setup_logging()
+# Global logger handle; handlers are configured lazily via setup_logging().
+logger = logging.getLogger("nexus")
