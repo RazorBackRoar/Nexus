@@ -4,7 +4,6 @@ from nexus.utils.url_processor import URLProcessor
 
 
 class TestURLProcessor(unittest.TestCase):
-
     def test_extract_urls_simple(self):
         processor = URLProcessor()
         text = "Visit https://example.com for more info."
@@ -24,9 +23,14 @@ class TestURLProcessor(unittest.TestCase):
         # Test adding scheme
         self.assertEqual(processor._normalize_url("example.com"), "https://example.com")
         # Test keeping scheme
-        self.assertEqual(processor._normalize_url("http://example.com"), "http://example.com")
+        self.assertEqual(
+            processor._normalize_url("http://example.com"), "http://example.com"
+        )
         # Test trimming
-        self.assertEqual(processor._normalize_url("  https://example.com  "), "https://example.com")
+        self.assertEqual(
+            processor._normalize_url("  https://example.com  "), "https://example.com"
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

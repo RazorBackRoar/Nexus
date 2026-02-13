@@ -1,4 +1,5 @@
 """Configuration and Logging setup for Nexus."""
+
 import logging
 import os
 import sys
@@ -14,13 +15,16 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib  # type: ignore
 
+
 def resolve_version(default: str = "0.0.0") -> str:
     try:
         return pkg_version("Nexus")
     except PackageNotFoundError:
         # Fallback to finding pyproject.toml relative to this file
         # core/config.py -> core -> nexus -> src -> root
-        pyproject = Path(__file__).resolve().parent.parent.parent.parent / "pyproject.toml"
+        pyproject = (
+            Path(__file__).resolve().parent.parent.parent.parent / "pyproject.toml"
+        )
         if pyproject.exists():
             try:
                 with pyproject.open("rb") as fp:
@@ -29,6 +33,7 @@ def resolve_version(default: str = "0.0.0") -> str:
             except Exception:
                 pass
     return default
+
 
 class Config:
     """Application configuration constants."""
@@ -126,6 +131,7 @@ def get_logger() -> logging.Logger:
         setup_logging()
     return logging.getLogger("nexus")
 
+
 def cleanup_logs():
     """Remove all log files and clear browsing traces for privacy."""
     try:
@@ -151,6 +157,7 @@ def cleanup_logs():
 
     except OSError as e:
         print(f"Warning: Could not fully cleanup logs: {e}")
+
 
 # Global logger handle; handlers are configured lazily via setup_logging().
 logger = logging.getLogger("nexus")

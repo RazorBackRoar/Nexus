@@ -1,4 +1,5 @@
 """Bookmark Manager to handle loading and saving of bookmarks."""
+
 import json
 from pathlib import Path
 from typing import Any

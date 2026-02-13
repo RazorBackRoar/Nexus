@@ -3,6 +3,7 @@
 
 Converts existing .icns file to proper format with all required sizes.
 """
+
 import os
 import shutil
 import subprocess
@@ -26,12 +27,24 @@ def extract_png_from_icns(icns_path, output_path, size=1024):
         # sips is a macOS command-line tool for image processing
         # -s format png: Set output format to PNG
         # --resampleWidth: Resize to specified width (maintains aspect ratio)
-        cmd = ['sips', '-s', 'format', 'png', '--resampleWidth', str(size), icns_path, '--out', output_path]
+        cmd = [
+            "sips",
+            "-s",
+            "format",
+            "png",
+            "--resampleWidth",
+            str(size),
+            icns_path,
+            "--out",
+            output_path,
+        ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
-            print(f"   ✅ Extracted {size}x{size} PNG from {os.path.basename(icns_path)}")
+            print(
+                f"   ✅ Extracted {size}x{size} PNG from {os.path.basename(icns_path)}"
+            )
             return True
         else:
             print(f"   ❌ sips failed: {result.stderr}")
@@ -40,6 +53,7 @@ def extract_png_from_icns(icns_path, output_path, size=1024):
     except Exception as e:
         print(f"   ❌ Error extracting PNG: {e}")
         return False
+
 
 def create_icns_from_png(png_path, output_icns):
     """Create a proper .icns file from PNG using iconutil (macOS built-in tool).
@@ -57,40 +71,40 @@ def create_icns_from_png(png_path, output_icns):
     """
     try:
         # Create a .iconset directory - this is what iconutil expects
-        iconset_dir = png_path.replace('.png', '.iconset')
+        iconset_dir = png_path.replace(".png", ".iconset")
         os.makedirs(iconset_dir, exist_ok=True)
 
         # Define all required icon sizes for macOS
         # Format: (pixel_size, filename_in_iconset)
         sizes = [
-            (16, 'icon_16x16.png'),           # Small icons (Finder, etc.)
-            (32, 'icon_16x16@2x.png'),        # 16x16 Retina version
-            (32, 'icon_32x32.png'),           # Standard 32x32
-            (64, 'icon_32x32@2x.png'),        # 32x32 Retina version
-            (128, 'icon_128x128.png'),        # Standard 128x128
-            (256, 'icon_128x128@2x.png'),     # 128x128 Retina version
-            (256, 'icon_256x256.png'),        # Standard 256x256
-            (512, 'icon_256x256@2x.png'),     # 256x256 Retina version
-            (512, 'icon_512x512.png'),        # Standard 512x512
-            (1024, 'icon_512x512@2x.png')     # 512x512 Retina version (largest)
+            (16, "icon_16x16.png"),  # Small icons (Finder, etc.)
+            (32, "icon_16x16@2x.png"),  # 16x16 Retina version
+            (32, "icon_32x32.png"),  # Standard 32x32
+            (64, "icon_32x32@2x.png"),  # 32x32 Retina version
+            (128, "icon_128x128.png"),  # Standard 128x128
+            (256, "icon_128x128@2x.png"),  # 128x128 Retina version
+            (256, "icon_256x256.png"),  # Standard 256x256
+            (512, "icon_256x256@2x.png"),  # 256x256 Retina version
+            (512, "icon_512x512.png"),  # Standard 512x512
+            (1024, "icon_512x512@2x.png"),  # 512x512 Retina version (largest)
         ]
 
         # Open the source PNG and ensure it has transparency (RGBA)
         with Image.open(png_path) as img:
-            if img.mode != 'RGBA':
+            if img.mode != "RGBA":
                 # Convert to RGBA to preserve transparency
-                img = img.convert('RGBA')
+                img = img.convert("RGBA")
 
             # Create each required size
             for size, filename in sizes:
                 # Use LANCZOS resampling for high-quality resizing
                 resized = img.resize((size, size), Image.Resampling.LANCZOS)
-                resized.save(os.path.join(iconset_dir, filename), 'PNG')
+                resized.save(os.path.join(iconset_dir, filename), "PNG")
 
         print(f"   ✅ Created all {len(sizes)} icon sizes in iconset")
 
         # Use iconutil to convert the .iconset directory to .icns file
-        cmd = ['iconutil', '-c', 'icns', iconset_dir, '-o', output_icns]
+        cmd = ["iconutil", "-c", "icns", iconset_dir, "-o", output_icns]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
@@ -105,6 +119,7 @@ def create_icns_from_png(png_path, output_icns):
     except Exception as e:
         print(f"   ❌ Error creating icns: {e}")
         return False
+
 
 def main():
     """Main function that orchestrates the icon conversion process."""
@@ -145,6 +160,7 @@ def main():
             os.remove(temp_png)
         print("   ❌ Failed to create new .icns file")
         sys.exit(1)
+
 
 # This is the corrected line - note the double underscores
 if __name__ == "__main__":

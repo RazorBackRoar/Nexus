@@ -1,4 +1,5 @@
 """Data models for Nexus."""
+
 from dataclasses import dataclass, field
 
 

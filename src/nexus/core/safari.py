@@ -1,4 +1,5 @@
 """Safari Automation Controller."""
+
 import asyncio
 import random
 from urllib.parse import urlparse
@@ -249,18 +250,18 @@ class SafariController:
             '''
 
         try:
-             process = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 "osascript",
                 "-e",
                 script,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-             stdout, stderr = await process.communicate()
-             if process.returncode != 0:
-                 logger.error("AppleScript error: %s", stderr.decode())
-                 return False
-             return True
+            stdout, stderr = await process.communicate()
+            if process.returncode != 0:
+                logger.error("AppleScript error: %s", stderr.decode())
+                return False
+            return True
         except Exception as e:
             logger.error("Failed to run AppleScript: %s", e)
             return False
@@ -268,4 +269,6 @@ class SafariController:
     @staticmethod
     async def _open_url_batch(urls: list[str], private_mode: bool = True) -> bool:
         """Legacy batch opener."""
-        return await SafariController._open_url_batch_with_stealth(urls, is_first=True, private_mode=private_mode)
+        return await SafariController._open_url_batch_with_stealth(
+            urls, is_first=True, private_mode=private_mode
+        )
