@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
 **Package:** `nexus`
-**Version:** 3.0.0
+**Version:** 3.1.0
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -138,7 +138,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
