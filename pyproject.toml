@@ -8,7 +8,7 @@
 
 [project]
 name = "nexus"
-version = "3.5.0"
+version = "3.6.0"
 description = "Nexus desktop bookmark and URL manager"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
