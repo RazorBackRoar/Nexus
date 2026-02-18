@@ -46,6 +46,18 @@ jobs:
       - name: Run Ruff format check
         run: ruff format --check .
 
+      - name: Prepare ty search paths
+        run: |
+          SITE_PACKAGES="$(python - <<'PY'
+          import sysconfig
+          print(sysconfig.get_paths()['purelib'])
+          PY
+          )"
+          sudo mkdir -p /Users/home/Library/Python/3.13/lib/python
+          sudo ln -sfn "$SITE_PACKAGES" /Users/home/Library/Python/3.13/lib/python/site-packages
+          sudo mkdir -p /opt/homebrew/lib/python3.13
+          sudo ln -sfn "$SITE_PACKAGES" /opt/homebrew/lib/python3.13/site-packages
+
       - name: Run ty
         run: ty check
 
