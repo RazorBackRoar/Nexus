@@ -671,7 +671,7 @@ class MainWindow(QMainWindow):
 
             # Use AsyncWorker for non-blocking UI
             self.worker = AsyncWorker(self._open_urls_with_tracking, urls, private_mode)
-            self.worker.finished.connect(
+            self.worker.result_ready.connect(
                 lambda success: self._on_safari_operation_complete(success, len(urls))
             )
             self.worker.error.connect(

@@ -34,11 +34,31 @@ from nexus.core.config import Config, logger
 from nexus.utils.url_processor import URLProcessor
 
 
-class AsyncWorker(QThread):
-    """Generic QThread worker for running asynchronous tasks off the main UI thread."""
+try:
+    from razorcore.threading import BaseWorker
+except Exception:
+    # Fallback for standalone Nexus environments where razorcore is unavailable.
+    class BaseWorker(QThread):
+        finished = Signal(dict)
+        error = Signal(str)
 
-    finished = Signal(object)
-    error = Signal(str)
+        def do_work(self):
+            raise NotImplementedError
+
+        def run(self):
+            try:
+                result = self.do_work() or {}
+                self.finished.emit(result)
+            except Exception as e:
+                logger.error("Fallback worker error: %s", e, exc_info=True)
+                self.error.emit(str(e))
+                self.finished.emit({"error": str(e)})
+
+
+class AsyncWorker(BaseWorker):
+    """Generic worker for running asynchronous tasks off the main UI thread."""
+
+    result_ready = Signal(object)
 
     def __init__(self, coro_func, *args, **kwargs):
         super().__init__()
@@ -46,16 +66,14 @@ class AsyncWorker(QThread):
         self.args = args
         self.kwargs = kwargs
 
-    def run(self):
+    def do_work(self):
         loop = None
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(self.coro_func(*self.args, **self.kwargs))
-            self.finished.emit(result)
-        except Exception as e:
-            logger.error("Async worker error: %s", e, exc_info=True)
-            self.error.emit(str(e))
+            self.result_ready.emit(result)
+            return {"result": result}
         finally:
             if loop:
                 asyncio.set_event_loop(None)
