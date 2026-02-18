@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from core import DATA_DIR, search
+from razorcore.ascii_box import format_design_system_ascii_box
 
 
 # ============ CONFIGURATION ============
@@ -239,127 +240,7 @@ BOX_WIDTH = 90  # Wider box for more content
 
 def format_ascii_box(design_system: dict) -> str:
     """Format design system as ASCII box with emojis (MCP-style)."""
-    project = design_system.get("project_name", "PROJECT")
-    pattern = design_system.get("pattern", {})
-    style = design_system.get("style", {})
-    colors = design_system.get("colors", {})
-    typography = design_system.get("typography", {})
-    effects = design_system.get("key_effects", "")
-    anti_patterns = design_system.get("anti_patterns", "")
-
-    def wrap_text(text: str, prefix: str, width: int) -> list:
-        """Wrap long text into multiple lines."""
-        if not text:
-            return []
-        words = text.split()
-        lines = []
-        current_line = prefix
-        for word in words:
-            if len(current_line) + len(word) + 1 <= width - 2:
-                current_line += (" " if current_line != prefix else "") + word
-            else:
-                if current_line != prefix:
-                    lines.append(current_line)
-                current_line = prefix + word
-        if current_line != prefix:
-            lines.append(current_line)
-        return lines
-
-    # Build sections from pattern
-    sections = pattern.get("sections", "").split(">")
-    sections = [s.strip() for s in sections if s.strip()]
-
-    # Build output lines
-    lines = []
-    w = BOX_WIDTH - 1
-
-    lines.append("+" + "-" * w + "+")
-    lines.append(f"|  TARGET: {project} - RECOMMENDED DESIGN SYSTEM".ljust(BOX_WIDTH) + "|")
-    lines.append("+" + "-" * w + "+")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Pattern section
-    lines.append(f"|  PATTERN: {pattern.get('name', '')}".ljust(BOX_WIDTH) + "|")
-    if pattern.get('conversion'):
-        lines.append(f"|     Conversion: {pattern.get('conversion', '')}".ljust(BOX_WIDTH) + "|")
-    if pattern.get('cta_placement'):
-        lines.append(f"|     CTA: {pattern.get('cta_placement', '')}".ljust(BOX_WIDTH) + "|")
-    lines.append("|     Sections:".ljust(BOX_WIDTH) + "|")
-    for i, section in enumerate(sections, 1):
-        lines.append(f"|       {i}. {section}".ljust(BOX_WIDTH) + "|")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Style section
-    lines.append(f"|  STYLE: {style.get('name', '')}".ljust(BOX_WIDTH) + "|")
-    if style.get("keywords"):
-        for line in wrap_text(f"Keywords: {style.get('keywords', '')}", "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-    if style.get("best_for"):
-        for line in wrap_text(f"Best For: {style.get('best_for', '')}", "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-    if style.get("performance") or style.get("accessibility"):
-        perf_a11y = f"Performance: {style.get('performance', '')} | Accessibility: {style.get('accessibility', '')}"
-        lines.append(f"|     {perf_a11y}".ljust(BOX_WIDTH) + "|")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Colors section
-    lines.append("|  COLORS:".ljust(BOX_WIDTH) + "|")
-    lines.append(f"|     Primary:    {colors.get('primary', '')}".ljust(BOX_WIDTH) + "|")
-    lines.append(f"|     Secondary:  {colors.get('secondary', '')}".ljust(BOX_WIDTH) + "|")
-    lines.append(f"|     CTA:        {colors.get('cta', '')}".ljust(BOX_WIDTH) + "|")
-    lines.append(f"|     Background: {colors.get('background', '')}".ljust(BOX_WIDTH) + "|")
-    lines.append(f"|     Text:       {colors.get('text', '')}".ljust(BOX_WIDTH) + "|")
-    if colors.get("notes"):
-        for line in wrap_text(f"Notes: {colors.get('notes', '')}", "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Typography section
-    lines.append(f"|  TYPOGRAPHY: {typography.get('heading', '')} / {typography.get('body', '')}".ljust(BOX_WIDTH) + "|")
-    if typography.get("mood"):
-        for line in wrap_text(f"Mood: {typography.get('mood', '')}", "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-    if typography.get("best_for"):
-        for line in wrap_text(f"Best For: {typography.get('best_for', '')}", "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-    if typography.get("google_fonts_url"):
-        lines.append(f"|     Google Fonts: {typography.get('google_fonts_url', '')}".ljust(BOX_WIDTH) + "|")
-    if typography.get("css_import"):
-        lines.append(f"|     CSS Import: {typography.get('css_import', '')[:70]}...".ljust(BOX_WIDTH) + "|")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Key Effects section
-    if effects:
-        lines.append("|  KEY EFFECTS:".ljust(BOX_WIDTH) + "|")
-        for line in wrap_text(effects, "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-        lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Anti-patterns section
-    if anti_patterns:
-        lines.append("|  AVOID (Anti-patterns):".ljust(BOX_WIDTH) + "|")
-        for line in wrap_text(anti_patterns, "|     ", BOX_WIDTH):
-            lines.append(line.ljust(BOX_WIDTH) + "|")
-        lines.append("|" + " " * BOX_WIDTH + "|")
-
-    # Pre-Delivery Checklist section
-    lines.append("|  PRE-DELIVERY CHECKLIST:".ljust(BOX_WIDTH) + "|")
-    checklist_items = [
-        "[ ] No emojis as icons (use SVG: Heroicons/Lucide)",
-        "[ ] cursor-pointer on all clickable elements",
-        "[ ] Hover states with smooth transitions (150-300ms)",
-        "[ ] Light mode: text contrast 4.5:1 minimum",
-        "[ ] Focus states visible for keyboard nav",
-        "[ ] prefers-reduced-motion respected",
-        "[ ] Responsive: 375px, 768px, 1024px, 1440px"
-    ]
-    for item in checklist_items:
-        lines.append(f"|     {item}".ljust(BOX_WIDTH) + "|")
-    lines.append("|" + " " * BOX_WIDTH + "|")
-
-    lines.append("+" + "-" * w + "+")
-
-    return "\n".join(lines)
+    return format_design_system_ascii_box(design_system, box_width=BOX_WIDTH)
 
 
 def format_markdown(design_system: dict) -> str:
