@@ -1,5 +1,7 @@
 # Nexus
 
+> Workspace context source: `/Users/home/Workspace/Apps/.code-analysis/` (`AGENTS.md`, `monorepo-analysis.md`, `essential-queries.md`).
+
 [![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pyproject.toml)
@@ -76,7 +78,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cd Nexus
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
