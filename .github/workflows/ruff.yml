@@ -19,6 +19,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Fetch canonical Ruff config
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/RazorBackRoar/razorcore/main/src/razorcore/configs/ruff.toml -o ../ruff.toml
       - name: Run Ruff
         run: |
           ruff check --force-exclude $(git ls-files '*.py')

@@ -29,6 +29,10 @@ jobs:
           pip install -e .
           pip install ruff ty pytest pytest-cov
 
+      - name: Fetch canonical Ruff config
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/RazorBackRoar/razorcore/main/src/razorcore/configs/ruff.toml -o ../ruff.toml
+
       - name: Guard Ruff SSOT
         run: |
           if grep -nE '^\[tool\.ruff(\..*)?\]$' pyproject.toml; then
