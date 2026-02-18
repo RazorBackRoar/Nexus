@@ -31,7 +31,7 @@ jobs:
 
       - name: Fetch canonical Ruff config
         run: |
-          curl -fsSL https://raw.githubusercontent.com/RazorBackRoar/razorcore/main/src/razorcore/configs/ruff.toml -o ../ruff.toml
+          cp ruff.ci.toml ../ruff.toml
 
       - name: Guard Ruff SSOT
         run: |
