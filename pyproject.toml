@@ -172,6 +172,15 @@ source = ["nexus"]
 show_missing = true
 skip_covered = true
 
+[tool.ty.src]
+exclude = [
+    ".agent/**",
+    ".shared/**",
+]
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["razorcore.threading"]
+
 [tool.ty.environment]
 extra-paths = [
     "src",
