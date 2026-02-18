@@ -11,6 +11,36 @@ class SafariController:
     """Manages all interaction with Safari via AppleScript with anti-detection features."""
 
     @staticmethod
+    def _escape_applescript_string(value: str) -> str:
+        """Escape user-provided strings before embedding in AppleScript."""
+        return (
+            value.replace("\\", "\\\\")
+            .replace('"', '\\"')
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+        )
+
+    @staticmethod
+    async def _wait_for_safari_ready(
+        attempts: int = 20, delay_seconds: float = 0.25
+    ) -> bool:
+        """Wait until Safari can respond to AppleScript commands."""
+        ready_script = 'tell application "Safari" to count of windows'
+        for _ in range(attempts):
+            process = await asyncio.create_subprocess_exec(
+                "osascript",
+                "-e",
+                ready_script,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            await process.communicate()
+            if process.returncode == 0:
+                return True
+            await asyncio.sleep(delay_seconds)
+        return False
+
+    @staticmethod
     async def check_safari_status() -> bool:
         """Check if Safari is running and launch it if not."""
         try:
@@ -37,9 +67,14 @@ class SafariController:
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-                await launch_process.communicate()
-                # Give Safari time to launch
-                await asyncio.sleep(2.0)
+                _stdout, stderr = await launch_process.communicate()
+                if launch_process.returncode != 0:
+                    logger.error("Failed to launch Safari: %s", stderr.decode().strip())
+                    return False
+
+            if not await SafariController._wait_for_safari_ready():
+                logger.error("Safari did not become ready for AppleScript commands")
+                return False
 
             return True
         except (TimeoutError, OSError) as e:
@@ -213,6 +248,7 @@ class SafariController:
             return True
 
         if is_first:
+            first_url = SafariController._escape_applescript_string(urls[0])
             # Create new window with first URL
             if private_mode:
                 # Private mode requires menu interaction usually, but let's try direct script
@@ -220,14 +256,14 @@ class SafariController:
                 # For now, standard 'make new document'
                 script = f'''
                     tell application "Safari"
-                        make new document with properties {{URL:"{urls[0]}"}}
+                        make new document with properties {{URL:"{first_url}"}}
                         activate
                     end tell
                 '''
             else:
                 script = f'''
                     tell application "Safari"
-                        make new document with properties {{URL:"{urls[0]}"}}
+                        make new document with properties {{URL:"{first_url}"}}
                         activate
                     end tell
                 '''
@@ -241,10 +277,11 @@ class SafariController:
 
         # Append remaining URLs as tabs
         for url in remaining:
+            escaped_url = SafariController._escape_applescript_string(url)
             script += f'''
                 tell application "Safari"
                     tell front window
-                        make new tab with properties {{URL:"{url}"}}
+                        make new tab with properties {{URL:"{escaped_url}"}}
                     end tell
                 end tell
             '''

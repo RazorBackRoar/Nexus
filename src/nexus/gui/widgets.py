@@ -53,12 +53,14 @@ class AsyncWorker(QThread):
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(self.coro_func(*self.args, **self.kwargs))
             self.finished.emit(result)
-        except (RuntimeError, asyncio.CancelledError) as e:
+        except Exception as e:
             logger.error("Async worker error: %s", e, exc_info=True)
             self.error.emit(str(e))
         finally:
-            if loop and not loop.is_closed():
-                loop.close()
+            if loop:
+                asyncio.set_event_loop(None)
+                if not loop.is_closed():
+                    loop.close()
 
 
 class URLTableWidget(QTableWidget):
