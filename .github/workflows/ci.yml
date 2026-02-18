@@ -27,7 +27,23 @@ jobs:
           touch requirements.txt
           pip install -r requirements.txt
           pip install -e .
-          pip install pytest pytest-cov
+          pip install ruff ty pytest pytest-cov
+
+      - name: Guard Ruff SSOT
+        run: |
+          if grep -nE '^\[tool\.ruff(\..*)?\]$' pyproject.toml; then
+            echo "Ruff must be configured via Apps/ruff.toml only."
+            exit 1
+          fi
+
+      - name: Run Ruff lint
+        run: ruff check .
+
+      - name: Run Ruff format check
+        run: ruff format --check .
+
+      - name: Run ty
+        run: ty check
 
       - name: Run tests
         env:
