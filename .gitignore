@@ -36,6 +36,9 @@ dist/*
 .venv/
 venv/
 
+# Ty cache
+.ty/
+
 # IDE
 .vscode/
 .idea/
