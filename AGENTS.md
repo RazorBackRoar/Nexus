@@ -40,7 +40,7 @@ When opening this project/workspace, load context in this order:
 ### ⚡ Performance Optimization (Bolt)
 
 - **Agent:** Bolt ⚡
-- **Activation:** `bolt` (alias `snake`) or `razorcore bolt`
+- **Activation:** `bolt` or `razorcore bolt`
 - **Goal:** < 2s startup, < 50MB bundle
 - **Journal:** `.razorcore/bolt/journal.md`
 
@@ -138,7 +138,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
