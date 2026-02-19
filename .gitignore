@@ -39,11 +39,15 @@ venv/
 # Ty cache
 .ty/
 
+# Personal documentation (IDE-hidden)
+/Users/home/Workspace/Documentation/
+
 # IDE
 .vscode/
 .idea/
 
 # Secrets
+.env
 .env.*
 !.env.example
 !.env.sample
