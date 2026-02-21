@@ -39,6 +39,9 @@ venv/
 # Ty cache
 .ty/
 
+# Hypothesis cache
+.hypothesis/
+
 # Personal documentation (IDE-hidden)
 /Users/home/Workspace/Documentation/
 
