@@ -22,6 +22,7 @@
     "**/htmlcov",
     "**/.idea",
     "**/.vscode",
+    "**/.ui-ux-pro-max",
     "**/.windsurf",
     "**/Icon",
     "resources"

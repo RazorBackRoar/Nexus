@@ -27,7 +27,39 @@ jobs:
           touch requirements.txt
           pip install -r requirements.txt
           pip install -e .
-          pip install pytest pytest-cov
+          pip install ruff ty pytest pytest-cov
+
+      - name: Fetch canonical Ruff config
+        run: |
+          cp ruff.ci.toml ../ruff.toml
+
+      - name: Guard Ruff SSOT
+        run: |
+          if grep -nE '^\[tool\.ruff(\..*)?\]$' pyproject.toml; then
+            echo "Ruff must be configured via Apps/ruff.toml only."
+            exit 1
+          fi
+
+      - name: Run Ruff lint
+        run: ruff check .
+
+      - name: Run Ruff format check
+        run: ruff format --check .
+
+      - name: Prepare ty search paths
+        run: |
+          SITE_PACKAGES="$(python - <<'PY'
+          import sysconfig
+          print(sysconfig.get_paths()['purelib'])
+          PY
+          )"
+          sudo mkdir -p /Users/home/Library/Python/3.13/lib/python
+          sudo ln -sfn "$SITE_PACKAGES" /Users/home/Library/Python/3.13/lib/python/site-packages
+          sudo mkdir -p /opt/homebrew/lib/python3.13
+          sudo ln -sfn "$SITE_PACKAGES" /opt/homebrew/lib/python3.13/site-packages
+
+      - name: Run ty
+        run: ty check
 
       - name: Run tests
         env:

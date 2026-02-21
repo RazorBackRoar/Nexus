@@ -1,0 +1,131 @@
+# ============================================================================
+# RAZORBACKROAR ECOSYSTEM - RUFF CONFIGURATION (SSOT)
+# ============================================================================
+# Location: /Users/home/Workspace/Apps/ruff.toml
+# Purpose: Single source of truth for linting & formatting across all projects
+#
+# Ruff automatically discovers this file by walking up the directory tree,
+# so all sub-projects (4Charm, Nexus, Papyrus, .razorcore) inherit these rules.
+#
+# Last Updated: 2026-02-03
+# Python Version: 3.13.x (STRICT LOCK)
+# ============================================================================
+
+# Line length matches PEP 8 and Black defaults
+line-length = 88
+
+# Target Python 3.13 specifically
+target-version = "py313"
+
+# Source code locations
+src = ["src"]
+
+# Exclude common directories that should never be linted
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "*.pyc",
+    ".pytest_cache",
+    ".ruff_cache",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".DS_Store",
+    # Third-party skills and shared utility scripts (not core ecosystem code)
+    ".agent",
+    ".shared",
+]
+
+# ============================================================================
+# RULE SELECTION
+# ============================================================================
+# Essential rules that catch real bugs without overwhelming developers
+
+[lint]
+select = [
+    # ESSENTIAL RULES - Always enforce
+    "E",      # pycodestyle errors (PEP 8 violations)
+    "F",      # pyflakes (undefined names, unused imports, etc.)
+    "I",      # isort (import sorting)
+
+    # CODE QUALITY - Catch common bugs
+    "B",      # flake8-bugbear (likely bugs and design problems)
+    "C4",     # flake8-comprehensions (better list/dict/set comprehensions)
+    "UP",     # pyupgrade (modernize Python code for your version)
+
+    # STYLE - Keep code readable
+    "N",      # pep8-naming (function/variable naming conventions)
+    "W",      # pycodestyle warnings
+
+    # DOCUMENTATION - Enforce good practices
+    "D",      # pydocstyle (docstring conventions)
+]
+
+# Rules to ignore (with explanations)
+ignore = [
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package
+    "D107",   # Missing docstring in __init__
+    # WHY: Docstrings are good but enforcing them everywhere is overwhelming
+
+    "E501",   # Line too long
+    # WHY: Ruff's formatter handles this automatically
+]
+
+# ============================================================================
+# SPECIFIC RULE CONFIGURATIONS
+# ============================================================================
+
+[lint.per-file-ignores]
+# Test files don't need docstrings and can use assert statements
+"tests/**/*.py" = ["D", "S101", "B905"]
+
+# __init__.py files often just import for convenience
+"__init__.py" = ["F401"]
+
+# Qt method overrides MUST use camelCase to match Qt's API
+# (keyPressEvent, paintEvent, closeEvent, enterEvent, leaveEvent, etc.)
+"**/ui/**/*.py" = ["N802"]
+"**/gui/**/*.py" = ["N802"]
+"**/styling/**/*.py" = ["N802"]
+"**/widgets.py" = ["N802"]
+"**/highlighter.py" = ["N802"]
+"**/app.py" = ["N802"]
+"**/window*.py" = ["N802"]
+
+# Entry point scripts often manipulate sys.path before imports
+"**/main.py" = ["E402"]
+"**/__main__.py" = ["E402"]
+"**/scripts/*.py" = ["E402", "D"]
+
+[lint.pydocstyle]
+# Use Google-style docstrings (most popular in Python community)
+convention = "google"
+
+[lint.isort]
+# Organize imports consistently
+known-first-party = ["razorcore", "four_charm", "nexus", "papyrus"]
+# WHY: Tells isort these are your packages, not third-party
+
+# Separate import groups with a blank line
+lines-after-imports = 2
+
+# ============================================================================
+# FORMATTING
+# ============================================================================
+
+[format]
+# Use double quotes for strings (Python community standard)
+quote-style = "double"
+
+# Use spaces for indentation (never tabs)
+indent-style = "space"
+
+# Keep line endings Unix-style (LF not CRLF)
+line-ending = "lf"
+# WHY: macOS uses Unix-style line endings
