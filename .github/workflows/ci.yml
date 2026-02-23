@@ -32,4 +32,5 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/src
+          QT_QPA_PLATFORM: offscreen
         run: pytest --cov=nexus --cov-report=term-missing --cov-report=xml
