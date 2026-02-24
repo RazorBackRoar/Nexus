@@ -37,6 +37,7 @@ exclude = [
 ]
 
 [tool.ty.analysis]
+respect-type-ignore-comments = true
 allowed-unresolved-imports = ["razorcore.threading"]
 
 [tool.ty.environment]

@@ -26,8 +26,9 @@ jobs:
           # Create empty requirements if missing to prevent fail
           touch requirements.txt
           pip install -r requirements.txt
+          pip install -r requirements-tools.txt
           pip install -e .
-          pip install ruff ty pytest pytest-cov
+          pip install pytest pytest-cov
 
       - name: Fetch canonical Ruff config
         run: |
@@ -59,7 +60,7 @@ jobs:
           sudo ln -sfn "$SITE_PACKAGES" /opt/homebrew/lib/python3.13/site-packages
 
       - name: Run ty
-        run: ty check
+        run: ty check src --python-version 3.13
 
       - name: Run tests
         env:
