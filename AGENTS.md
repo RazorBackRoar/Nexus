@@ -1,1 +1,1 @@
-/Users/home/Workspace/Windsurf Projects/.pythontemplates/agents/nexus.AGENTS.md
+/Users/home/Workspace/Windsurf/.pythontemplates/agents/nexus.AGENTS.md
