@@ -4,17 +4,19 @@ requires-python = "==3.13.*"
 
 [[package]]
 name = "nexus"
-version = "3.10.3"
+version = "3.10.5"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },
     { name = "pyside6" },
+    { name = "razorcore" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "pyside6", specifier = ">=6.6.0" },
+    { name = "razorcore", editable = "../.razorcore" },
 ]
 
 [[package]]
@@ -97,6 +99,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/22/a8/616bbbd009efd3e17bf9a2db09d90c6764c010565cd2bdea2a240bfd18f7/pyside6_essentials-6.10.2-cp39-abi3-win_amd64.whl", hash = "sha256:0741018c2b6395038cad4c41775cfae3f13a409e87995ac9f7d89e5b1fb6b22a", size = 74546490, upload-time = "2026-02-02T08:46:26.395Z" },
     { url = "https://files.pythonhosted.org/packages/b9/f9/c9757a984c4ffb6d12fab69e966d95dfc862a5d44e12b7900f3a03780b76/pyside6_essentials-6.10.2-cp39-abi3-win_arm64.whl", hash = "sha256:db5f4913648bb6afddb8b347edae151ee2378f12bceb03c8b2515a530a4b38d9", size = 55258626, upload-time = "2026-02-02T08:46:36.788Z" },
 ]
+
+[[package]]
+name = "razorcore"
+version = "1.139.0"
+source = { editable = "../.razorcore" }
+dependencies = [
+    { name = "pyside6" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyside6", specifier = ">=6.6.0" }]
 
 [[package]]
 name = "shiboken6"

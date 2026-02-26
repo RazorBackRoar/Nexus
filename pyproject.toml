@@ -24,6 +24,7 @@ requires-python = "==3.13.*"
 dependencies = [
     "PySide6>=6.6.0",
     "Pillow>=10.0.0",
+    "razorcore",
 ]
 
 # ============================================================================
@@ -195,3 +196,6 @@ extra-paths = [
     "/Users/home/Library/Python/3.13/lib/python/site-packages",
     "/opt/homebrew/lib/python3.13/site-packages",
 ]
+
+[tool.uv.sources]
+razorcore = { path = "../.razorcore", editable = true }

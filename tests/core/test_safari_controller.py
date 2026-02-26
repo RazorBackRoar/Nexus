@@ -52,7 +52,9 @@ def test_wait_for_safari_ready_retries_until_success(monkeypatch):
         return _DummyProcess(returncode=0, stdout=b"1\n")
 
     monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
-    ready = asyncio.run(SafariController._wait_for_safari_ready(attempts=5, delay_seconds=0))
+    ready = asyncio.run(
+        SafariController._wait_for_safari_ready(attempts=5, delay_seconds=0)
+    )
 
     assert ready is True
     assert attempt["count"] == 3
