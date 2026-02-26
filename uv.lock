@@ -4,7 +4,7 @@ requires-python = "==3.13.*"
 
 [[package]]
 name = "nexus"
-version = "3.10.5"
+version = "3.11.4"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },
@@ -102,7 +102,7 @@ wheels = [
 
 [[package]]
 name = "razorcore"
-version = "1.139.0"
+version = "1.154.0"
 source = { editable = "../.razorcore" }
 dependencies = [
     { name = "pyside6" },
