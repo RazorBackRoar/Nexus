@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-3.10.1-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
 Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
@@ -72,16 +72,17 @@ This project uses `.razorcore` for build tooling.
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.13
 - macOS 11.0+
 
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cd Nexus
-pip install -r requirements.txt
-pip install -e ../.razorcore  # Install build tools
+uv venv --python 3.13
+uv sync
+uv add --editable ../.razorcore
 ```
 
 ### Build & Release

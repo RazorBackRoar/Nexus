@@ -138,7 +138,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -357,8 +357,8 @@ razorcheck
 - Use `razorpush Nexus` (or `nexuspush`) for commit, version bump, tag, and push. Do not edit versions manually.
 - Build via `nexusbuild` or `razorbuild Nexus`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
-- If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
-- **Always run the app after making changes** (`python -m nexus.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
+- If you change `.razorcore` CLI commands or `pyproject.toml`, run `uv add --editable ../.razorcore`.
+- **Always run the app after making changes** (`uv run python -m nexus.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
 
 ---
 
@@ -497,9 +497,9 @@ pytest tests/test_safari_bridge.py -v
 - **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 - **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
 - **Code Analysis Agent Rules:** `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
-- **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
-- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Guides/cli_inventory.md`
-- **Nexus Manual:** `/Users/home/Workspace/Apps/Guides/nexus_manual.md`
+- **CLI Commands:** `/Users/home/Workspace/Apps/Docs/cli_commands.md`
+- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Docs/cli_inventory.md`
+- **Nexus Manual:** `/Users/home/Workspace/Apps/Docs/nexus_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
 
 ---
