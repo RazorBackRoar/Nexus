@@ -7,5 +7,5 @@ script = ""
 
 [[actions]]
 name = "Run"
-icon = "play"
+icon = "run"
 command = "./run_preview.sh"
