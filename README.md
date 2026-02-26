@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ruff.yml)
-[![Version](https://img.shields.io/badge/version-3.10.1-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-3.11.2-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
 Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
@@ -78,7 +78,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/Nexus.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+git clone <https://github.com/RazorBackRoar/Nexus.git>
 cd Nexus
 uv venv --python 3.13
 uv sync
