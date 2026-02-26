@@ -11,7 +11,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 ## 🏁 GLOBAL AUTHORITY
 
 All standard patterns must follow:
-👉 **`/Users/home/Workspace/Apps/MCP.md`**
+👉 **`/Users/home/Workspace/Apps/CONTEXT.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`**
@@ -19,7 +19,7 @@ All standard patterns must follow:
 This file contains **Nexus-specific** overrides and critical implementation details.
 
 When opening this project/workspace, load context in this order:
-1. `/Users/home/Workspace/Apps/MCP.md`
+1. `/Users/home/Workspace/Apps/CONTEXT.md`
 2. `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 3. `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
 4. `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
@@ -138,7 +138,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
