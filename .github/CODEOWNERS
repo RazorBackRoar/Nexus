@@ -1,1 +1,8 @@
+# Security-sensitive ownership map (updated 2026-02-27)
+# Add at least one additional human owner for each sensitive path.
+
+src/nexus/core/safari.py @RazorBackRoar
+src/nexus/core/bookmarks.py @RazorBackRoar
+src/nexus/utils/url_processor.py @RazorBackRoar
+
 * @RazorBackRoar
