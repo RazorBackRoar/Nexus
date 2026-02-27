@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🌀 Nexus - Safari Bookmark Manager Agent
 
 **Package:** `nexus`
-**Version:** 3.11.6
+**Version:** 3.11.7
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
