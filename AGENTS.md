@@ -138,7 +138,7 @@ plistlib.dump(data, f)
 {
 'Title': 'BookmarksBar',
 'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
+{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
 {'Title': 'Folder', 'Children': [...]}  # Nested folders
 ]
 },
@@ -520,5 +520,70 @@ pytest tests/test_safari_bridge.py -v
 ## RazorCore Usage
 
 See `/Users/home/Workspace/Apps/.razorcore/AGENTS.md` for the complete public API and safety rules.
+
+---
+
+## 🚀 Power-User Architecture & Quality Tools
+
+This project follows the RazorBackRoar workspace power-user architecture for multi-agent coordination and standardized quality assurance.
+
+### 📋 Multi-Agent Execution Protocol
+
+**Control Plane:** AGENTS.md files serve as enforceable execution policies
+
+**Branch Isolation:** One task per branch with naming conventions:
+- `feat/task-name` - New features
+- `fix/issue-description` - Bug fixes
+- `refactor/component-name` - Code improvements
+
+**Task Contract:** Standard task structure includes:
+- Objective, scope, constraints, commands, deliverables
+- Evidence bundle with diffs, test outputs, benchmarks
+- Demo-like runbook for reproducible execution
+
+### 🛠️ Standardized Quality Scripts
+
+Load the master quality script for complete code quality workflow:
+
+```bash
+# Load all quality functions (run once per session)
+source ~/.skills/scripts/quality.sh
+
+# Quick development check
+quality_quick
+
+# Full check with auto-fixes and coverage
+quality_full
+
+# Strict pre-commit validation
+quality_precommit
+
+# Check specific file
+quality_file src/main.py
+```
+
+**Available Scripts:**
+- `~/.skills/scripts/quality.sh` - Master script (test + lint + format)
+- `~/.skills/scripts/test.sh` - Pytest execution with coverage
+- `~/.skills/scripts/lint.sh` - Ruff linting + ty type checking
+- `~/.skills/scripts/format.sh` - Ruff code formatting
+
+**Quick Reference:**
+
+```bash
+# Individual operations
+source ~/.skills/scripts/test.sh && test_quick
+source ~/.skills/scripts/lint.sh && check_quick
+source ~/.skills/scripts/format.sh && format_all
+
+# Project setup with quality tools
+source ~/.skills/scripts/quality.sh && setup_quality
+```
+
+### 📚 Documentation
+
+- **Power-User Protocol:** `~/.skills/agents.md`
+- **Quality Scripts:** `~/.skills/scripts/README.md`
+- **Workspace Standards:** `/Users/home/Workspace/Apps/AGENTS.md`
 
 <!-- verification check Tue Jan 27 23:52:04 MST 2026 -->
