@@ -35,6 +35,7 @@ exclude = [
     ".DS_Store",
     # Third-party skills and shared utility scripts (not core ecosystem code)
     ".agent",
+    ".ui-ux-pro-max",
     ".shared",
 ]
 
