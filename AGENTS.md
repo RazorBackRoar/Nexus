@@ -1,6 +1,6 @@
-Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
-
 # 🌀 Nexus - Safari Bookmark Manager Agent
+
+> Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
 
 **Package:** `nexus`
 **Version:** 3.11.8
@@ -19,6 +19,7 @@ All standard patterns must follow:
 This file contains **Nexus-specific** overrides and critical implementation details.
 
 When opening this project/workspace, load context in this order:
+
 1. `/Users/home/Workspace/Apps/CONTEXT.md`
 2. `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 3. `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
@@ -78,76 +79,57 @@ from pathlib import Path
 import plistlib
 
 class BookmarkManager:
+    """Handles Safari bookmark file access."""
 
-```
-"""Handles Safari bookmark file access."""
+    # Modern macOS (Ventura 13.0+)
+    BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
 
-```text
+    def load_bookmarks(self) -> dict:
+        """
+        Load Safari bookmarks from binary plist.
 
-```
-# Modern macOS (Ventura 13.0+)
-BOOKMARKS_PATH = Path.home() / "Library/Safari/Bookmarks.plist"
+        CRITICAL: Must open in binary mode ('rb').
+        Modern macOS uses binary plist format, not XML.
+        """
+        try:
+            with open(self.BOOKMARKS_PATH, "rb") as f:
+                return plistlib.load(f)
+        except FileNotFoundError as exc:
+            raise RuntimeError(
+                "Safari bookmarks not found. Launch Safari at least once to create the file."
+            ) from exc
+        except PermissionError as exc:
+            raise RuntimeError(
+                "Permission denied. Grant Full Disk Access: "
+                "System Settings → Privacy & Security → Full Disk Access"
+            ) from exc
 
-```text
-
-```
-def load_bookmarks(self) -> dict:
-"""
-Load Safari bookmarks from binary plist.
-
-```text
-
-```
-⚠️ CRITICAL: Must open in binary mode ('rb')
-Modern macOS uses binary plist format, not XML.
-"""
-try:
-with open(self.BOOKMARKS_PATH, 'rb') as f:  # 'rb' not 'r'!
-return plistlib.load(f)
-except FileNotFoundError:
-raise RuntimeError(
-"Safari bookmarks not found. "
-"Launch Safari at least once to create the file."
-)
-except PermissionError:
-raise RuntimeError(
-"Permission denied. Grant Full Disk Access:\n"
-"System Settings → Privacy & Security → Full Disk Access"
-)
-
-```text
-
-```
-def save_bookmarks(self, data: dict):
-"""Save modified bookmarks back to Safari."""
-# ⚠️ Close Safari before saving to prevent conflicts
-with open(self.BOOKMARKS_PATH, 'wb') as f:  # 'wb' not 'w'!
-plistlib.dump(data, f)
-
-```text
+    def save_bookmarks(self, data: dict) -> None:
+        """Save modified bookmarks back to Safari."""
+        # Close Safari before saving to prevent conflicts.
+        with open(self.BOOKMARKS_PATH, "wb") as f:
+            plistlib.dump(data, f)
 
 ```
 
-**Plist Structure:**
+### Plist Structure
 
 ```python
 {
-
-```
-'Children': [
-{
-'Title': 'BookmarksBar',
-'Children': [
-{'URLString': '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://example.com',>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 'URIDictionary': {...}},
-{'Title': 'Folder', 'Children': [...]}  # Nested folders
-]
-},
-{'Title': 'BookmarksMenu', 'Children': [...]},
-{'Title': 'com.apple.ReadingList', 'Children': [...]}
-]
-
-```text
-
+    "Children": [
+        {
+            "Title": "BookmarksBar",
+            "Children": [
+                {
+                    "URLString": "https://example.com",
+                    "URIDictionary": {"title": "Example"},
+                },
+                {"Title": "Folder", "Children": [...]},
+            ],
+        },
+        {"Title": "BookmarksMenu", "Children": [...]},
+        {"Title": "com.apple.ReadingList", "Children": [...]},
+    ]
 }
 ```
 
@@ -160,64 +142,46 @@ from uuid import uuid4
 
 @dataclass
 class Bookmark:
+    """Individual bookmark item."""
 
-```
-"""Individual bookmark item."""
-title: str
-url: str
-uuid: str = None  # Auto-generate if not provided
+    title: str
+    url: str
+    uuid: str | None = None
 
-```text
+    def __post_init__(self):
+        if self.uuid is None:
+            self.uuid = str(uuid4())
 
-```
-def **post_init**(self):
-if self.uuid is None:
-self.uuid = str(uuid4())
+    def to_dict(self) -> dict:
+        """Convert to Safari plist format."""
+        return {
+            "URLString": self.url,
+            "URIDictionary": {"title": self.title},
+            "WebBookmarkUUID": self.uuid,
+            "WebBookmarkType": "WebBookmarkTypeLeaf",
+        }
 
-```text
-
-```
-def to_dict(self) -> dict:
-"""Convert to Safari plist format."""
-return {
-'URLString': self.url,
-'URIDictionary': {'title': self.title},
-'WebBookmarkUUID': self.uuid,
-'WebBookmarkType': 'WebBookmarkTypeLeaf'
-}
-
-```text
 
 @dataclass
 class BookmarkFolder:
+    """Folder containing bookmarks/subfolders."""
 
-```
-"""Folder containing bookmarks/subfolders."""
-title: str
-children: List[Union['Bookmark', 'BookmarkFolder']]
-uuid: str = None
+    title: str
+    children: List[Union["Bookmark", "BookmarkFolder"]]
+    uuid: str | None = None
 
-```text
+    def __post_init__(self):
+        if self.uuid is None:
+            self.uuid = str(uuid4())
 
-```
-def **post_init**(self):
-if self.uuid is None:
-self.uuid = str(uuid4())
-
-```text
-
-```
-def to_dict(self) -> dict:
-"""Convert to Safari plist format."""
-return {
-'Title': self.title,
-'Children': [child.to_dict() for child in self.children],
-'WebBookmarkUUID': self.uuid,
-'WebBookmarkType': 'WebBookmarkTypeList'
-}
-
-```text
-
+    def to_dict(self) -> dict:
+        """Convert to Safari plist format."""
+        return {
+            "Title": self.title,
+            "Children": [child.to_dict() for child in self.children],
+            "WebBookmarkUUID": self.uuid,
+            "WebBookmarkType": "WebBookmarkTypeList",
+        }
 ```
 
 ### 4. AppleScript Safari Automation
@@ -227,77 +191,58 @@ import subprocess
 from typing import List
 
 class SafariBridge:
+    """Controls Safari via AppleScript."""
 
-```
-"""Controls Safari via AppleScript."""
+    def open_urls(self, urls: List[str], new_window: bool = False):
+        """
+        Open URLs in Safari.
 
-```text
+        Args:
+            urls: List of URLs to open.
+            new_window: If True, opens in a new Safari window.
+        """
+        if not urls:
+            return
 
-```
-def open_urls(self, urls: List[str], new_window: bool = False):
-"""
-Open URLs in Safari.
-
-```text
-
-```
-Args:
-urls: List of URLs to open
-new_window: If True, opens in new Safari window
-"""
-# Build AppleScript
-if new_window:
-script = f'''
+        if new_window:
+            script = f'''
 tell application "Safari"
 activate
 make new document
 set URL of current tab of front window to "{urls[0]}"
 end tell
 '''
-else:
-script = f'''
+        else:
+            script = f'''
 tell application "Safari"
 activate
 open location "{urls[0]}"
 end tell
 '''
 
-```text
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
 
-```
-# Execute AppleScript
-result = subprocess.run(
-['osascript', '-e', script],
-capture_output=True,
-text=True,
-timeout=5
-)
+        if result.returncode != 0:
+            raise RuntimeError(f"AppleScript failed: {result.stderr}")
 
-```text
-
-```
-if result.returncode != 0:
-raise RuntimeError(f"AppleScript failed: {result.stderr}")
-
-```text
-
-```
-def get_current_url(self) -> str:
-"""Get URL of current Safari tab."""
-script = '''
+    def get_current_url(self) -> str:
+        """Get URL of the current Safari tab."""
+        script = '''
 tell application "Safari"
 return URL of current tab of front window
 end tell
 '''
-result = subprocess.run(
-['osascript', '-e', script],
-capture_output=True,
-text=True
-)
-return result.stdout.strip()
-
-```text
-
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
 ```
 
 ---
@@ -368,6 +313,7 @@ razorcheck
 
 **Cause:** Missing Full Disk Access
 **Fix:**
+
 1. System Settings → Privacy & Security → Full Disk Access
 2. Add Terminal.app, VS Code.app, Nexus.app
 3. **Restart Terminal/IDE after granting permission**
@@ -385,20 +331,11 @@ razorcheck
 ```python
 # ❌ WRONG
 with open(path, 'r') as f:
-
-```
-data = plistlib.load(f)
-
-```text
+    data = plistlib.load(f)
 
 # ✅ CORRECT
 with open(path, 'rb') as f:  # Binary mode!
-
-```
-data = plistlib.load(f)
-
-```text
-
+    data = plistlib.load(f)
 ```
 
 ### ❌ AppleScript Timeout or "Application isn't running"
@@ -409,24 +346,14 @@ data = plistlib.load(f)
 ```python
 # Check if Safari is running first
 result = subprocess.run(
-
-```
-['osascript', '-e', 'tell application "System Events" to (name of processes) contains "Safari"'],
-capture_output=True,
-text=True
-
-```text
-
+    ['osascript', '-e', 'tell application "System Events" to (name of processes) contains "Safari"'],
+    capture_output=True,
+    text=True
 )
 if 'true' not in result.stdout:
-
-```
-# Launch Safari first
-subprocess.run(['open', '-a', 'Safari'])
-time.sleep(1)  # Wait for launch
-
-```text
-
+    # Launch Safari first
+    subprocess.run(['open', '-a', 'Safari'])
+    time.sleep(1)  # Wait for launch
 ```
 
 ### ❌ Bookmarks Disappear After Save
@@ -436,22 +363,14 @@ time.sleep(1)  # Wait for launch
 
 ```python
 def save_bookmarks(self, data: dict):
+    """Always close Safari before saving."""
+    # Warn user to close Safari
+    subprocess.run(['osascript', '-e', 'tell application "Safari" to quit'])
+    time.sleep(0.5)
 
-```
-"""Always close Safari before saving."""
-# Warn user to close Safari
-subprocess.run(['osascript', '-e', 'tell application "Safari" to quit'])
-time.sleep(0.5)
-
-```text
-
-```
-# Now safe to save
-with open(self.BOOKMARKS_PATH, 'wb') as f:
-plistlib.dump(data, f)
-
-```text
-
+    # Now safe to save
+    with open(self.BOOKMARKS_PATH, 'wb') as f:
+        plistlib.dump(data, f)
 ```
 
 ### ❌ ModuleNotFoundError in Built .app
@@ -461,14 +380,9 @@ plistlib.dump(data, f)
 
 ```python
 hiddenimports=[
-
-```
-'razorcore.styling',
-'razorcore.threading',
-'razorcore.appinfo',
-
-```text
-
+    'razorcore.styling',
+    'razorcore.threading',
+    'razorcore.appinfo',
 ]
 ```
 
@@ -532,11 +446,13 @@ This project follows the RazorBackRoar workspace power-user architecture for mul
 **Control Plane:** AGENTS.md files serve as enforceable execution policies
 
 **Branch Isolation:** One task per branch with naming conventions:
+
 - `feat/task-name` - New features
 - `fix/issue-description` - Bug fixes
 - `refactor/component-name` - Code improvements
 
 **Task Contract:** Standard task structure includes:
+
 - Objective, scope, constraints, commands, deliverables
 - Evidence bundle with diffs, test outputs, benchmarks
 - Demo-like runbook for reproducible execution
@@ -563,6 +479,7 @@ quality_file src/main.py
 ```
 
 **Available Scripts:**
+
 - `~/.skills/scripts/quality.sh` - Master script (test + lint + format)
 - `~/.skills/scripts/test.sh` - Pytest execution with coverage
 - `~/.skills/scripts/lint.sh` - Ruff linting + ty type checking
