@@ -1,0 +1,37 @@
+{
+  "project_type": "python_application",
+  "main_entry": "src/nexus/main.py",
+  "python": {
+    "version": "3.13",
+    "venv_path": ".venv",
+    "linter": "ruff",
+    "formatter": "ruff",
+    "test_runner": "pytest"
+  },
+  "dependencies": {
+    "core": ["PySide6", "Pillow", "razorcore"],
+    "dev": ["pytest", "ruff", "ty"]
+  },
+  "exclude": [
+    "**/.venv/**", "**/build/**", "**/dist/**",
+    "**/__pycache__/**", "**/.pytest_cache/**", "**/.ruff_cache/**",
+    "**/.agent/**", "**/.shared/**"
+  ],
+  "rules": [
+    {
+      "pattern": "**/*.{py,md,txt,json,toml}",
+      "description": "Nexus development patterns",
+      "actions": ["analyze", "suggest"]
+    },
+    {
+      "pattern": "src/nexus/**/*.py",
+      "description": "Core application files",
+      "actions": ["analyze", "suggest", "refactor"]
+    },
+    {
+      "pattern": "tests/**/*.py",
+      "description": "Test files",
+      "actions": ["analyze", "test", "coverage"]
+    }
+  ]
+}
