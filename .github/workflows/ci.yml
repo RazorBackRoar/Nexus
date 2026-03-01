@@ -34,4 +34,4 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-        run: uv run pytest --cov=nexus --cov-report=term-missing --cov-report=xml
+        run: uv run --with pytest --with pytest-cov pytest --cov=nexus --cov-report=term-missing --cov-report=xml
