@@ -197,5 +197,8 @@ extra-paths = [
     "/opt/homebrew/lib/python3.13/site-packages",
 ]
 
+[dependency-groups]
+dev = ["pyinstaller>=6.0"]
+
 [tool.uv.sources]
 razorcore = { path = "../.razorcore", editable = true }

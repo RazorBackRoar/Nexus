@@ -21,7 +21,7 @@ characters
 
 - [ ] 1.2 Implement _split_concatenated_urls method
   - Create new method to detect and split stacked URLs
-  - Handle cases like "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://site1.comhttps://site2.com">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  - Handle cases like "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://site1.comhttps://site2.com">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   - Use domain boundary detection logic
   - _Requirements: 1.2_
 

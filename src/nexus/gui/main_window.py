@@ -223,7 +223,8 @@ class MainWindow(QMainWindow):
     def _setup_window(self):
         """Sets up the main window properties with Glass Noir styling."""
         self.setWindowTitle("Nexus")  # Set title for Dock
-        self.setGeometry(200, 200, 1100, 650)  # Increased width for buttons
+        self.setMinimumSize(1100, 700)
+        self.resize(1100, 700)
         # Glass Noir gradient background
         self.setStyleSheet("""
             QMainWindow {
