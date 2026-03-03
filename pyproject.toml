@@ -198,7 +198,11 @@ extra-paths = [
 ]
 
 [dependency-groups]
-dev = ["pyinstaller>=6.0"]
+dev = [
+    "pyinstaller>=6.0",
+    "ruff>=0.15.4",
+    "ty>=0.0.20",
+]
 
 [tool.uv.sources]
 razorcore = { path = "../.razorcore", editable = true }
