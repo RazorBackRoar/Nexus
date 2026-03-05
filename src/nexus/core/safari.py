@@ -249,24 +249,22 @@ class SafariController:
 
         if is_first:
             first_url = SafariController._escape_applescript_string(urls[0])
-            # Create new window with first URL
+            # NOTE: Safari private/reader mode cannot be reliably opened via standard
+            # AppleScript — it requires UI scripting (File > New Private Window) which
+            # needs Accessibility permissions and is fragile across macOS versions.
+            # We open a standard window regardless of the private_mode flag.
             if private_mode:
-                # Private mode requires menu interaction usually, but let's try direct script
-                # or standard window if private not easily scriptable without UI scripting
-                # For now, standard 'make new document'
-                script = f'''
-                    tell application "Safari"
-                        make new document with properties {{URL:"{first_url}"}}
-                        activate
-                    end tell
-                '''
-            else:
-                script = f'''
-                    tell application "Safari"
-                        make new document with properties {{URL:"{first_url}"}}
-                        activate
-                    end tell
-                '''
+                logger.warning(
+                    "private_mode=True requested but Safari private windows cannot be "
+                    "opened via AppleScript without Accessibility permissions. "
+                    "Opening in a standard window instead."
+                )
+            script = f'''
+                tell application "Safari"
+                    make new document with properties {{URL:"{first_url}"}}
+                    activate
+                end tell
+            '''
 
             # For the rest of the batch, add tabs
             remaining = urls[1:]

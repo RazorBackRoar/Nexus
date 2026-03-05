@@ -25,7 +25,7 @@ wheels = [
 
 [[package]]
 name = "nexus"
-version = "3.12.2"
+version = "3.12.3"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },
@@ -205,7 +205,7 @@ wheels = [
 
 [[package]]
 name = "razorcore"
-version = "1.188.0"
+version = "1.192.0"
 source = { editable = "../.razorcore" }
 dependencies = [
     { name = "pyside6" },
@@ -213,6 +213,12 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "pyside6", specifier = ">=6.6.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ruff", specifier = ">=0.15.4" },
+    { name = "ty", specifier = ">=0.0.20" },
+]
 
 [[package]]
 name = "ruff"
