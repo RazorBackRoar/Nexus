@@ -5,20 +5,16 @@ A fully themeable, production-ready PySide6 app with a "neon outline" aesthetic,
 hierarchical bookmarks, and powerful Safari automation.
 """
 
-import os
 import sys
+from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
+from nexus.core.config import Config, setup_logging
+from nexus.gui.main_window import MainWindow
 
-# Add src directory to Python path to allow 'nexus' package imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.dirname(current_dir)
-if src_dir not in sys.path:
-    sys.path.insert(0, src_dir)
 
-from nexus.core.config import Config, setup_logging  # noqa: E402
-from nexus.gui.main_window import MainWindow  # noqa: E402
+_PACKAGE_DIR = Path(__file__).resolve().parent
 
 
 def main():
@@ -29,13 +25,11 @@ def main():
     app.setApplicationName(Config.APP_NAME)
 
     # Set app icon
-    icon_path = os.path.join(
-        os.path.dirname(current_dir), "assets", "icons", "Nexus.icns"
-    )
-    if os.path.exists(icon_path):
+    icon_path = _PACKAGE_DIR.parent / "assets" / "icons" / "Nexus.icns"
+    if icon_path.exists():
         from PySide6.QtGui import QIcon
 
-        app.setWindowIcon(QIcon(icon_path))
+        app.setWindowIcon(QIcon(str(icon_path)))
 
         # macOS: Set Dock icon when running from source
         if sys.platform == "darwin":
@@ -46,7 +40,7 @@ def main():
                 )
 
                 ns_app = NSApplication.sharedApplication()
-                ns_image = NSImage.alloc().initWithContentsOfFile_(icon_path)
+                ns_image = NSImage.alloc().initWithContentsOfFile_(str(icon_path))
                 if ns_image:
                     ns_app.setApplicationIconImage_(ns_image)
             except ImportError:
