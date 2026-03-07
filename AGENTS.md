@@ -36,3 +36,23 @@ Add focused checks when relevant:
 - Safari, bookmark, or main-window behavior: run `uv run python -m nexus.main`
 
 If runtime verification is blocked by Safari state or macOS Automation permission, say that explicitly instead of implying the code path was exercised.
+
+## CI Limitations
+
+CI proves lint, type safety, and unit test correctness. It does NOT prove Safari permissions
+are granted, AppleScript works, or macOS automation entitlements are intact.
+
+## Release Readiness Checklist
+
+Before tagging a release, verify all of the following:
+- [ ] `uv run ruff check .` passes with no errors
+- [ ] `uv run ty check src --python-version 3.13` passes with no errors
+- [ ] `uv run pytest tests/ -q` passes with no failures
+- [ ] App launches locally from a clean `uv sync`
+- [ ] At least one core user flow exercised manually end-to-end
+- [ ] `pyproject.toml` version matches README badge/display text
+
+### What CI Does Not Prove
+> Green CI is necessary but not sufficient for a safe release.
+> Source site behavior (4Charm), macOS permissions (Nexus), and external tools (L!bra/Papyrus)
+> cannot be fully validated by static CI checks.
