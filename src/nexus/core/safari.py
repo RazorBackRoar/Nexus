@@ -1,85 +1,21 @@
-"""Safari Automation Controller."""
+"""Safari Automation Controller.
+
+High-level coordinator that delegates AppleScript construction to
+``nexus.applescript.builder`` and Safari state management to
+``nexus.applescript.poller``.
+"""
 
 import asyncio
 import random
 from urllib.parse import urlparse
 
+from nexus.applescript.builder import build_batch_script
+from nexus.applescript.poller import check_safari_status, run_applescript
 from nexus.core.config import Config, logger
 
 
 class SafariController:
     """Manages all interaction with Safari via AppleScript with anti-detection features."""
-
-    @staticmethod
-    def _escape_applescript_string(value: str) -> str:
-        """Escape user-provided strings before embedding in AppleScript."""
-        return (
-            value.replace("\\", "\\\\")
-            .replace('"', '\\"')
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-        )
-
-    @staticmethod
-    async def _wait_for_safari_ready(
-        attempts: int = 20, delay_seconds: float = 0.25
-    ) -> bool:
-        """Wait until Safari can respond to AppleScript commands."""
-        ready_script = 'tell application "Safari" to count of windows'
-        for _ in range(attempts):
-            process = await asyncio.create_subprocess_exec(
-                "osascript",
-                "-e",
-                ready_script,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await process.communicate()
-            if process.returncode == 0:
-                return True
-            await asyncio.sleep(delay_seconds)
-        return False
-
-    @staticmethod
-    async def check_safari_status() -> bool:
-        """Check if Safari is running and launch it if not."""
-        try:
-            # Check if Safari is running
-            check_script = 'tell application "System Events" to (name of processes) contains "Safari"'
-            process = await asyncio.create_subprocess_exec(
-                "osascript",
-                "-e",
-                check_script,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await process.communicate()
-
-            is_running = stdout.decode().strip() == "true"
-
-            if not is_running:
-                logger.info("Safari not running, launching...")
-                launch_script = 'tell application "Safari" to activate'
-                launch_process = await asyncio.create_subprocess_exec(
-                    "osascript",
-                    "-e",
-                    launch_script,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-                _stdout, stderr = await launch_process.communicate()
-                if launch_process.returncode != 0:
-                    logger.error("Failed to launch Safari: %s", stderr.decode().strip())
-                    return False
-
-            if not await SafariController._wait_for_safari_ready():
-                logger.error("Safari did not become ready for AppleScript commands")
-                return False
-
-            return True
-        except (TimeoutError, OSError) as e:
-            logger.error("Failed to check/launch Safari: %s", e)
-            return False
 
     @staticmethod
     async def open_urls(
@@ -88,48 +24,47 @@ class SafariController:
         use_stealth: bool = True,
         private_mode: bool = True,
     ) -> bool:
-        """Opens URLs in Safari with anti-detection measures and privacy settings."""
+        """Open URLs in Safari with anti-detection measures and privacy settings."""
         if not urls:
             return False
         try:
-            # Ensure Safari is running
-            safari_ready = await SafariController.check_safari_status()
+            safari_ready = await check_safari_status()
             if not safari_ready:
                 logger.error("Failed to ensure Safari is ready")
                 return False
 
             if use_stealth and Config.STEALTH_MODE:
-                # Group URLs by domain to apply different strategies
                 domain_groups = SafariController._group_urls_by_domain(urls)
                 return await SafariController._open_urls_with_stealth(
                     domain_groups, private_mode
                 )
-            else:
-                # Original batch processing with privacy support
-                for i in range(0, len(urls), max_batch_size):
-                    batch = urls[i : i + max_batch_size]
-                    success = await SafariController._open_url_batch(
-                        batch, private_mode=private_mode
+
+            # Plain batch processing
+            for i in range(0, len(urls), max_batch_size):
+                batch = urls[i : i + max_batch_size]
+                success = await SafariController._run_batch(
+                    batch, create_window=True, private_mode=private_mode
+                )
+                if not success:
+                    logger.warning("Failed to open batch starting with %s", batch[0])
+                if i + max_batch_size < len(urls):
+                    delay = random.uniform(
+                        Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
                     )
-                    if not success:
-                        logger.warning(
-                            "Failed to open batch starting with %s", batch[0]
-                        )
-                    if i + max_batch_size < len(urls):
-                        # Use privacy-focused delay
-                        delay = random.uniform(
-                            Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
-                        )
-                        await asyncio.sleep(delay)
-                return True
+                    await asyncio.sleep(delay)
+            return True
         except (TimeoutError, OSError) as e:
             logger.error("Failed to open URLs in Safari: %s", e)
             return False
 
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
     @staticmethod
     def _group_urls_by_domain(urls: list[str]) -> dict[str, list[str]]:
         """Group URLs by domain for targeted anti-detection strategies."""
-        domain_groups = {}
+        domain_groups: dict[str, list[str]] = {}
         for url in urls:
             try:
                 domain = urlparse(url).netloc.lower()
@@ -142,41 +77,37 @@ class SafariController:
     async def _open_urls_with_stealth(
         domain_groups: dict[str, list[str]], private_mode: bool = True
     ) -> bool:
-        """Opens URLs with domain-specific anti-detection strategies in single window."""
+        """Open URLs with domain-specific anti-detection strategies in single window."""
         overall_success = True
         is_first_domain = True
 
         for domain, domain_urls in domain_groups.items():
             logger.info("Opening %d URLs from %s", len(domain_urls), domain)
 
-            # Strategy 1: Staggered opening for same-domain URLs with privacy delay
             if len(domain_urls) > 5:
                 success = await SafariController._open_domain_urls_staggered(
                     domain_urls, domain, is_first_domain, private_mode
                 )
             else:
-                success = await SafariController._open_url_batch_with_stealth(
-                    domain_urls, is_first=is_first_domain, private_mode=private_mode
+                success = await SafariController._run_batch(
+                    domain_urls,
+                    create_window=is_first_domain,
+                    private_mode=private_mode,
                 )
 
             if not success:
                 overall_success = False
                 logger.warning("Failed to open URLs from domain: %s", domain)
 
-            # Only the first domain creates a new window, rest add to existing window
             is_first_domain = False
 
-            # Balanced delay between different domains
             base_delay = random.uniform(
                 Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
             )
-            # Add extra delay for same domain to prevent 503 errors
             if domain != "unknown":
                 base_delay += Config.SAME_DOMAIN_EXTRA_DELAY
-            # Moderate jitter for anti-detection
             jitter = random.uniform(0.5, 1.2)
-            total_delay = base_delay + jitter
-            await asyncio.sleep(total_delay)
+            await asyncio.sleep(base_delay + jitter)
 
         return overall_success
 
@@ -187,22 +118,18 @@ class SafariController:
         is_first_domain: bool = False,
         private_mode: bool = True,
     ) -> bool:
-        """Opens multiple URLs from same domain with staggered timing and stealth measures."""
+        """Open multiple URLs from same domain with staggered timing."""
         try:
-            # Open first URL to establish the window (only if this is the first domain)
-            first_batch = urls[:1]
-            success = await SafariController._open_url_batch_with_stealth(
-                first_batch, is_first=is_first_domain, private_mode=private_mode
+            success = await SafariController._run_batch(
+                urls[:1], create_window=is_first_domain, private_mode=private_mode
             )
             if not success:
                 return False
 
-            # Only wait if this is the first domain and we opened the first URL
             if is_first_domain:
                 base_delay = random.uniform(
                     Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
                 )
-                # Extra delay for same domain + moderate jitter to prevent 503 errors
                 delay = (
                     base_delay
                     + Config.SAME_DOMAIN_EXTRA_DELAY
@@ -217,22 +144,19 @@ class SafariController:
 
             for i in range(0, len(remaining_urls), batch_size):
                 batch = remaining_urls[i : i + batch_size]
-                success = await SafariController._open_url_batch_with_stealth(
-                    batch, is_first=False, private_mode=private_mode
+                success = await SafariController._run_batch(
+                    batch, create_window=False, private_mode=private_mode
                 )
                 if not success:
                     logger.warning("Failed batch for %s", domain)
 
-                # Balanced progressive delay - prevents 503 errors
                 base_delay = random.uniform(
                     Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
                 )
                 progressive_delay = (
                     i // batch_size
                 ) * Config.PROGRESSIVE_DELAY_INCREMENT
-                total_delay = base_delay + progressive_delay
-
-                await asyncio.sleep(total_delay)
+                await asyncio.sleep(base_delay + progressive_delay)
 
             return True
         except Exception as e:
@@ -240,70 +164,33 @@ class SafariController:
             return False
 
     @staticmethod
-    async def _open_url_batch_with_stealth(
-        urls: list[str], is_first: bool = False, private_mode: bool = True
+    async def _run_batch(
+        urls: list[str],
+        *,
+        create_window: bool = False,
+        private_mode: bool = True,
     ) -> bool:
-        """Opens a batch of URLs using AppleScript."""
+        """Build and execute an AppleScript batch via the builder module."""
         if not urls:
             return True
 
-        if is_first:
-            first_url = SafariController._escape_applescript_string(urls[0])
-            # NOTE: Safari private/reader mode cannot be reliably opened via standard
-            # AppleScript — it requires UI scripting (File > New Private Window) which
-            # needs Accessibility permissions and is fragile across macOS versions.
-            # We open a standard window regardless of the private_mode flag.
-            if private_mode:
-                logger.warning(
-                    "private_mode=True requested but Safari private windows cannot be "
-                    "opened via AppleScript without Accessibility permissions. "
-                    "Opening in a standard window instead."
-                )
-            script = f'''
-                tell application "Safari"
-                    make new document with properties {{URL:"{first_url}"}}
-                    activate
-                end tell
-            '''
+        if create_window and private_mode:
+            logger.warning(
+                "private_mode=True requested but Safari private windows cannot be "
+                "opened via AppleScript without Accessibility permissions. "
+                "Opening in a standard window instead."
+            )
 
-            # For the rest of the batch, add tabs
-            remaining = urls[1:]
-        else:
-            # Add all to current window
-            script = ""
-            remaining = urls
-
-        # Append remaining URLs as tabs
-        for url in remaining:
-            escaped_url = SafariController._escape_applescript_string(url)
-            script += f'''
-                tell application "Safari"
-                    tell front window
-                        make new tab with properties {{URL:"{escaped_url}"}}
-                    end tell
-                end tell
-            '''
+        script = build_batch_script(urls, create_window=create_window)
+        if not script:
+            return True
 
         try:
-            process = await asyncio.create_subprocess_exec(
-                "osascript",
-                "-e",
-                script,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await process.communicate()
-            if process.returncode != 0:
-                logger.error("AppleScript error: %s", stderr.decode())
+            _stdout, stderr, rc = await run_applescript(script)
+            if rc != 0:
+                logger.error("AppleScript error: %s", stderr)
                 return False
             return True
         except Exception as e:
             logger.error("Failed to run AppleScript: %s", e)
             return False
-
-    @staticmethod
-    async def _open_url_batch(urls: list[str], private_mode: bool = True) -> bool:
-        """Legacy batch opener."""
-        return await SafariController._open_url_batch_with_stealth(
-            urls, is_first=True, private_mode=private_mode
-        )
