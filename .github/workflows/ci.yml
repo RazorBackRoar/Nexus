@@ -1,37 +1,32 @@
 name: CI
-
 on:
   push:
-    branches: [main]
-    tags: ["v*"]
+    branches: [ main ]
   pull_request:
-    branches: [main]
-
+    branches: [ main ]
 jobs:
-  test:
-    name: Test
+  quality:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Nexus
+        uses: actions/checkout@v4
       - name: Checkout razorcore
         uses: actions/checkout@v4
         with:
-          repository: RazorBackRoar/razorcore
-          path: .razorcore
-          token: ${{ secrets.RAZORCORE_TOKEN }}
-
+          repository: RazorBackRoar/.razorcore
+          path: ../.razorcore
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: "3.13"
-
-      - name: Link razorcore to expected path
-        run: ln -sf "$(realpath .razorcore)" "$(realpath .)/../.razorcore"
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
-        run: uv run --with pytest --with pytest-cov pytest --cov=nexus --cov-report=term-missing --cov-report=xml
+          enable-cache: true
+      - name: Sync
+        run: uv sync --all-extras
+      - name: Lint
+        run: uv run ruff check .
+      - name: Type Check
+        run: uv run ty check src --python-version 3.13
+      - name: Tests
+        run: uv run pytest tests/ -q
+      - name: Prune cache (keep CI runner lean)
+        run: uv cache prune --ci
+        if: always()

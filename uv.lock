@@ -43,7 +43,7 @@ wheels = [
 
 [[package]]
 name = "nexus"
-version = "3.12.5"
+version = "3.12.6"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },
@@ -259,7 +259,7 @@ wheels = [
 
 [[package]]
 name = "razorcore"
-version = "1.199.0"
+version = "1.204.0"
 source = { editable = "../.razorcore" }
 dependencies = [
     { name = "pyside6" },
