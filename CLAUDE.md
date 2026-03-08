@@ -14,6 +14,12 @@ See workspace policy: `/Users/home/Workspace/CLAUDE.md`
 - Launch: `./run_preview.sh`
 - Build: `nexusbuild` or `razorbuild Nexus` | Push: `nexuspush` or `razorpush Nexus`
 - Toolchain: `uv sync` → `uv run ruff check .` → `uv run ty check src --python-version 3.13`
+- Tests: `uv run pytest tests/ -v`
 - razorcore: editable dep at `../.razorcore`
 - **⚠️ macOS Full Disk Access required** — without it, `Bookmarks.plist` raises `PermissionError`. Grant in System Settings → Privacy & Security → Full Disk Access.
 - **Always open plist in binary mode**: `open(path, "rb")` — macOS uses binary plist format, not XML
+
+## Module structure (post-refactor)
+- `applescript/builder.py` — pure AppleScript string construction (no asyncio, no subprocess); fully testable on any platform
+- `applescript/poller.py` — async Safari state queries; `run_applescript()`, `wait_for_safari_ready()`, `check_safari_status()`
+- `core/safari.py` — coordinator only; no raw AppleScript strings
