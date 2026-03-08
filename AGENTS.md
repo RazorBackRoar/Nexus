@@ -1,7 +1,7 @@
 # Nexus AGENTS
 
 **Package:** `nexus`
-**Version:** 3.12.7
+**Version:** 3.12.8
 
 Use this file with `/Users/home/Workspace/Apps/AGENTS.md`. It only records Nexus-specific context.
 
