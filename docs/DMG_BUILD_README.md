@@ -1,41 +1,30 @@
-# Building DMG for Nexus
+# Building a DMG for Nexus
 
-> Workspace context source: `/Users/home/Workspace/Apps/.code-analysis/` (`AGENTS.md`, `monorepo-analysis.md`, `essential-queries.md`).
+Use the shared Apps workspace guide:
+- [Docs/dmg_build_guide.md](/Users/home/Workspace/Apps/Docs/dmg_build_guide.md)
 
-## Quick Start
-
-```bash
-./build-dmg.sh
-```
-
-## Configuration
-
-Edit `dmg-config.json` to customize:
-
-- Window size and position
-- Icon positions
-- Background image
-- Volume icon
-- Additional files to include
-
-## Creating the .DS_Store Template
-
-1. Create a test folder that matches your DMG layout
-2. Arrange icons exactly as you want them
-3. Close the Finder window
-4. Copy the .DS_Store to dmg-template/
+For Nexus specifically, run from `/Users/home/Workspace/Apps`:
 
 ```bash
-mkdir test-layout
-cd test-layout
-## Add your files and arrange them
-cd ..
-cp test-layout/.DS_Store dmg-template/.DS_Store
-rm -rf test-layout
+uv run --project .razorcore razorbuild Nexus
 ```
 
-## Troubleshooting
+If `razorbuild` is already on your `PATH`:
 
-- If window size is wrong, check `window` settings in dmg-config.json
-- If icons aren't positioned, verify names in `icon_positions` match exactly
-- To force AppleScript styling, remove dmg-template/.DS_Store
+```bash
+razorbuild Nexus
+```
+
+Repo-specific build inputs:
+- [Nexus.spec](/Users/home/Workspace/Apps/Nexus/Nexus.spec)
+- app assets under `assets/`
+
+Current notes:
+- the primary DMG path is the shared `razorbuild` flow, not a repo-local `build-dmg.sh`
+- layout is controlled by the shared build script
+- if `create-dmg` is unavailable, the build can still fall back to a plain `hdiutil` DMG without the locked Finder layout
+
+Quick troubleshooting:
+- if packaging is wrong, inspect [Nexus.spec](/Users/home/Workspace/Apps/Nexus/Nexus.spec) first
+- if DMG layout is wrong, inspect [Docs/dmg_build_guide.md](/Users/home/Workspace/Apps/Docs/dmg_build_guide.md) and [.razorcore/universal-build.sh](/Users/home/Workspace/Apps/.razorcore/universal-build.sh)
+- if assets are missing, verify the repo-local `assets/` inputs bundled by `Nexus.spec`
