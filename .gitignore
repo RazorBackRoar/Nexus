@@ -39,6 +39,8 @@ Clean/
 skills
 .agent/
 .agents/
+mcp.json
+Icon?
 
 # Session backups and local task files
 AGENTS.md.backup.*
