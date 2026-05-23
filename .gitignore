@@ -28,9 +28,29 @@ build/
 pip-wheel-metadata/
 temp-dmg-*
 
-# Dist folder - ignore everything except DMG
-dist/*
-!dist/*.dmg
+# Dist and build staging
+dist/
+Clean/
+
+# Release binaries — distribute via GitHub Releases
+*.dmg
+
+# Workspace symlinks — machine-local, do not commit
+skills
+.agent/
+.agents/
+
+# Session backups and local task files
+AGENTS.md.backup.*
+INSTRUCTIONS.md
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.ty_cache/
+
+# IDE tool dirs
+.codex-artifacts/
 
 # Virtual envs
 .venv/
@@ -45,3 +65,12 @@ venv/
 !.env.example
 !.env.sample
 .security
+
+# Shared workspace content — machine-local
+.shared/
+
+# Backup files
+**/*.backup
+docs/*.backup
+
+security_best_practices_report.md

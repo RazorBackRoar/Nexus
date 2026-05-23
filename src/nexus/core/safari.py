@@ -9,9 +9,12 @@ import asyncio
 import random
 from urllib.parse import urlparse
 
-from nexus.applescript.builder import build_batch_script
+from nexus.applescript.builder import (
+    build_batch_script,
+    build_open_in_front_window_script,
+)
 from nexus.applescript.poller import check_safari_status, run_applescript
-from nexus.core.config import Config, logger
+from nexus.core.config import Config, logger, privacy_fingerprint
 
 
 class SafariController:
@@ -46,7 +49,10 @@ class SafariController:
                     batch, create_window=True, private_mode=private_mode
                 )
                 if not success:
-                    logger.warning("Failed to open batch starting with %s", batch[0])
+                    logger.warning(
+                        "Failed to open batch starting with %s",
+                        privacy_fingerprint(batch[0], "url"),
+                    )
                 if i + max_batch_size < len(urls):
                     delay = random.uniform(
                         Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
@@ -55,6 +61,43 @@ class SafariController:
             return True
         except (TimeoutError, OSError) as e:
             logger.error("Failed to open URLs in Safari: %s", e)
+            return False
+
+    @staticmethod
+    async def open_urls_in_front_window(
+        urls: list[str], private_mode: bool = True
+    ) -> bool:
+        """Open URLs in the front Safari window, creating one if needed."""
+        if not urls:
+            return False
+
+        safari_ready = await check_safari_status()
+        if not safari_ready:
+            logger.error("Failed to ensure Safari is ready")
+            return False
+
+        if private_mode:
+            logger.warning(
+                "private_mode=True requested but Safari private windows cannot be "
+                "opened via AppleScript without Accessibility permissions. "
+                "Opening in a standard window instead."
+            )
+
+        script = build_open_in_front_window_script(urls)
+        if not script:
+            return False
+
+        try:
+            _stdout, _stderr, rc = await run_applescript(script)
+            if rc != 0:
+                logger.error(
+                    "AppleScript returned non-zero exit status for %d bookmark URL(s)",
+                    len(urls),
+                )
+                return False
+            return True
+        except Exception as e:
+            logger.error("Failed to run bookmark AppleScript: %s", e)
             return False
 
     # ------------------------------------------------------------------
@@ -82,7 +125,11 @@ class SafariController:
         is_first_domain = True
 
         for domain, domain_urls in domain_groups.items():
-            logger.info("Opening %d URLs from %s", len(domain_urls), domain)
+            logger.info(
+                "Opening %d URLs from %s",
+                len(domain_urls),
+                privacy_fingerprint(domain, "domain"),
+            )
 
             if len(domain_urls) > 5:
                 success = await SafariController._open_domain_urls_staggered(
@@ -97,7 +144,10 @@ class SafariController:
 
             if not success:
                 overall_success = False
-                logger.warning("Failed to open URLs from domain: %s", domain)
+                logger.warning(
+                    "Failed to open URLs from domain: %s",
+                    privacy_fingerprint(domain, "domain"),
+                )
 
             is_first_domain = False
 
@@ -148,7 +198,10 @@ class SafariController:
                     batch, create_window=False, private_mode=private_mode
                 )
                 if not success:
-                    logger.warning("Failed batch for %s", domain)
+                    logger.warning(
+                        "Failed batch for %s",
+                        privacy_fingerprint(domain, "domain"),
+                    )
 
                 base_delay = random.uniform(
                     Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
@@ -186,9 +239,12 @@ class SafariController:
             return True
 
         try:
-            _stdout, stderr, rc = await run_applescript(script)
+            _stdout, _stderr, rc = await run_applescript(script)
             if rc != 0:
-                logger.error("AppleScript error: %s", stderr)
+                logger.error(
+                    "AppleScript returned non-zero exit status for %d URL(s)",
+                    len(urls),
+                )
                 return False
             return True
         except Exception as e:

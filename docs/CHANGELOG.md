@@ -8,6 +8,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Capped PySide6 below v7 to prevent silent dependency breakage.
+
 ## [1.0.0] - 2024-12-10
 
 ### Added

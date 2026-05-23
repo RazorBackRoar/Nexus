@@ -72,7 +72,7 @@ This project uses `.razorcore` for build tooling.
 
 ### Prerequisites
 
-- Python 3.13
+- Python 3.14
 - macOS 11.0+
 
 ### Setup
@@ -80,7 +80,7 @@ This project uses `.razorcore` for build tooling.
 ```bash
 git clone https://github.com/RazorBackRoar/Nexus.git
 cd Nexus
-uv venv --python 3.13
+uv venv --python 3.14
 uv sync
 uv add --editable ../.razorcore
 ```
@@ -88,11 +88,11 @@ uv add --editable ../.razorcore
 ### Build & Release
 
 ```bash
-## Build app and create DMG
+## Build app and create DMG without touching Git
 razorbuild Nexus
 
-## Create release (auto-commits & tags)
-razorcore save Nexus
+## Save/release only after explicit Git approval
+RAZORCORE_ALLOW_GIT_MUTATION=1 razorcore save Nexus
 ```
 
 ---

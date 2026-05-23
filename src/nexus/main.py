@@ -53,11 +53,14 @@ def main():
     window.raise_()
     window.activateWindow()
 
-    # Center window on screen
-    screen = app.primaryScreen().geometry()
-    window.move(
-        (screen.width() - window.width()) // 2, (screen.height() - window.height()) // 2
-    )
+    if not window.restored_window_geometry:
+        screen = app.primaryScreen()
+        if screen is not None:
+            geometry = screen.geometry()
+            window.move(
+                (geometry.width() - window.width()) // 2,
+                (geometry.height() - window.height()) // 2,
+            )
 
     sys.exit(app.exec())
 

@@ -4,6 +4,7 @@
 Updates version in README.md, setup.py, src/Main.py, and build.sh automatically.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -142,9 +143,14 @@ def main():
         update_main_py(new_version)
         update_build_sh(new_version)
 
-        # Auto-commit if git repo
         if Path(".git").exists():
-            git_commit_version_change(old_version, new_version)
+            if os.environ.get("RAZORCORE_ALLOW_GIT_MUTATION") == "1":
+                git_commit_version_change(old_version, new_version)
+            else:
+                print(
+                    "ℹ️  Skipping git commit. Set RAZORCORE_ALLOW_GIT_MUTATION=1 "
+                    "only when a commit was explicitly requested."
+                )
 
         return new_version
 

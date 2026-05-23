@@ -1,5 +1,6 @@
 """Configuration and Logging setup for Nexus."""
 
+import hashlib
 import logging
 import os
 import sys
@@ -96,6 +97,19 @@ def _resolve_log_dir() -> Path:
     )
 
 
+def _env_flag(name: str) -> bool:
+    value = os.getenv(name, "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def privacy_fingerprint(value: str, label: str = "value") -> str:
+    """Return a stable non-reversible label for sensitive log data."""
+    if not value:
+        return f"{label}#empty"
+    digest = hashlib.sha256(value.encode("utf-8", "ignore")).hexdigest()[:12]
+    return f"{label}#{digest}"
+
+
 def setup_logging(force: bool = False) -> logging.Logger:
     """Configure application logging lazily at runtime."""
     global _LOGGER_INITIALIZED
@@ -105,9 +119,12 @@ def setup_logging(force: bool = False) -> logging.Logger:
     handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
 
     explicit_log_dir = os.getenv("NEXUS_LOG_DIR")
+    file_logging_enabled = bool(explicit_log_dir) or _env_flag(
+        "NEXUS_ENABLE_FILE_LOGGING"
+    )
 
-    # Skip file handler during tests unless explicitly configured.
-    if explicit_log_dir or not os.getenv("PYTEST_CURRENT_TEST"):
+    # Persistent file logs are opt-in because pasted URLs may be sensitive.
+    if file_logging_enabled:
         try:
             log_dir = _resolve_log_dir()
             log_dir.mkdir(parents=True, exist_ok=True)

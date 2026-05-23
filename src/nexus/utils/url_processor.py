@@ -3,7 +3,7 @@
 import re
 from urllib.parse import urlparse
 
-from nexus.core.config import Config, logger
+from nexus.core.config import Config, logger, privacy_fingerprint
 
 
 class URLProcessor:
@@ -380,6 +380,9 @@ class URLProcessor:
             else:
                 return None
 
+        if not self._is_valid_url(url):
+            return None
+
         try:
             parsed = urlparse(url)
             if parsed.scheme and parsed.netloc:
@@ -393,6 +396,10 @@ class URLProcessor:
                     normalized += f"#{parsed.fragment}"
                 return normalized
         except (ValueError, TypeError) as e:
-            logger.warning("Failed to normalize URL %s: %s", url, e)
+            logger.warning(
+                "Failed to normalize %s: %s",
+                privacy_fingerprint(url, "url"),
+                e,
+            )
 
         return None

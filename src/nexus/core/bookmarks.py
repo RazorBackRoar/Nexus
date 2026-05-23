@@ -6,6 +6,17 @@ from typing import Any
 
 from nexus.core.config import logger
 from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
+from nexus.utils.url_processor import URLProcessor
+
+
+DEFAULT_BOOKMARK_FOLDER_NAMES = (
+    "Favorites",
+    "Tech",
+    "Misc",
+    "Work",
+    "Later",
+    "News",
+)
 
 
 class BookmarkManager:
@@ -14,6 +25,7 @@ class BookmarkManager:
     def __init__(self, file_path: Path):
         self.file_path = file_path
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.url_processor = URLProcessor()
 
     def load_bookmarks(self) -> list[BookmarkNode]:
         """Loads bookmarks, handles errors, and creates defaults."""
@@ -23,7 +35,12 @@ class BookmarkManager:
         try:
             with open(self.file_path, encoding="utf-8") as f:
                 data = json.load(f)
-            bookmarks = [self._deserialize_node(node_data) for node_data in data]
+            bookmarks: list[BookmarkNode] = []
+            for node_data in data:
+                try:
+                    bookmarks.append(self._deserialize_node(node_data))
+                except ValueError as e:
+                    logger.warning("Skipping invalid bookmark entry: %s", e)
             logger.info("Loaded %d top-level bookmark sections", len(bookmarks))
             return bookmarks
         except (json.JSONDecodeError, KeyError, TypeError) as e:
@@ -69,20 +86,22 @@ class BookmarkManager:
     def _deserialize_node(self, data: dict[str, Any]) -> BookmarkNode:
         """Converts dictionaries from JSON back into dataclass objects."""
         if data.get("type") == "folder":
-            children = [
-                self._deserialize_node(child) for child in data.get("children", [])
-            ]
+            children = []
+            for child in data.get("children", []):
+                try:
+                    children.append(self._deserialize_node(child))
+                except ValueError as e:
+                    logger.warning("Skipping invalid bookmark child entry: %s", e)
             return BookmarkFolder(name=data["name"], children=children)
         else:  # It's a bookmark
-            return Bookmark(name=data["name"], url=data["url"])
+            normalized_url = self.url_processor._normalize_url(str(data["url"]))
+            if not normalized_url:
+                raise ValueError("Bookmark URL failed validation")
+            return Bookmark(name=data["name"], url=normalized_url)
 
     def _create_default_bookmarks(self) -> list[BookmarkNode]:
         """Creates default bookmark folders for common categories."""
         return [
-            BookmarkFolder(name="News", children=[]),
-            BookmarkFolder(name="Apple", children=[]),
-            BookmarkFolder(name="Misc", children=[]),
-            BookmarkFolder(name="Google", children=[]),
-            BookmarkFolder(name="Github", children=[]),
-            BookmarkFolder(name="Fun", children=[]),
+            BookmarkFolder(name=name, children=[])
+            for name in DEFAULT_BOOKMARK_FOLDER_NAMES
         ]

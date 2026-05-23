@@ -4,8 +4,12 @@ These tests verify the core bookmark management features including
 plist parsing, bookmark data models, and folder hierarchy.
 """
 
+import json
 import plistlib
 from typing import Any
+
+from nexus.core.bookmarks import BookmarkManager
+from nexus.core.models import BookmarkFolder
 
 
 def test_bookmark_data_structure():
@@ -178,3 +182,48 @@ def test_empty_bookmark_folder():
 
     assert len(empty_folder["Children"]) == 0
     assert empty_folder["WebBookmarkType"] == "WebBookmarkTypeList"
+
+
+def test_default_bookmark_folders_match_glossy_sidebar(tmp_path):
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+
+    defaults = manager._create_default_bookmarks()
+
+    assert [node.name for node in defaults] == [
+        "Favorites",
+        "Tech",
+        "Misc",
+        "Work",
+        "Later",
+        "News",
+    ]
+
+
+def test_load_bookmarks_skips_invalid_bookmark_urls(tmp_path):
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {"name": "Good", "type": "bookmark", "url": "example.com"},
+                        {
+                            "name": "Bad",
+                            "type": "bookmark",
+                            "url": 'https://evil.com"\n do shell script "open -a Calculator"',
+                        },
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
+    assert len(bookmarks[0].children) == 1
+    assert bookmarks[0].children[0].url == "https://example.com"

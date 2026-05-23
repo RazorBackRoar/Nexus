@@ -1,7 +1,7 @@
 """Main Application Window for Nexus."""
 
-import asyncio
 import json
+import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -15,6 +15,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
+    QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QInputDialog,
@@ -23,20 +24,25 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QPushButton,
+    QStackedLayout,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from nexus.core.bookmarks import BookmarkManager
-from nexus.core.config import Config, cleanup_logs, logger
+from nexus.core.bookmarks import DEFAULT_BOOKMARK_FOLDER_NAMES, BookmarkManager
+from nexus.core.config import Config, cleanup_logs, logger, privacy_fingerprint
 from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
 from nexus.core.safari import SafariController
 from nexus.gui.widgets import (
     AsyncWorker,
+    BookmarkTreeDelegate,
+    CosmicFrame,
     GlassButton,
     URLTableWidget,
+    WindowTitleBar,
 )
 from nexus.utils.url_processor import URLProcessor
 
@@ -49,7 +55,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._setup_themes()  # Define themes
         self.settings = QSettings()
+        self.restored_window_geometry = False
         self._load_settings()  # Load saved theme or default
+        self.private_mode_enabled = Config.DEFAULT_PRIVATE_MODE
+        self._url_history: list[list[str]] = []
+        self._current_url_snapshot: list[str] = []
+        self._restoring_url_history = False
 
         self.url_processor = URLProcessor()
         self.safari_controller = SafariController()
@@ -221,140 +232,185 @@ class MainWindow(QMainWindow):
                     )
 
     def _setup_window(self):
-        """Sets up the main window properties with Glass Noir styling."""
+        """Sets up the main window properties for the cosmic glass shell."""
         self.setWindowTitle("Nexus")  # Set title for Dock
-        self.setMinimumSize(1100, 700)
-        self.resize(1100, 700)
-        # Glass Noir gradient background
+        self.setMinimumSize(1220, 760)
+        self.resize(1240, 780)
+        if sys.platform == "darwin":
+            self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setStyleSheet("""
             QMainWindow {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #0a0a0f, stop:1 #12121a);
+                background: transparent;
+                border: none;
             }
         """)
 
     def _setup_ui(self):
-        """Sets up the Glass Noir single-pane UI with sidebar."""
+        """Sets up the single-frame Nexus UI inspired by the provided reference."""
         central_widget = QWidget()
+        central_widget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        central_widget.setStyleSheet("background: transparent;")
         self.setCentralWidget(central_widget)
 
-        # Main vertical layout
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        root_layout = QVBoxLayout(central_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
 
-        # ===== HEADER: Centered NEXUS title + Tagline =====
+        self.chrome_frame = CosmicFrame()
+        root_layout.addWidget(self.chrome_frame)
+
+        main_layout = QVBoxLayout(self.chrome_frame)
+        main_layout.setContentsMargins(22, 8, 22, 14)
+        main_layout.setSpacing(10)
+
+        if sys.platform == "darwin":
+            self.window_titlebar = WindowTitleBar(self, "Nexus")
+            main_layout.addWidget(self.window_titlebar)
+
         header_widget = QWidget()
-        header_widget.setFixedHeight(95)  # Increased height for tagline
         header_widget.setStyleSheet("background: transparent;")
-        header_layout = QVBoxLayout(header_widget)  # Vertical layout
-        header_layout.setContentsMargins(20, 10, 20, 10)
-        header_layout.setSpacing(4)
+        header_layout = QVBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(0)
 
         self.title_label = QLabel("NEXUS")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
-                color: #ffffff;
-                font-size: 36px;
-                font-weight: 300;
-                letter-spacing: 12px;
+                color: #f8faff;
+                font-family: "Avenir Next";
+                font-size: 40px;
+                font-weight: 800;
+                letter-spacing: 8px;
+                padding-bottom: 4px;
             }
         """)
-        # Add glow effect to title
         title_glow = QGraphicsDropShadowEffect()
-        title_glow.setBlurRadius(30)
-        title_glow.setColor(QColor(0, 245, 255, 180))  # Cyan glow
+        title_glow.setBlurRadius(26)
+        title_glow.setColor(QColor(216, 227, 255, 120))
         title_glow.setOffset(0, 0)
         self.title_label.setGraphicsEffect(title_glow)
         header_layout.addWidget(self.title_label)
-
-        # Pink tagline (now in header)
-        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
-        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        tagline.setStyleSheet("""
-            QLabel {
-                color: #ff2d92;
-                font-size: 16px;
-                font-weight: 600;
-                font-style: italic;
-                letter-spacing: 1px;
-            }
-        """)
-        header_layout.addWidget(tagline)
-
         main_layout.addWidget(header_widget)
 
-        # ===== CONTENT: Sidebar + Main area =====
-        content_widget = QWidget()
-        content_layout = QHBoxLayout(content_widget)
-        content_layout.setContentsMargins(20, 0, 20, 20)
-        content_layout.setSpacing(20)
+        header_rule = QFrame()
+        header_rule.setFixedHeight(1)
+        header_rule.setStyleSheet(
+            """
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(124, 92, 255, 0.0),
+                stop:0.22 rgba(124, 92, 255, 0.12),
+                stop:0.5 rgba(77, 223, 255, 0.10),
+                stop:0.78 rgba(245, 74, 169, 0.12),
+                stop:1 rgba(124, 92, 255, 0.0));
+            border: none;
+            """
+        )
+        main_layout.addWidget(header_rule)
 
-        # ----- SIDEBAR: Bookmark folders -----
+        content_widget = QWidget()
+        content_widget.setStyleSheet("background: transparent;")
+        content_layout = QHBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(28)
+
         self.sidebar = QWidget()
-        self.sidebar.setFixedWidth(200)
+        self.sidebar.setFixedWidth(272)
+        self.sidebar.setObjectName("bookmarkSidebar")
         self.sidebar.setStyleSheet("""
-            QWidget {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(25, 25, 35, 0.95),
-                    stop:0.5 rgba(20, 20, 30, 0.97),
-                    stop:1 rgba(15, 15, 25, 0.98));
-                border: 1px solid qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(139, 92, 246, 0.5),
-                    stop:0.5 rgba(0, 245, 255, 0.3),
-                    stop:1 rgba(139, 92, 246, 0.5));
-                border-radius: 16px;
+            QWidget#bookmarkSidebar {
+                background: qlineargradient(x1:0, y1:0, x2:0.92, y2:1,
+                    stop:0 rgba(20, 10, 44, 0.22),
+                    stop:0.38 rgba(5, 8, 22, 0.16),
+                    stop:1 rgba(2, 4, 12, 0.10));
+                border-right: 1px solid rgba(88, 116, 255, 0.10);
             }
         """)
-        # Add subtle glow to sidebar
-        sidebar_glow = QGraphicsDropShadowEffect()
-        sidebar_glow.setBlurRadius(15)
-        sidebar_glow.setColor(QColor(139, 92, 246, 60))  # Purple glow
-        sidebar_glow.setOffset(0, 0)
-        self.sidebar.setGraphicsEffect(sidebar_glow)
         sidebar_layout = QVBoxLayout(self.sidebar)
-        sidebar_layout.setContentsMargins(16, 20, 16, 20)
-        sidebar_layout.setSpacing(12)
+        sidebar_layout.setContentsMargins(12, 20, 18, 12)
+        sidebar_layout.setSpacing(18)
 
-        # Sidebar title with cyan accent (centered)
+        sidebar_header = QWidget()
+        sidebar_header_layout = QHBoxLayout(sidebar_header)
+        sidebar_header_layout.setContentsMargins(4, 0, 4, 0)
+        sidebar_header_layout.setSpacing(4)
+
         sidebar_title = QLabel("BOOKMARKS")
-        sidebar_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_title.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         sidebar_title.setStyleSheet("""
             QLabel {
-                color: #00f5ff;
-                font-size: 13px;
+                color: #f5f8ff;
+                font-family: "Avenir Next";
+                font-size: 15px;
                 font-weight: 700;
-                letter-spacing: 4px;
-                padding: 8px 8px 16px 8px;
-                background: transparent;
-                border: none;
-                border-bottom: 2px solid rgba(0, 245, 255, 0.4);
+                letter-spacing: 3.4px;
+                padding-left: 12px;
+                padding-bottom: 4px;
             }
         """)
-        sidebar_layout.addWidget(sidebar_title)
+        sidebar_header_layout.addWidget(sidebar_title, 1)
 
-        # Search bar for bookmarks
+        self.add_folder_btn = QPushButton("+")
+        self.add_folder_btn.clicked.connect(self.add_bookmark_section)
+        self.add_folder_btn.setFixedSize(24, 24)
+        self.add_folder_btn.setToolTip("Add folder")
+        self.add_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_folder_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.add_folder_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                border: none;
+                color: rgba(250, 252, 255, 0.96);
+                font-family: "Avenir Next";
+                font-size: 28px;
+                font-weight: 500;
+                padding: 0px;
+                margin: 0px;
+            }
+            QPushButton:hover {
+                color: rgba(255, 255, 255, 1.0);
+            }
+            QPushButton:pressed {
+                color: rgba(214, 226, 255, 0.86);
+            }
+        """)
+        sidebar_header_layout.addWidget(
+            self.add_folder_btn,
+            0,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop,
+        )
+        sidebar_layout.addWidget(sidebar_header)
+
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search bookmarks...")
+        self.search_bar.setPlaceholderText("Filter bookmarks")
         self.search_bar.textChanged.connect(self._filter_bookmarks)
         self.search_bar.setStyleSheet("""
             QLineEdit {
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(0, 245, 255, 0.3);
-                border-radius: 8px;
-                color: #e0e0e0;
-                padding: 6px 10px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(6, 9, 24, 0.94),
+                    stop:1 rgba(3, 5, 16, 0.90));
+                border: 1px solid rgba(54, 164, 255, 0.26);
+                border-radius: 14px;
+                color: #ecf2ff;
+                padding: 10px 15px;
                 font-size: 13px;
+                font-family: "Avenir Next";
+                selection-background-color: rgba(129, 160, 255, 0.35);
             }
             QLineEdit:focus {
-                border: 1px solid rgba(0, 245, 255, 0.7);
-                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(183, 87, 255, 0.46);
+                background: rgba(8, 12, 30, 0.96);
+            }
+            QLineEdit::placeholder {
+                color: rgba(223, 231, 255, 0.55);
             }
         """)
+        self.search_bar.setFixedHeight(38)
         sidebar_layout.addWidget(self.search_bar)
 
-        # Bookmark tree with improved styling
         self.bookmark_tree = QTreeWidget()
         self.bookmark_tree.setHeaderHidden(True)
         self.bookmark_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -362,59 +418,43 @@ class MainWindow(QMainWindow):
             self._show_bookmark_context_menu
         )
         self.bookmark_tree.itemDoubleClicked.connect(self._handle_item_double_click)
+        self.bookmark_tree.setRootIsDecorated(False)
+        self.bookmark_tree.setItemsExpandable(True)
+        self.bookmark_tree.setIndentation(0)
+        self.bookmark_tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.bookmark_tree.setMouseTracking(True)
+        self.bookmark_tree.setItemDelegate(BookmarkTreeDelegate(self.bookmark_tree))
         self.bookmark_tree.setStyleSheet("""
             QTreeWidget {
                 background: transparent;
                 border: none;
-                color: #ffffff;
-                font-size: 16px;
-                font-weight: 600;
                 outline: none;
+                color: transparent;
             }
             QTreeWidget::item {
-                padding: 14px 20px;
-                border-radius: 10px;
-                margin: 4px 6px;
+                padding: 0px;
+                margin: 0px;
+                border: none;
                 background: transparent;
-            }
-            QTreeWidget::item:hover {
-                background: rgba(255, 255, 255, 0.06);
-            }
-            QTreeWidget::item:selected {
-                background: rgba(255, 255, 255, 0.1);
             }
             QTreeWidget::branch {
-                background: transparent;
                 image: none;
                 border: none;
-            }
-            QTreeWidget::branch:has-children:open,
-            QTreeWidget::branch:has-children:closed {
                 background: transparent;
-                border: none;
-                image: none;
-            }
-            QTreeWidget:focus {
-                outline: none;
-                border: none;
-            }
-            QTreeWidget::item:focus {
-                outline: none;
-                border: none;
             }
             QScrollBar:vertical {
                 background: transparent;
                 width: 8px;
+                margin: 8px 0;
                 border-radius: 4px;
-                margin: 4px 2px;
             }
             QScrollBar::handle:vertical {
-                background: rgba(255, 255, 255, 0.3);
+                background: rgba(178, 194, 255, 0.28);
                 border-radius: 4px;
                 min-height: 30px;
             }
             QScrollBar::handle:vertical:hover {
-                background: rgba(255, 255, 255, 0.5);
+                background: rgba(208, 218, 255, 0.4);
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -423,214 +463,270 @@ class MainWindow(QMainWindow):
                 background: transparent;
             }
         """)
-        self.bookmark_tree.setRootIsDecorated(
-            False
-        )  # Hide root decoration to remove 'grey bars' indentation
-        self.bookmark_tree.setItemsExpandable(True)
-        self.bookmark_tree.setIndentation(10)  # Minimal indentation
-        self.bookmark_tree.setFocusPolicy(
-            Qt.FocusPolicy.NoFocus
-        )  # Remove focus indicator
         sidebar_layout.addWidget(self.bookmark_tree, 1)
-
-        # Add folder button with icon styling
-        self.add_folder_btn = GlassButton("+ New Folder", "secondary")
-        self.add_folder_btn.clicked.connect(self.add_bookmark_section)
-        sidebar_layout.addWidget(self.add_folder_btn)
 
         content_layout.addWidget(self.sidebar)
 
-        # ----- MAIN CONTENT: URL area -----
         main_content = QWidget()
-        main_content.setStyleSheet("""
-            QWidget {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(20, 20, 32, 0.97),
-                    stop:0.3 rgba(18, 18, 28, 0.98),
-                    stop:0.7 rgba(15, 15, 25, 0.98),
-                    stop:1 rgba(12, 12, 22, 0.99));
-                border: 1px solid qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(0, 180, 180, 0.4),
-                    stop:0.5 rgba(139, 92, 246, 0.3),
-                    stop:1 rgba(255, 45, 146, 0.3));
-                border-radius: 16px;
+        main_content.setStyleSheet("background: transparent;")
+        main_content_layout = QVBoxLayout(main_content)
+        main_content_layout.setContentsMargins(0, 14, 0, 0)
+        main_content_layout.setSpacing(14)
+
+        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tagline.setStyleSheet("""
+            QLabel {
+                color: #ff5cae;
+                font-family: "Avenir Next";
+                font-size: 25px;
+                font-weight: 600;
+                font-style: italic;
+                letter-spacing: 0.7px;
+                padding-bottom: 6px;
             }
         """)
-        # Add outer glow to main content
-        content_glow = QGraphicsDropShadowEffect()
-        content_glow.setBlurRadius(20)
-        content_glow.setColor(QColor(0, 180, 180, 40))  # Teal glow
-        content_glow.setOffset(0, 0)
-        main_content.setGraphicsEffect(content_glow)
-        main_content_layout = QVBoxLayout(main_content)
-        main_content_layout.setContentsMargins(24, 24, 24, 24)
-        main_content_layout.setSpacing(20)
+        tagline_glow = QGraphicsDropShadowEffect()
+        tagline_glow.setBlurRadius(24)
+        tagline_glow.setOffset(0, 0)
+        tagline_glow.setColor(QColor(255, 96, 182, 86))
+        tagline.setGraphicsEffect(tagline_glow)
+        main_content_layout.addWidget(tagline)
 
-        # (Tagline moved to header)
+        tagline_beam = QFrame()
+        tagline_beam.setFixedHeight(3)
+        tagline_beam.setStyleSheet("""
+            QFrame {
+                border: none;
+                border-radius: 1px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(89, 132, 255, 0.0),
+                    stop:0.18 rgba(58, 212, 255, 0.30),
+                    stop:0.5 rgba(255, 74, 169, 0.92),
+                    stop:0.82 rgba(93, 108, 255, 0.36),
+                    stop:1 rgba(89, 132, 255, 0.0));
+            }
+        """)
+        beam_glow = QGraphicsDropShadowEffect()
+        beam_glow.setBlurRadius(18)
+        beam_glow.setOffset(0, 0)
+        beam_glow.setColor(QColor(156, 96, 255, 102))
+        tagline_beam.setGraphicsEffect(beam_glow)
+        main_content_layout.addWidget(tagline_beam)
 
-        # URL Table with enhanced styling and colored headers
+        url_panel = QWidget()
+        url_panel.setObjectName("urlWell")
+        url_panel.setStyleSheet("""
+            QWidget#urlWell {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(8, 8, 24, 0.92),
+                    stop:0.32 rgba(4, 8, 20, 0.94),
+                    stop:0.70 rgba(10, 8, 26, 0.88),
+                    stop:1 rgba(2, 6, 15, 0.96));
+                border: 1px solid rgba(69, 132, 255, 0.20);
+                border-radius: 22px;
+            }
+        """)
+        url_panel_shadow = QGraphicsDropShadowEffect()
+        url_panel_shadow.setBlurRadius(34)
+        url_panel_shadow.setOffset(0, 0)
+        url_panel_shadow.setColor(QColor(52, 66, 180, 34))
+        url_panel.setGraphicsEffect(url_panel_shadow)
+        url_panel_layout = QVBoxLayout(url_panel)
+        url_panel_layout.setContentsMargins(16, 16, 16, 12)
+        url_panel_layout.setSpacing(10)
+
         self.url_table = URLTableWidget()
         self.url_table.itemChanged.connect(self._update_url_counter)
         self.url_table.model().rowsInserted.connect(self._update_url_counter)
         self.url_table.model().rowsRemoved.connect(self._update_url_counter)
+        self.url_table.url_activated.connect(self._open_single_url)
+        self.url_table.urls_changed.connect(self._on_urls_changed)
+        self.url_table.setToolTip("Double-click a URL row to open it in Safari")
         self.url_table.setStyleSheet("""
             QTableWidget {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(15, 15, 25, 0.8),
-                    stop:1 rgba(10, 10, 20, 0.9));
-                border: 1px solid rgba(0, 180, 180, 0.25);
-                border-radius: 12px;
-                color: #e0e0e0;
-                font-size: 15px; /* Increased row text size */
-                gridline-color: rgba(0, 180, 180, 0.1);
-                selection-background-color: rgba(0, 180, 180, 0.3);
+                background: transparent;
+                border: none;
+                color: #f8faff;
+                font-size: 15px;
+                outline: none;
+                selection-background-color: transparent;
             }
             QTableWidget::item {
-                padding: 12px 10px;
-                border-bottom: 1px solid rgba(0, 180, 180, 0.08);
-            }
-            QTableWidget::item:hover {
-                background: rgba(0, 180, 180, 0.1);
-            }
-            QTableWidget::item:selected {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(0, 180, 180, 0.35), stop:1 rgba(255, 45, 146, 0.35));
-            }
-            QHeaderView::section {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(0, 180, 180, 0.2), stop:1 rgba(255, 45, 146, 0.15));
-                color: #00e5e5;
-                padding: 14px 12px;
+                padding: 0px;
                 border: none;
-                border-bottom: 1px solid rgba(0, 212, 212, 0.4);
-                font-weight: 700;
-                font-size: 14px; /* Increased header text size */
-                letter-spacing: 1px;
+                background: transparent;
+            }
+            QTableWidget QLineEdit {
+                background: transparent;
+                border: none;
+                color: #f8faff;
+                padding-left: 24px;
+                font-size: 15px;
+                selection-background-color: rgba(129, 160, 255, 0.35);
             }
             QScrollBar:vertical {
-                background: rgba(0, 0, 0, 0.2);
+                background: transparent;
                 width: 8px;
-                border-radius: 4px;
+                margin: 8px 0;
             }
             QScrollBar::handle:vertical {
-                background: rgba(0, 180, 180, 0.4);
+                background: rgba(178, 194, 255, 0.28);
                 border-radius: 4px;
                 min-height: 30px;
             }
             QScrollBar::handle:vertical:hover {
-                background: rgba(0, 180, 180, 0.6);
+                background: rgba(208, 218, 255, 0.4);
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: transparent;
             }
         """)
-        main_content_layout.addWidget(self.url_table, 1)
 
-        # URL counter with accent styling
-        self.url_counter_label = QLabel("0 URLs")
+        self.url_empty_state = QWidget()
+        self.url_empty_state.setStyleSheet("background: transparent;")
+        empty_layout = QVBoxLayout(self.url_empty_state)
+        empty_layout.setContentsMargins(34, 36, 34, 36)
+        empty_layout.setSpacing(10)
+        empty_layout.addStretch()
+
+        self.url_empty_title = QLabel("Paste URLs to Fill This List")
+        self.url_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.url_empty_title.setStyleSheet("""
+            QLabel {
+                color: rgba(238, 246, 255, 0.94);
+                font-family: "Avenir Next";
+                font-size: 26px;
+                font-weight: 700;
+                letter-spacing: 0.4px;
+            }
+        """)
+        title_glow = QGraphicsDropShadowEffect()
+        title_glow.setBlurRadius(22)
+        title_glow.setOffset(0, 0)
+        title_glow.setColor(QColor(138, 198, 255, 90))
+        self.url_empty_title.setGraphicsEffect(title_glow)
+        empty_layout.addWidget(self.url_empty_title)
+
+        self.url_empty_note = QLabel(
+            "Copied links appear here automatically, then each row reports Ready or Failed."
+        )
+        self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.url_empty_note.setWordWrap(True)
+        self.url_empty_note.setStyleSheet("""
+            QLabel {
+                color: rgba(188, 206, 255, 0.66);
+                font-family: "Avenir Next";
+                font-size: 14px;
+                font-weight: 500;
+                padding-left: 60px;
+                padding-right: 60px;
+            }
+        """)
+        empty_layout.addWidget(self.url_empty_note)
+        empty_layout.addStretch()
+
+        self.url_stack_host = QWidget()
+        self.url_stack = QStackedLayout(self.url_stack_host)
+        self.url_stack.setContentsMargins(0, 0, 0, 0)
+        self.url_stack.addWidget(self.url_empty_state)
+        self.url_stack.addWidget(self.url_table)
+        url_panel_layout.addWidget(self.url_stack_host, 1)
+        main_content_layout.addWidget(url_panel, 1)
+
+        self.url_counter_label = QLabel("0 URLs ready")
+        self.url_counter_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.url_counter_label.setStyleSheet("""
             QLabel {
-                color: #8b8b8b;
-                font-size: 13px;
-                font-weight: 500;
-                background: transparent;
-                border: none;
-                padding: 4px 0;
+                color: rgba(124, 220, 255, 0.72);
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.8px;
+                padding-top: 2px;
+                padding-right: 8px;
             }
         """)
         main_content_layout.addWidget(self.url_counter_label)
 
-        # Action buttons row - Distributed evenly (Space them out there are 4)
         button_row = QHBoxLayout()
-        button_row.setSpacing(10)  # Using stretch instead for even spacing
+        button_row.setContentsMargins(18, 2, 18, 0)
+        button_row.setSpacing(18)
 
-        self.run_btn = GlassButton("🚀   Open All", "primary")
+        self.run_btn = GlassButton("Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
-        self.save_btn = GlassButton("🔖   Save", "secondary")
+        self.save_btn = GlassButton("Save", "secondary")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
-        self.private_mode_btn = GlassButton("🔓   Private Mode", "tertiary")
-        self.private_mode_btn.setCheckable(True)
-        self.private_mode_btn.setChecked(Config.DEFAULT_PRIVATE_MODE)
-        self.private_mode_btn.clicked.connect(self._toggle_private_mode)
+        self.undo_btn = GlassButton("Undo", "tertiary")
+        self.undo_btn.clicked.connect(self._undo_url_change)
+        self.undo_btn.setEnabled(False)
 
-        self.clear_btn = GlassButton("🗑️   Clear", "danger")
+        self.clear_btn = GlassButton("Clear", "quaternary")
         self.clear_btn.clicked.connect(self._clear_all_data)
+        for button in (
+            self.run_btn,
+            self.save_btn,
+            self.undo_btn,
+            self.clear_btn,
+        ):
+            button.setFixedSize(184, 50)
 
-        # Distribute buttons evenly: Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn-Stretch
-        # Or simpler: Btn-Stretch-Btn-Stretch-Btn-Stretch-Btn
-
-        button_row.addWidget(self.run_btn)
         button_row.addStretch()
+        button_row.addWidget(self.run_btn)
+        button_row.addWidget(self.save_btn)
+        button_row.addWidget(self.undo_btn)
         button_row.addWidget(self.clear_btn)
         button_row.addStretch()
-        button_row.addWidget(self.private_mode_btn)
-        button_row.addStretch()
-        button_row.addWidget(self.save_btn)
-
         main_content_layout.addLayout(button_row)
 
         content_layout.addWidget(main_content, 1)
-
         main_layout.addWidget(content_widget, 1)
 
-        # ===== STATUS BAR =====
         self.status_bar = QLabel("Ready")
+        self.status_bar.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.status_bar.setStyleSheet("""
             QLabel {
-                color: #444444;
+                color: rgba(175, 190, 255, 0.48);
                 font-size: 11px;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                padding: 8px 20px;
+                padding-right: 6px;
             }
         """)
         main_layout.addWidget(self.status_bar)
 
-        # Store references for legacy compatibility (some methods reference these)
         self.safari_panel = main_content
         self.bookmarks_panel = self.sidebar
         self.settings_panel = None
         self.safari_title = self.title_label
         self.bookmarks_title = sidebar_title
-        self.organize_btn = None  # Removed in redesign
-        self.add_link_btn = None  # Use context menu instead
-        self.export_btn = None  # Use context menu instead
+        self.organize_btn = None
+        self.add_link_btn = None
+        self.export_btn = None
+        self._current_url_snapshot = self.url_table.get_all_urls()
+        self._update_url_empty_state()
+        self._update_url_counter()
 
-    def _update_private_mode_style(self):
-        """Update private mode button appearance based on state."""
-        if hasattr(self, "private_mode_btn"):
-            if self.private_mode_btn.isChecked():
-                self.private_mode_btn.setText("🔒   Private Mode")
-                self.private_mode_btn.setStyleSheet("""
-                    QPushButton {
-                        background: rgba(139, 92, 246, 0.2);
-                        color: #a78bfa;
-                        border: 1px solid rgba(139, 92, 246, 0.4);
-                        border-radius: 10px;
-                        padding: 12px 24px;
-                        font-weight: 600;
-                        font-size: 14px;
-                        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                    }
-                    QPushButton:hover {
-                        background: rgba(139, 92, 246, 0.3);
-                    }
-                """)
-            else:
-                self.private_mode_btn.setText("🔓   Private Mode")
-                self.private_mode_btn.setStyleSheet("""
-                    QPushButton {
-                        background: rgba(255, 255, 255, 0.05);
-                        color: #888888;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 10px;
-                        padding: 12px 24px;
-                        font-weight: 600;
-                        font-size: 14px;
-                        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                    }
-                    QPushButton:hover {
-                        background: rgba(255, 255, 255, 0.1);
-                    }
-                """)
+    def _update_undo_button_state(self):
+        if hasattr(self, "undo_btn"):
+            self.undo_btn.setEnabled(bool(self._url_history))
+
+    def _update_url_empty_state(self):
+        """Swap between the empty-state message and the real URL table."""
+        has_urls = self.url_table.rowCount() > 0
+        if hasattr(self, "url_stack"):
+            self.url_stack.setCurrentWidget(
+                self.url_table if has_urls else self.url_empty_state
+            )
+        if hasattr(self, "run_btn"):
+            self.run_btn.setEnabled(has_urls)
+        if hasattr(self, "save_btn"):
+            self.save_btn.setEnabled(has_urls)
+        if hasattr(self, "clear_btn"):
+            self.clear_btn.setEnabled(has_urls)
+        self._update_undo_button_state()
 
     def _populate_safari_tab(
         self, tab_widget: QWidget
@@ -660,18 +756,12 @@ class MainWindow(QMainWindow):
         """Runs URLs from the table in Safari with status tracking and privacy settings."""
         urls = self.url_table.get_all_urls()
         if urls:
-            # Reset all status indicators to pending
             for row in range(self.url_table.rowCount()):
-                # Reset status to pending (⏳)
-                status_item = self.url_table.item(row, 2)
-                if status_item:
-                    status_item.setText("⏳")
+                self.url_table.set_status_state(row, "opening")
 
-            # Get private mode setting
-            private_mode = self.private_mode_btn.isChecked()
-
-            # Use AsyncWorker for non-blocking UI
-            self.worker = AsyncWorker(self._open_urls_with_tracking, urls, private_mode)
+            self.worker = AsyncWorker(
+                self._open_urls_with_tracking, urls, self.private_mode_enabled
+            )
             self.worker.result_ready.connect(
                 lambda success: self._on_safari_operation_complete(success, len(urls))
             )
@@ -683,6 +773,49 @@ class MainWindow(QMainWindow):
             self.worker.start()
         else:
             self._show_message("No URLs found to launch.", "warning")
+
+    def _open_single_url(self, row: int, url: str):
+        """Open one URL from the list when a row is activated."""
+        if not url:
+            return
+        self.url_table.set_status_state(row, "opening")
+        self.worker = AsyncWorker(
+            self._open_single_url_with_tracking,
+            row,
+            url,
+            self.private_mode_enabled,
+        )
+        self.worker.result_ready.connect(self._on_single_url_operation_complete)
+        self.worker.error.connect(
+            lambda err: self._handle_single_url_error(row, err)
+        )
+        self.worker.start()
+
+    async def _open_single_url_with_tracking(
+        self, row: int, url: str, private_mode: bool = True
+    ) -> tuple[int, bool]:
+        """Open a single URL and keep row-level status intact."""
+        try:
+            success = await self.safari_controller.open_urls(
+                [url], private_mode=private_mode
+            )
+            return row, success
+        except (TimeoutError, OSError) as e:
+            logger.error(
+                "Error opening %s: %s",
+                privacy_fingerprint(url, "url"),
+                e,
+            )
+            return row, False
+
+    def _on_single_url_operation_complete(self, result: tuple[int, bool]):
+        """Update row state after a single URL finishes opening."""
+        row, success = result
+        self.url_table.update_status(row, success)
+
+    def _handle_single_url_error(self, row: int, err: str):
+        self.url_table.update_status(row, False)
+        self._show_message(f"Error launching URL: {err}", "warning")
 
     async def _open_urls_with_tracking(
         self, urls: list[str], private_mode: bool = True
@@ -844,7 +977,44 @@ class MainWindow(QMainWindow):
     def _update_url_counter(self):
         """Updates the URL counter label based on table contents."""
         count = self.url_table.rowCount()
-        self.url_counter_label.setText(f"{count} URL{'s' if count != 1 else ''} found")
+        if count == 0:
+            self.url_counter_label.setText("Waiting for pasted URLs")
+        else:
+            self.url_counter_label.setText(
+                f"{count} URL{'s' if count != 1 else ''} ready"
+            )
+
+    def _track_url_history(self, urls: list[str]):
+        """Track URL list mutations so the Undo action can restore the prior state."""
+        if self._restoring_url_history:
+            self._current_url_snapshot = urls.copy()
+            self._update_undo_button_state()
+            return
+        if urls == self._current_url_snapshot:
+            return
+        self._url_history.append(self._current_url_snapshot.copy())
+        self._url_history = self._url_history[-20:]
+        self._current_url_snapshot = urls.copy()
+        self._update_undo_button_state()
+
+    def _on_urls_changed(self, urls: list[str]):
+        """Refresh derived UI state after the URL list changes."""
+        self._track_url_history(urls)
+        self._update_url_empty_state()
+        self._update_url_counter()
+
+    def _undo_url_change(self):
+        """Restore the previous URL list state."""
+        if not self._url_history:
+            return
+        previous_urls = self._url_history.pop()
+        self._restoring_url_history = True
+        try:
+            self.url_table.replace_urls(previous_urls)
+        finally:
+            self._restoring_url_history = False
+        self._current_url_snapshot = previous_urls.copy()
+        self._update_undo_button_state()
 
     def _find_or_create_folder(self, folder_name: str) -> QTreeWidgetItem:
         """Finds an existing folder in the tree or creates a new one."""
@@ -861,6 +1031,152 @@ class MainWindow(QMainWindow):
 
         folder_data = {"name": folder_name, "type": "folder", "children": []}
         return self._create_tree_item(folder_data)
+
+    def _resolve_folder_style(self, folder_name: str) -> dict[str, str]:
+        """Return a stable color palette for a bookmark folder row."""
+        named_styles = {
+            "favorites": {
+                "start": "#991647",
+                "end": "#3D081E",
+                "border": "#E8A5C2",
+                "icon": "#FFE7F0",
+            },
+            "tech": {
+                "start": "#0B6EB6",
+                "end": "#082A56",
+                "border": "#94D5FF",
+                "icon": "#E6FCFF",
+            },
+            "misc": {
+                "start": "#7025CF",
+                "end": "#23074F",
+                "border": "#D6B1FF",
+                "icon": "#F6E9FF",
+            },
+            "work": {
+                "start": "#0C8B77",
+                "end": "#072F2A",
+                "border": "#9DE9D8",
+                "icon": "#EDFFF9",
+            },
+            "later": {
+                "start": "#A45B0A",
+                "end": "#492403",
+                "border": "#F0C88F",
+                "icon": "#FFF4D0",
+            },
+            "news": {
+                "start": "#3467D6",
+                "end": "#10235D",
+                "border": "#AFC7FF",
+                "icon": "#EEF5FF",
+            },
+            "reading": {
+                "start": "#D7DBEE",
+                "end": "#717AA8",
+                "border": "#F3F5FF",
+                "icon": "#FFFFFF",
+            },
+            "apple": {
+                "start": "#5EC4FF",
+                "end": "#2767C7",
+                "border": "#C1E5FF",
+                "icon": "#EAF7FF",
+            },
+            "google": {
+                "start": "#62F5D9",
+                "end": "#238B8A",
+                "border": "#C7FFF5",
+                "icon": "#EBFFFB",
+            },
+            "github": {
+                "start": "#9880FF",
+                "end": "#4720BE",
+                "border": "#D1C9FF",
+                "icon": "#EEEBFF",
+            },
+            "fun": {
+                "start": "#FF67E2",
+                "end": "#A11BB7",
+                "border": "#FFC7F2",
+                "icon": "#FFEAFB",
+            },
+            "personal": {
+                "start": "#4E90DE",
+                "end": "#265CB2",
+                "border": "#BADEFF",
+                "icon": "#DFF0FF",
+            },
+            "youtube": {
+                "start": "#CE425B",
+                "end": "#8A203A",
+                "border": "#FFB8C4",
+                "icon": "#FFE2E7",
+            },
+            "guides": {
+                "start": "#D39A36",
+                "end": "#945F1E",
+                "border": "#FFE0A7",
+                "icon": "#FFF1D8",
+            },
+            "random": {
+                "start": "#55A58B",
+                "end": "#2F6B58",
+                "border": "#C2F4E4",
+                "icon": "#E3FFF6",
+            },
+        }
+        fallback_styles = [
+            {
+                "start": "#0F6DAF",
+                "end": "#092B59",
+                "border": "#9AD4FF",
+                "icon": "#E8F7FF",
+            },
+            {
+                "start": "#7227CE",
+                "end": "#250854",
+                "border": "#D6B5FF",
+                "icon": "#F3E8FF",
+            },
+            {
+                "start": "#0D8B77",
+                "end": "#07312B",
+                "border": "#9CE8D8",
+                "icon": "#ECFFF8",
+            },
+            {
+                "start": "#9B174B",
+                "end": "#3E081F",
+                "border": "#EAB0C9",
+                "icon": "#FFE5EF",
+            },
+            {
+                "start": "#A7600E",
+                "end": "#4A2603",
+                "border": "#F0CB93",
+                "icon": "#FFF5D7",
+            },
+            {
+                "start": "#496EDA",
+                "end": "#162B67",
+                "border": "#B5C5FF",
+                "icon": "#F1F3FF",
+            },
+        ]
+
+        normalized = folder_name.lower()
+        if normalized in named_styles:
+            return named_styles[normalized]
+
+        if not hasattr(self, "_folder_style_cache"):
+            self._folder_style_cache = {}
+
+        if normalized not in self._folder_style_cache:
+            index = len(self._folder_style_cache) % len(fallback_styles)
+            self._folder_style_cache[normalized] = fallback_styles[index]
+
+        return self._folder_style_cache[normalized]
 
     def _generate_bookmark_name(self, url: str) -> str:
         """Generates a readable name from a URL."""
@@ -939,58 +1255,16 @@ class MainWindow(QMainWindow):
     ) -> QTreeWidgetItem:
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
-        # No icons - just clean text
         item = QTreeWidgetItem([data["name"]])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
-
-        input_name = data["name"]
-        # Normalize name for color lookup (case insensitive)
-        norm_name = input_name.lower()
-
-        # Color mapping based on user request (v1.27.1 palette)
-        # Default rotation colors if not specified
-        default_colors = [
-            "#00E5FF",  # Personal (Cyan)
-            "#FF1744",  # YouTube (Red)
-            "#FFEA00",  # Guides (Yellow)
-            "#B388FF",  # GitHub (Purple)
-            "#00FF85",  # Random (Green)
-        ]
-
-        # Specific color overrides (user-defined)
-        specific_colors = {
-            "personal": "#00E5FF",
-            "youtube": "#FF1744",
-            "guides": "#FFEA00",
-            "github": "#B388FF",
-            "random": "#00FF85",
-        }
-
-        # Apply font styling directly to the item - bigger text
-        font = item.font(0)
-        font.setBold(is_folder)
-        font.setPointSize(18 if is_folder else 14)  # Larger font sizes
-        item.setFont(0, font)
-
-        # Apply color to folders
         if is_folder:
-            if norm_name in specific_colors:
-                color = specific_colors[norm_name]
-            else:
-                # Get folder index for color rotation
-                if not hasattr(self, "_folder_color_index"):
-                    self._folder_color_index = 0
-                color = default_colors[self._folder_color_index % len(default_colors)]
-                self._folder_color_index += 1
-
-            item.setForeground(0, QColor(color))
-            item.setFlags(
-                item.flags() & ~Qt.ItemFlag.ItemIsEditable
-            )  # Folders not editable inline
+            item.setData(
+                0,
+                Qt.ItemDataRole.UserRole + 1,
+                self._resolve_folder_style(data["name"]),
+            )
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         else:
-            # Bookmarks are gray
-            item.setForeground(0, QColor("#aaaaaa"))
-            # Make sure bookmarks are NOT editable
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
         if parent:
@@ -1028,40 +1302,79 @@ class MainWindow(QMainWindow):
         self.bookmark_tree.clear()
         bookmark_nodes = self.bookmark_manager.load_bookmarks()
 
-        # Migration: Rename "AI News" to "News" if it exists
-        ai_news_node = next(
-            (
-                n
-                for n in bookmark_nodes
-                if isinstance(n, BookmarkFolder) and n.name == "AI News"
-            ),
-            None,
-        )
-        if ai_news_node:
-            ai_news_node.name = "News"
+        bookmark_nodes, changed = self._normalize_bookmark_nodes(bookmark_nodes)
+        if changed:
             self.bookmark_manager.save_bookmarks(bookmark_nodes)
 
-        # Ensure all required default folders exist
-        required_folders = ["News", "Apple", "Misc", "Google", "Github", "Fun"]
-        existing_names = {
-            n.name for n in bookmark_nodes if isinstance(n, BookmarkFolder)
-        }
-
-        folders_added = False
-        for req_name in required_folders:
-            if req_name not in existing_names:
-                bookmark_nodes.append(BookmarkFolder(name=req_name, children=[]))
-                folders_added = True
-
-        if folders_added:
-            self.bookmark_manager.save_bookmarks(bookmark_nodes)
-
-        # Sort bookmarks alphabetically by name
-        bookmark_nodes.sort(key=lambda x: x.name.lower())
+        bookmark_nodes.sort(key=self._bookmark_sort_key)
         for node in bookmark_nodes:
             node_data = self.bookmark_manager._serialize_node(node)
             item = self._create_tree_item(node_data)
             item.setExpanded(True)
+
+    def _normalize_bookmark_nodes(
+        self, bookmark_nodes: list[BookmarkNode]
+    ) -> tuple[list[BookmarkNode], bool]:
+        """Align saved bookmark folders with the glossy sidebar set without dropping user data."""
+        changed = False
+
+        def _folder_lookup() -> dict[str, BookmarkFolder]:
+            return {
+                node.name.lower(): node
+                for node in bookmark_nodes
+                if isinstance(node, BookmarkFolder)
+            }
+
+        folder_lookup = _folder_lookup()
+
+        ai_news_node = folder_lookup.get("ai news")
+        if ai_news_node is not None:
+            ai_news_node.name = "News"
+            changed = True
+            folder_lookup = _folder_lookup()
+
+        reading_node = folder_lookup.get("reading")
+        misc_node = folder_lookup.get("misc")
+        if reading_node is not None:
+            if misc_node is None:
+                reading_node.name = "Misc"
+            else:
+                misc_node.children.extend(reading_node.children)
+                bookmark_nodes.remove(reading_node)
+            changed = True
+            folder_lookup = _folder_lookup()
+
+        removable_empty_folders = {"news", "apple", "google", "github", "fun"}
+        kept_nodes: list[BookmarkNode] = []
+        for node in bookmark_nodes:
+            if (
+                isinstance(node, BookmarkFolder)
+                and node.name.lower() in removable_empty_folders
+                and node.name.lower() not in {"news"}
+                and not node.children
+            ):
+                changed = True
+                continue
+            kept_nodes.append(node)
+        bookmark_nodes = kept_nodes
+        folder_lookup = _folder_lookup()
+
+        for folder_name in DEFAULT_BOOKMARK_FOLDER_NAMES:
+            if folder_name.lower() not in folder_lookup:
+                bookmark_nodes.append(BookmarkFolder(name=folder_name, children=[]))
+                changed = True
+                folder_lookup = _folder_lookup()
+
+        return bookmark_nodes, changed
+
+    def _bookmark_sort_key(self, node: BookmarkNode) -> tuple[int, int, str]:
+        preferred_order = {
+            name.lower(): index for index, name in enumerate(DEFAULT_BOOKMARK_FOLDER_NAMES)
+        }
+        folder_name = node.name.lower()
+        group = 0 if folder_name in preferred_order else 1
+        order = preferred_order.get(folder_name, 999)
+        return group, order, folder_name
 
     def _show_bookmark_context_menu(self, position):
         """Shows a context menu for bookmark items with relevant actions."""
@@ -1090,20 +1403,20 @@ class MainWindow(QMainWindow):
         item_type = data.get("type") if data else None
 
         if item_type == "bookmark":
-            open_action = menu.addAction("🌐 Open in Safari")
+            open_action = menu.addAction("Open in Safari")
             open_action.triggered.connect(lambda: self._open_bookmark_link(item))
             menu.addSeparator()
 
-        edit_action = menu.addAction("✏️ Rename")
+        edit_action = menu.addAction("Rename")
         edit_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
 
         if item_type == "folder":
-            add_bookmark_action = menu.addAction("🔗 Add Bookmark to Folder")
+            add_bookmark_action = menu.addAction("Add Bookmark to Folder")
             add_bookmark_action.triggered.connect(lambda: self._add_bookmark_link(item))
-            add_folder_action = menu.addAction("📁 Add Subfolder")
+            add_folder_action = menu.addAction("Add Subfolder")
             add_folder_action.triggered.connect(self.add_bookmark_section)
 
-        delete_action = menu.addAction("🗑️ Delete")
+        delete_action = menu.addAction("Delete")
         delete_action.triggered.connect(lambda: self._delete_bookmark_item(item))
 
         menu.exec(self.bookmark_tree.viewport().mapToGlobal(position))
@@ -1114,67 +1427,20 @@ class MainWindow(QMainWindow):
         if data and data.get("type") == "bookmark":
             url = data.get("url")
             if url:
-                # Get private mode setting
-                private_mode = self.private_mode_btn.isChecked()
-                # Use AsyncWorker for non-blocking UI - opens in same Safari window
                 self.worker = AsyncWorker(
-                    self._open_bookmark_in_existing_window, [url], private_mode
+                    self._open_bookmark_in_existing_window,
+                    [url],
+                    self.private_mode_enabled,
                 )
                 self.worker.start()
 
     async def _open_bookmark_in_existing_window(
         self, urls: list[str], private_mode: bool = True
     ) -> bool:
-        """Opens bookmark URLs in Safari, creating window if needed."""
-        if not urls:
-            return False
-
-        processed_urls = [url.replace('"', '\\"') for url in urls]
-        script_parts = ['tell application "Safari"', "activate"]
-
-        # Check if Safari has any windows, create one if needed
-        script_parts.extend(
-            ["if (count of windows) = 0 then", "    make new document", "end if"]
+        """Open bookmark URLs via the escaped AppleScript builder path."""
+        return await self.safari_controller.open_urls_in_front_window(
+            urls, private_mode=private_mode
         )
-
-        # Add URLs as new tabs
-        for i, url in enumerate(processed_urls):
-            if i == 0:
-                # First URL goes to current/new window
-                script_parts.append(f'set URL of front document to "{url}"')
-            else:
-                # Additional URLs as new tabs
-                script_parts.extend(
-                    [
-                        "delay 0.5",
-                        f'tell front window to make new tab with properties {{URL:"{url}"}}',
-                    ]
-                )
-
-        script_parts.append("end tell")
-        applescript = "\n".join(script_parts)
-
-        try:
-            process = await asyncio.create_subprocess_exec(
-                "osascript",
-                "-e",
-                applescript,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=Config.REQUEST_TIMEOUT
-            )
-            if process.returncode == 0:
-                logger.info(
-                    "Successfully opened %d bookmark URLs.", len(processed_urls)
-                )
-                return True
-            logger.error("Safari AppleScript error: %s", stderr.decode())
-            return False
-        except (TimeoutError, OSError) as e:
-            logger.error("Error opening bookmark URLs: %s", e)
-            return False
 
     def _add_bookmark_link(self, parent_item: QTreeWidgetItem | None = None):
         """Prompts for bookmark details and adds a new bookmark."""
@@ -1243,6 +1509,7 @@ class MainWindow(QMainWindow):
             geometry_data, QByteArray
         ):  # QSettings returns QByteArray for geometry/state
             self.restoreGeometry(geometry_data)
+            self.restored_window_geometry = not geometry_data.isEmpty()
         state_data = self.settings.value("mainWindow/state")
         if isinstance(state_data, QByteArray):
             self.restoreState(state_data)
@@ -1257,14 +1524,6 @@ class MainWindow(QMainWindow):
         """Converts a hex color string to an RGB string for rgba() CSS functions."""
         hex_color = hex_color.lstrip("#")
         return f"{int(hex_color[0:2], 16)}, {int(hex_color[2:4], 16)}, {int(hex_color[4:6], 16)}"
-
-    def _toggle_private_mode(self):
-        """Toggle private mode setting and update button text."""
-        is_private = self.private_mode_btn.isChecked()
-        self.private_mode_btn.setText(
-            f"🔒 Private Mode: {'ON' if is_private else 'OFF'}"
-        )
-        logger.info("Private mode %s", "enabled" if is_private else "disabled")
 
     def _clear_all_data(self):
         """Clear all URLs and optionally cleanup logs for privacy."""

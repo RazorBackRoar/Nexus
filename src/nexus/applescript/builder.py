@@ -59,6 +59,35 @@ def build_new_tab_script(url: str) -> str:
     )
 
 
+def build_open_in_front_window_script(urls: list[str]) -> str:
+    """Open URLs in the front Safari window, creating one when needed."""
+    if not urls:
+        return ""
+
+    first_url = escape_string(urls[0])
+    parts = [
+        'tell application "Safari"',
+        "    activate",
+        "    if (count of windows) = 0 then",
+        f'        make new document with properties {{URL:"{first_url}"}}',
+        "    else",
+        f'        set URL of front document to "{first_url}"',
+        "    end if",
+    ]
+
+    for url in urls[1:]:
+        safe = escape_string(url)
+        parts.extend(
+            [
+                "    delay 0.5",
+                f'    tell front window to make new tab with properties {{URL:"{safe}"}}',
+            ]
+        )
+
+    parts.append("end tell")
+    return "\n".join(parts)
+
+
 def build_batch_script(urls: list[str], *, create_window: bool = False) -> str:
     """Combine multiple URL-open commands into a single AppleScript string.
 

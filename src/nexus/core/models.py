@@ -17,7 +17,7 @@ class BookmarkFolder:
     """Represents a folder that can contain bookmarks or other folders."""
 
     name: str
-    children: list["BookmarkFolder | Bookmark"] = field(default_factory=list)
+    children: list[BookmarkFolder | Bookmark] = field(default_factory=list)
     type: str = "folder"  # Used for serialization/deserialization
 
 

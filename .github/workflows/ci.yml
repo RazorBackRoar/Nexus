@@ -24,7 +24,7 @@ jobs:
       - name: Lint
         run: uv run ruff check .
       - name: Type Check
-        run: uv run ty check src --python-version 3.13
+        run: uv run ty check src --python-version 3.14
       - name: Tests
         run: uv run pytest tests/ -q
       - name: Prune cache (keep CI runner lean)

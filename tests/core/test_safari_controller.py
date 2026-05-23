@@ -84,3 +84,13 @@ def test_build_batch_script_tabs_only():
 def test_build_batch_script_empty_returns_empty():
     """Empty URL list produces empty script string."""
     assert builder.build_batch_script([]) == ""
+
+
+def test_build_open_in_front_window_script_escapes_user_urls():
+    """Front-window scripts should use escaped URL content."""
+    script = builder.build_open_in_front_window_script(
+        ['https://example.com/path?"x"=1\\2\nnext\rline', "https://b.com"]
+    )
+
+    assert 'set URL of front document to "https://example.com/path?\\"x\\"=1\\\\2\\nnext\\rline"' in script
+    assert 'make new tab with properties {URL:"https://b.com"}' in script
