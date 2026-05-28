@@ -9,7 +9,7 @@ import plistlib
 from typing import Any
 
 from nexus.core.bookmarks import BookmarkManager
-from nexus.core.models import BookmarkFolder
+from nexus.core.models import Bookmark, BookmarkFolder
 
 
 def test_bookmark_data_structure():
@@ -226,4 +226,6 @@ def test_load_bookmarks_skips_invalid_bookmark_urls(tmp_path):
     assert len(bookmarks) == 1
     assert isinstance(bookmarks[0], BookmarkFolder)
     assert len(bookmarks[0].children) == 1
-    assert bookmarks[0].children[0].url == "https://example.com"
+    child = bookmarks[0].children[0]
+    assert isinstance(child, Bookmark)
+    assert child.url == "https://example.com"

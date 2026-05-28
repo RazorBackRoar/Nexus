@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+from typing import cast
 
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import (
@@ -23,24 +24,30 @@ def _app() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return cast(QApplication, app)
 
 
 def test_url_table_uses_named_status_states():
     _app()
     table = URLTableWidget()
     table.add_urls(["https://example.com"])
+    status_item = table.item(0, 2)
+    assert status_item is not None
 
     assert table.isColumnHidden(0)
-    assert table.item(0, 2).text() == "Ready"
-    assert table.item(0, 2).data(Qt.ItemDataRole.UserRole) == "ready"
+    assert status_item.text() == "Ready"
+    assert status_item.data(Qt.ItemDataRole.UserRole) == "ready"
 
     table.set_status_state(0, "opening")
-    assert table.item(0, 2).text() == "Opening"
+    opening_item = table.item(0, 2)
+    assert opening_item is not None
+    assert opening_item.text() == "Opening"
 
     table.update_status(0, True)
-    assert table.item(0, 2).text() == "Opened"
-    assert table.item(0, 2).data(Qt.ItemDataRole.UserRole) == "opened"
+    opened_item = table.item(0, 2)
+    assert opened_item is not None
+    assert opened_item.text() == "Opened"
+    assert opened_item.data(Qt.ItemDataRole.UserRole) == "opened"
 
 
 def test_url_table_emits_url_activation_and_replacement_state():
@@ -52,7 +59,9 @@ def test_url_table_emits_url_activation_and_replacement_state():
     table.urls_changed.connect(lambda urls: changed.append(urls))
 
     table.add_urls(["https://example.com"])
-    table._activate_item_url(table.item(0, 1))
+    row_item = table.item(0, 1)
+    assert row_item is not None
+    table._activate_item_url(row_item)
 
     assert activated == [(0, "https://example.com")]
     assert changed[-1] == ["https://example.com"]
@@ -194,16 +203,20 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
 
     window = main_window_module.MainWindow()
     try:
-        names = [
-            window.bookmark_tree.topLevelItem(index).text(0)
-            for index in range(window.bookmark_tree.topLevelItemCount())
-        ]
+        names: list[str] = []
+        for index in range(window.bookmark_tree.topLevelItemCount()):
+            item = window.bookmark_tree.topLevelItem(index)
+            assert item is not None
+            names.append(item.text(0))
         assert names == ["Favorites", "Tech", "Misc", "Work", "Later", "News"]
 
         misc_item = window.bookmark_tree.topLevelItem(2)
+        assert misc_item is not None
         assert misc_item.text(0) == "Misc"
         assert misc_item.childCount() == 1
-        assert misc_item.child(0).text(0) == "Example"
+        child_item = misc_item.child(0)
+        assert child_item is not None
+        assert child_item.text(0) == "Example"
 
         misc_style = misc_item.data(0, Qt.ItemDataRole.UserRole + 1)
         assert misc_style["start"] == "#7025CF"

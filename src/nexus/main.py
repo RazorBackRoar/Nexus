@@ -34,7 +34,7 @@ def main():
         # macOS: Set Dock icon when running from source
         if sys.platform == "darwin":
             try:
-                from AppKit import (  # type: ignore[import-not-found]
+                from AppKit import (  # ty: ignore[unresolved-import]
                     NSApplication,
                     NSImage,
                 )

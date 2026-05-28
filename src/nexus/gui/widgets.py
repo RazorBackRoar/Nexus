@@ -66,7 +66,7 @@ except Exception:
                 self.finished.emit({"error": str(e)})
 
 
-class AsyncWorker(BaseWorker):  # ty: ignore[unsupported-base]
+class AsyncWorker(BaseWorker):
     """Generic worker for running asynchronous tasks off the main UI thread."""
 
     result_ready = Signal(object)
