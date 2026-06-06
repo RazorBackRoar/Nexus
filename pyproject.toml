@@ -44,9 +44,6 @@ exclude = [
     ".shared/**",
 ]
 
-[tool.ty.analysis]
-allowed-unresolved-imports = ["razorcore.threading"]
-
 [tool.ty.environment]
 extra-paths = [
     "src",

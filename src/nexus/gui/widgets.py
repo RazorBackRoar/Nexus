@@ -45,25 +45,21 @@ from nexus.core.config import Config, logger
 from nexus.utils.url_processor import URLProcessor
 
 
-try:
-    from razorcore.threading import BaseWorker
-except Exception:
-    # Fallback for standalone Nexus environments where razorcore is unavailable.
-    class BaseWorker(QThread):
-        finished = Signal(dict)
-        error = Signal(str)
+class BaseWorker(QThread):
+    finished = Signal(dict)
+    error = Signal(str)
 
-        def do_work(self):
-            raise NotImplementedError
+    def do_work(self):
+        raise NotImplementedError
 
-        def run(self):
-            try:
-                result = self.do_work() or {}
-                self.finished.emit(result)
-            except Exception as e:
-                logger.error("Fallback worker error: %s", e, exc_info=True)
-                self.error.emit(str(e))
-                self.finished.emit({"error": str(e)})
+    def run(self):
+        try:
+            result = self.do_work() or {}
+            self.finished.emit(result)
+        except Exception as e:
+            logger.error("Worker error: %s", e, exc_info=True)
+            self.error.emit(str(e))
+            self.finished.emit({"error": str(e)})
 
 
 class AsyncWorker(BaseWorker):
