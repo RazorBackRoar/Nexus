@@ -1,5 +1,9 @@
 name: CI
 
+# Thin caller — all CI logic lives in the shared reusable workflow.
+# Single source of truth: RazorBackRoar/.razorcore/.github/workflows/app-ci.yml
+# To add a coverage gate, pass `coverage-package:` and `coverage-min:` below.
+
 on:
   push:
     branches: [main]
@@ -7,41 +11,7 @@ on:
     branches: [main]
 
 jobs:
-  quality:
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13", "3.14"]
-    steps:
-      - name: Checkout Nexus
-        uses: actions/checkout@v4
-        with:
-          path: app
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Sync
-        working-directory: app
-        run: uv sync --all-extras --dev
-
-      - name: Lint
-        working-directory: app
-        run: uv run ruff check .
-
-      - name: Type Check
-        working-directory: app
-        run: uv run ty check src --python-version ${{ matrix.python-version }}
-
-      - name: Tests
-        working-directory: app
-        run: uv run pytest tests/ -q
-
-      - name: Prune cache (keep CI runner lean)
-        if: always()
-        run: uv cache prune --ci
+  ci:
+    uses: RazorBackRoar/.razorcore/.github/workflows/app-ci.yml@main
+    with:
+      app-name: Nexus

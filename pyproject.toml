@@ -3,7 +3,7 @@
 # ============================================================================
 # This pyproject.toml follows RazorBackRoar workspace standards
 # Last Updated: 2026-01-28
-# Python Version: 3.14 primary (best-effort source compatibility 3.12-3.14)
+# Python Version: 3.14 primary (best-effort source compatibility 3.14)
 # ============================================================================
 
 [build-system]
@@ -18,8 +18,8 @@ include = ["nexus*"]
 name = "nexus"
 version = "2.0.0"
 description = "Nexus desktop bookmark and URL manager"
-requires-python = ">=3.12,<3.15"
-# WHY: Native dev/build target is 3.14, with source compatibility for 3.12-3.14.
+requires-python = "==3.14.*"
+# WHY: Native dev/build target is 3.14, with source compatibility for 3.14.
 
 dependencies = [
     "PySide6>=6.6.0,<7.0.0",

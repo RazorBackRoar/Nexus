@@ -53,6 +53,34 @@ class TestURLProcessor(unittest.TestCase):
             ["https://bit.ly/abc/path"],
         )
 
+    def test_sanitize_text_removes_zero_width_and_non_printable_chars(self):
+        processor = URLProcessor()
+
+        self.assertEqual(
+            processor.sanitize_text_for_extraction("https://exa\u200bmple.com\noké"),
+            "https://example.com ok",
+        )
+
+    def test_extension_filter_distinguishes_files_from_urls(self):
+        processor = URLProcessor()
+
+        self.assertTrue(processor._should_filter_by_extension("notes.txt"))
+        self.assertFalse(
+            processor._should_filter_by_extension("https://example.com/file.pdf")
+        )
+        self.assertFalse(processor._should_filter_by_extension("example.com/file.pdf"))
+
+    def test_validation_rejects_unsupported_protocols_and_bad_domains(self):
+        processor = URLProcessor()
+
+        self.assertFalse(processor._is_valid_url("gopher://example.com"))
+        self.assertFalse(processor._is_valid_url("https://localhost"))
+        self.assertIsNone(processor._normalize_url("localhost"))
+        self.assertEqual(
+            processor._normalize_url("example.com/path?x=1#top"),
+            "https://example.com/path?x=1#top",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
