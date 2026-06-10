@@ -76,3 +76,15 @@ venv/
 docs/*.backup
 
 security_best_practices_report.md
+
+# ── Workspace standard hygiene (added 2026-06-09, appended only) ──
+.mypy_cache/
+.ty/
+env/
+*.spec.bak
+*.bak
+.env
+*.pem
+*.key
+*.p12
+*.mobileprovision
