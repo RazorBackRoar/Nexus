@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Nexus
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: app
 
