@@ -6,6 +6,13 @@
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
 
+<!-- Workspace Health Layer -->
+![Status](https://img.shields.io/badge/status-active-green)
+![Python](https://img.shields.io/badge/python-3.14-green)
+![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-green)
+![Tests](https://img.shields.io/badge/tests-present-green)
+![Lint](https://img.shields.io/badge/lint-ruff-green)
+
 ```text
 ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
 ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
