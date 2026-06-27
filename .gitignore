@@ -88,3 +88,9 @@ env/
 *.key
 *.p12
 *.mobileprovision
+
+# ── Coverage artifacts (added 2026-06-26, appended only) ──
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
