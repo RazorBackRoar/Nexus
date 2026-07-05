@@ -1,0 +1,54 @@
+name: Dependabot enrich
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  enrich:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Build enriched PR content
+        id: enrich
+        env:
+          DEPENDABOT_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+          DEPENDABOT_DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+          DEPENDABOT_UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python .github/scripts/enrich-dependabot-pr.py \
+            --title "${{ github.event.pull_request.title }}" \
+            --body "${PR_BODY}" \
+            --ecosystem "${{ steps.metadata.outputs.package-ecosystem }}" \
+            --dependency-type "${{ steps.metadata.outputs.dependency-type }}" \
+            --update-type "${{ steps.metadata.outputs.update-type }}" \
+            --title-out enriched-title.txt \
+            --body-out enriched-body.md
+
+      - name: Update pull request
+        if: steps.enrich.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --title "$(cat enriched-title.txt)" \
+            --body-file enriched-body.md
