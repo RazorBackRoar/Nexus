@@ -8,11 +8,9 @@
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
-![Status](https://img.shields.io/badge/status-active-green)
-![Python](https://img.shields.io/badge/python-3.14-green)
-![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-green)
-![Tests](https://img.shields.io/badge/tests-present-green)
-![Lint](https://img.shields.io/badge/lint-ruff-green)
+[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
+[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
+[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)
 
 ```text
 ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
