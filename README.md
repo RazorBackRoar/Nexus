@@ -34,7 +34,7 @@
 - **Smart URL Extraction** — find valid links in any pasted text
 - **Private Browsing** — one-click stealth/private mode support
 - **Export / Import** — back up your collections as JSON
-- **Apple Silicon Native** — arm64 build optimized for M1/M2/M3/M4 chips
+- **Apple Silicon Native** — arm64 build optimized for M-series Macs
 
 ---
 
