@@ -54,7 +54,7 @@ Before tagging a release, verify all of the following:
 
 ### What CI Does Not Prove
 > Green CI is necessary but not sufficient for a safe release.
-> Source site behavior (4Charm), macOS permissions (Nexus), and external tools (L!bra)
+> Source site behavior (4Charm) and macOS permissions (Nexus)
 > cannot be fully validated by static CI checks.
 
 ## Universal Safety Rules
