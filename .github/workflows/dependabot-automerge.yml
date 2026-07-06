@@ -1,0 +1,57 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for safe updates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+        run: |
+          set -euo pipefail
+          should_merge=false
+
+          case "${UPDATE_TYPE}" in
+            semver_patch|semver_minor)
+              case "${DEPENDENCY_TYPE}" in
+                direct:development|indirect:development)
+                  should_merge=true
+                  ;;
+                direct:production|indirect:production)
+                  if [ "${UPDATE_TYPE}" = "semver_patch" ]; then
+                    should_merge=true
+                  fi
+                  ;;
+              esac
+              ;;
+          esac
+
+          if [ "${ECOSYSTEM}" = "github-actions" ] && [ "${UPDATE_TYPE}" != "semver_major" ]; then
+            should_merge=true
+          fi
+
+          if [ "${should_merge}" != "true" ]; then
+            echo "Skipping auto-merge for ${ECOSYSTEM} ${DEPENDENCY_TYPE} ${UPDATE_TYPE}."
+            exit 0
+          fi
+
+          gh pr merge "${PR_NUMBER}" --auto --squash
+          echo "Auto-merge enabled for PR #${PR_NUMBER}."
