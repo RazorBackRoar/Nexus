@@ -120,7 +120,9 @@ def test_open_urls_in_front_window_returns_false_on_applescript_error(
         return True
 
     async def fake_run_applescript(script: str) -> tuple[str, str, int]:
-        assert "https://example.com" in script
+        assert script == safari.build_open_in_front_window_script(
+            ["https://example.com"]
+        )
         return "", "error", 1
 
     monkeypatch.setattr(safari, "check_safari_status", fake_check_safari_status)
