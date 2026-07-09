@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from PySide6.QtCore import (
     QByteArray,
+    QEvent,
     QSettings,
     QStandardPaths,
     Qt,
@@ -45,10 +46,14 @@ from nexus.gui.widgets import (
     WindowTitleBar,
 )
 from nexus.utils.url_processor import URLProcessor
+from razorcore.appinfo import AboutDialog
+from razorcore.updates import check_for_updates
 
 
 class MainWindow(QMainWindow):
     """The main application window with hierarchical bookmark support."""
+
+    APP_NAME = Config.APP_NAME
 
     def __init__(self):
         """Initialize with default theme."""
@@ -276,6 +281,13 @@ class MainWindow(QMainWindow):
 
         self.title_label = QLabel("NEXUS")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setToolTip("Double-click for About · Right-click for updates")
+        self.title_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.title_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.title_label.customContextMenuRequested.connect(
+            self._show_title_context_menu
+        )
+        self.title_label.installEventFilter(self)
         self.title_label.setStyleSheet("""
             QLabel {
                 color: #f8faff;
@@ -786,9 +798,7 @@ class MainWindow(QMainWindow):
             self.private_mode_enabled,
         )
         self.worker.result_ready.connect(self._on_single_url_operation_complete)
-        self.worker.error.connect(
-            lambda err: self._handle_single_url_error(row, err)
-        )
+        self.worker.error.connect(lambda err: self._handle_single_url_error(row, err))
         self.worker.start()
 
     async def _open_single_url_with_tracking(
@@ -1369,7 +1379,8 @@ class MainWindow(QMainWindow):
 
     def _bookmark_sort_key(self, node: BookmarkNode) -> tuple[int, int, str]:
         preferred_order = {
-            name.lower(): index for index, name in enumerate(DEFAULT_BOOKMARK_FOLDER_NAMES)
+            name.lower(): index
+            for index, name in enumerate(DEFAULT_BOOKMARK_FOLDER_NAMES)
         }
         folder_name = node.name.lower()
         group = 0 if folder_name in preferred_order else 1
@@ -1478,6 +1489,55 @@ class MainWindow(QMainWindow):
                 self.bookmark_tree.indexOfTopLevelItem(item)
             )
         self.save_bookmarks()
+
+    def eventFilter(self, obj, event):  # noqa: N802 - Qt override
+        """Open About when the NEXUS title is double-clicked."""
+        if (
+            obj is getattr(self, "title_label", None)
+            and event.type() == QEvent.Type.MouseButtonDblClick
+        ):
+            self._show_about()
+            return True
+        return super().eventFilter(obj, event)
+
+    def _show_about(self) -> None:
+        """Show the standardized razorcore About dialog."""
+        dialog = AboutDialog(self, Config.APP_NAME)
+        dialog.exec()
+
+    def _check_for_updates(self) -> None:
+        """Check GitHub Releases for a newer Nexus version."""
+        result = check_for_updates(Config.APP_NAME, Config.APP_VERSION)
+        if result.is_error:
+            self._show_message(
+                f"Update check failed: {result.error}",
+                "error",
+            )
+            return
+        if result.update_available:
+            notes = result.release_notes or ""
+            detail = f"New version available: {result.latest_version}"
+            if result.download_url:
+                detail = f"{detail}\n{result.download_url}"
+            if notes:
+                detail = f"{detail}\n\n{notes[:400]}"
+            self._show_message(detail, "info")
+        else:
+            self._show_message(
+                f"You are up to date (v{Config.APP_VERSION}).",
+                "info",
+            )
+
+    def _show_title_context_menu(self, position) -> None:
+        """Title context menu for About and update checking."""
+        menu = QMenu(self)
+        about_action = menu.addAction("About Nexus")
+        update_action = menu.addAction("Check for Updates")
+        chosen = menu.exec(self.title_label.mapToGlobal(position))
+        if chosen is about_action:
+            self._show_about()
+        elif chosen is update_action:
+            self._check_for_updates()
 
     def _export_bookmarks(self):
         """Exports all bookmarks to a JSON file."""

@@ -4,43 +4,18 @@ import hashlib
 import logging
 import os
 import sys
-from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version as pkg_version
 from pathlib import Path
 
 from PySide6.QtCore import QStandardPaths
 
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover
-    import tomli as tomllib  # type: ignore
-
-
-def resolve_version(default: str = "0.0.0") -> str:
-    try:
-        return pkg_version("Nexus")
-    except PackageNotFoundError:
-        # Fallback to finding pyproject.toml relative to this file
-        # core/config.py -> core -> nexus -> src -> root
-        pyproject = (
-            Path(__file__).resolve().parent.parent.parent.parent / "pyproject.toml"
-        )
-        if pyproject.exists():
-            try:
-                with pyproject.open("rb") as fp:
-                    data = tomllib.load(fp)
-                return data["project"]["version"]
-            except Exception:
-                pass
-    return default
+from razorcore.config import get_version
 
 
 class Config:
     """Application configuration constants."""
 
     APP_NAME = "Nexus"
-    APP_VERSION = resolve_version("3.0.0")
+    APP_VERSION = get_version(default="2.0.0", package_name="nexus")
     ORGANIZATION = "Nexus"
     DOMAIN = "nexus.com"
 

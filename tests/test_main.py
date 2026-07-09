@@ -63,6 +63,7 @@ def _run_main(monkeypatch: pytest.MonkeyPatch, restored_window_geometry: bool):
     fake_window = _FakeWindow(restored_window_geometry=restored_window_geometry)
 
     monkeypatch.setattr(main_module, "setup_logging", lambda: None)
+    monkeypatch.setattr(main_module, "print_startup_info", lambda _name: None)
     monkeypatch.setattr(main_module, "_PACKAGE_DIR", main_module.Path("/tmp"))
     monkeypatch.setattr(main_module, "QApplication", lambda _args: fake_app)
     monkeypatch.setattr(main_module, "MainWindow", lambda: fake_window)

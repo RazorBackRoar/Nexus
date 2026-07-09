@@ -24,6 +24,7 @@ requires-python = "==3.14.*"
 dependencies = [
     "PySide6>=6.6.0,<7.0.0",
     "Pillow>=10.0.0",
+    "razorcore>=1.211.0",
 ]
 
 [tool.pytest.ini_options]
@@ -57,3 +58,6 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.56",
 ]
+
+[tool.uv.sources]
+razorcore = { path = "../.razorcore", editable = true }

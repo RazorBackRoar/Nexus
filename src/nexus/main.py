@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication
 
 from nexus.core.config import Config, setup_logging
 from nexus.gui.main_window import MainWindow
+from razorcore.appinfo import print_startup_info
 
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -19,6 +20,7 @@ _PACKAGE_DIR = Path(__file__).resolve().parent
 
 def main():
     setup_logging()
+    print_startup_info(Config.APP_NAME)
     app = QApplication(sys.argv)
     app.setOrganizationName(Config.ORGANIZATION)
     app.setOrganizationDomain(Config.DOMAIN)
