@@ -23,7 +23,6 @@ from PySide6.QtGui import (
     QPainterPath,
     QPaintEvent,
     QPen,
-    QRadialGradient,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -89,125 +88,7 @@ class AsyncWorker(BaseWorker):
 
 
 class CosmicFrame(QWidget):
-    """A painted shell widget that provides the nebula-like frame from the UI reference."""
-
-    _STAR_FIELD = (
-        (0.06, 0.10, 2.2, 140),
-        (0.14, 0.18, 1.6, 120),
-        (0.22, 0.08, 1.8, 150),
-        (0.34, 0.16, 1.4, 110),
-        (0.48, 0.06, 2.0, 150),
-        (0.58, 0.14, 1.3, 115),
-        (0.72, 0.08, 1.8, 135),
-        (0.84, 0.18, 1.6, 125),
-        (0.92, 0.07, 2.1, 150),
-        (0.10, 0.34, 1.7, 115),
-        (0.28, 0.28, 1.4, 100),
-        (0.42, 0.35, 1.9, 125),
-        (0.60, 0.30, 1.5, 105),
-        (0.78, 0.34, 1.8, 120),
-        (0.88, 0.28, 1.3, 95),
-        (0.08, 0.62, 1.6, 110),
-        (0.18, 0.76, 2.0, 130),
-        (0.32, 0.68, 1.2, 95),
-        (0.52, 0.82, 1.8, 125),
-        (0.66, 0.72, 1.4, 105),
-        (0.82, 0.84, 1.6, 115),
-        (0.94, 0.64, 2.0, 130),
-    )
-
-    _NEBULAE = (
-        (0.10, 0.08, 0.36, "#4D1FA4", 92),
-        (0.28, 0.42, 0.22, "#FF3E96", 34),
-        (0.74, 0.08, 0.28, "#4EA3FF", 72),
-        (0.66, 0.66, 0.30, "#2F7EFF", 58),
-        (0.08, 0.92, 0.30, "#42168F", 88),
-        (0.95, 0.42, 0.24, "#7C33FF", 68),
-        (0.56, 0.84, 0.18, "#00DFFF", 24),
-    )
-
-    _GALAXY_SWIRLS = (
-        (
-            (0.00, 0.18),
-            (0.18, 0.08),
-            (0.46, 0.06),
-            (0.96, 0.06),
-            "#7B67FF",
-            18,
-            58.0,
-        ),
-        (
-            (0.02, 0.84),
-            (0.24, 0.88),
-            (0.50, 0.78),
-            (0.86, 0.60),
-            "#5A46E8",
-            16,
-            42.0,
-        ),
-        (
-            (0.16, 0.62),
-            (0.28, 0.38),
-            (0.58, 0.20),
-            (0.92, 0.14),
-            "#00CFFF",
-            12,
-            28.0,
-        ),
-        (
-            (0.10, 0.74),
-            (0.32, 0.58),
-            (0.54, 0.42),
-            (0.82, 0.34),
-            "#FF4AA9",
-            10,
-            22.0,
-        ),
-    )
-
-    def _scaled_point(self, rect: QRectF, rel_x: float, rel_y: float) -> tuple[float, float]:
-        return (
-            rect.left() + rect.width() * rel_x,
-            rect.top() + rect.height() * rel_y,
-        )
-
-    def _paint_galaxy_swirl(
-        self,
-        painter: QPainter,
-        rect: QRectF,
-        start: tuple[float, float],
-        ctrl1: tuple[float, float],
-        ctrl2: tuple[float, float],
-        end: tuple[float, float],
-        color_hex: str,
-        alpha: int,
-        width: float,
-    ) -> None:
-        start_x, start_y = self._scaled_point(rect, *start)
-        ctrl1_x, ctrl1_y = self._scaled_point(rect, *ctrl1)
-        ctrl2_x, ctrl2_y = self._scaled_point(rect, *ctrl2)
-        end_x, end_y = self._scaled_point(rect, *end)
-
-        path = QPainterPath()
-        path.moveTo(start_x, start_y)
-        path.cubicTo(ctrl1_x, ctrl1_y, ctrl2_x, ctrl2_y, end_x, end_y)
-
-        glow_color = QColor(color_hex)
-        glow_color.setAlpha(alpha)
-        painter.setPen(QPen(glow_color, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-        painter.drawPath(path)
-
-        crisp_color = QColor(color_hex)
-        crisp_color.setAlpha(min(255, alpha + 34))
-        painter.setPen(
-            QPen(
-                crisp_color,
-                max(2.0, width * 0.12),
-                Qt.PenStyle.SolidLine,
-                Qt.PenCapStyle.RoundCap,
-            )
-        )
-        painter.drawPath(path)
+    """Rounded dark shell for the frameless macOS window."""
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         painter = QPainter(self)
@@ -215,266 +96,116 @@ class CosmicFrame(QWidget):
 
         rect = self.rect().adjusted(0, 0, -1, -1)
         rounded_rect = QPainterPath()
-        rounded_rect.addRoundedRect(rect, 28, 28)
+        rounded_rect.addRoundedRect(rect, 16, 16)
 
-        base_gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        base_gradient.setColorAt(0.0, QColor("#06030E"))
-        base_gradient.setColorAt(0.20, QColor("#050712"))
-        base_gradient.setColorAt(0.58, QColor("#030913"))
-        base_gradient.setColorAt(1.0, QColor("#01040B"))
-        painter.fillPath(rounded_rect, QBrush(base_gradient))
-
-        depth_wash = QLinearGradient(rect.left(), rect.top(), rect.left(), rect.bottom())
-        depth_wash.setColorAt(0.0, QColor(92, 56, 190, 34))
-        depth_wash.setColorAt(0.24, QColor(28, 18, 72, 18))
-        depth_wash.setColorAt(0.68, QColor(9, 18, 42, 0))
-        depth_wash.setColorAt(1.0, QColor(4, 8, 18, 0))
-        painter.fillPath(rounded_rect, QBrush(depth_wash))
+        base = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        base.setColorAt(0.0, QColor("#141820"))
+        base.setColorAt(0.45, QColor("#10141C"))
+        base.setColorAt(1.0, QColor("#0C1016"))
+        painter.fillPath(rounded_rect, QBrush(base))
 
         painter.setClipPath(rounded_rect)
+        # Soft RGB corner washes — blue top-left, green bottom-left, red top-right
+        blue_wash = QLinearGradient(rect.topLeft(), rect.center())
+        blue_wash.setColorAt(0.0, QColor(45, 120, 220, 28))
+        blue_wash.setColorAt(1.0, QColor(45, 120, 220, 0))
+        painter.fillPath(rounded_rect, QBrush(blue_wash))
 
-        galaxy_core = QRadialGradient(
-            rect.left() + rect.width() * 0.66,
-            rect.top() + rect.height() * 0.62,
-            min(rect.width(), rect.height()) * 0.44,
+        green_wash = QLinearGradient(
+            rect.left(), rect.bottom(), rect.left() + rect.width() * 0.45, rect.center().y()
         )
-        galaxy_core.setColorAt(0.0, QColor(42, 122, 255, 58))
-        galaxy_core.setColorAt(0.24, QColor(31, 82, 205, 22))
-        galaxy_core.setColorAt(1.0, QColor(0, 0, 0, 0))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(galaxy_core))
-        painter.drawEllipse(
-            QRectF(
-                rect.left() + rect.width() * 0.22,
-                rect.top() + rect.height() * 0.22,
-                rect.width() * 0.76,
-                rect.height() * 0.76,
-            )
-        )
+        green_wash.setColorAt(0.0, QColor(40, 170, 110, 22))
+        green_wash.setColorAt(1.0, QColor(40, 170, 110, 0))
+        painter.fillPath(rounded_rect, QBrush(green_wash))
 
-        for rel_x, rel_y, radius_factor, color_hex, alpha in self._NEBULAE:
-            center_x = rect.left() + rect.width() * rel_x
-            center_y = rect.top() + rect.height() * rel_y
-            radius = min(rect.width(), rect.height()) * radius_factor
-
-            glow = QRadialGradient(center_x, center_y, radius)
-            glow_color = QColor(color_hex)
-            glow_color.setAlpha(alpha)
-            edge_color = QColor(color_hex)
-            edge_color.setAlpha(0)
-            glow.setColorAt(0.0, glow_color)
-            glow.setColorAt(1.0, edge_color)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(glow))
-            painter.drawEllipse(
-                QRectF(center_x - radius, center_y - radius, radius * 2, radius * 2)
-            )
-
-        for start, ctrl1, ctrl2, end, color_hex, alpha, width in self._GALAXY_SWIRLS:
-            self._paint_galaxy_swirl(
-                painter,
-                QRectF(rect),
-                start,
-                ctrl1,
-                ctrl2,
-                end,
-                color_hex,
-                alpha,
-                width,
-            )
-
-        for rel_x, rel_y, radius, alpha in self._STAR_FIELD:
-            star_color = QColor("#F8FAFF")
-            star_color.setAlpha(alpha)
-            painter.setBrush(star_color)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(
-                QRectF(
-                    rect.left() + rect.width() * rel_x,
-                    rect.top() + rect.height() * rel_y,
-                    radius,
-                    radius,
-                )
-            )
-
-        for idx in range(58):
-            rel_x = 0.03 + (((idx * 29) + (idx // 6) * 7) % 92) / 100
-            rel_y = 0.04 + (((idx * 17) + (idx // 5) * 11) % 88) / 100
-            radius = 0.8 + (idx % 3) * 0.35
-            alpha = 34 + (idx % 7) * 14
-            tint = QColor("#EEF4FF" if idx % 4 else "#8ED7FF")
-            tint.setAlpha(alpha)
-            painter.setBrush(tint)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(
-                QRectF(
-                    rect.left() + rect.width() * rel_x,
-                    rect.top() + rect.height() * rel_y,
-                    radius,
-                    radius,
-                )
-            )
-
-        for rel_x, rel_y, radius_factor, color_hex, alpha in (
-            (0.24, 0.18, 0.10, "#FFFFFF", 18),
-            (0.82, 0.16, 0.12, "#7CCFFF", 16),
-            (0.60, 0.58, 0.16, "#6D7DFF", 14),
-        ):
-            center_x = rect.left() + rect.width() * rel_x
-            center_y = rect.top() + rect.height() * rel_y
-            radius = min(rect.width(), rect.height()) * radius_factor
-            haze = QRadialGradient(center_x, center_y, radius)
-            glow = QColor(color_hex)
-            glow.setAlpha(alpha)
-            edge = QColor(color_hex)
-            edge.setAlpha(0)
-            haze.setColorAt(0.0, glow)
-            haze.setColorAt(1.0, edge)
-            painter.setBrush(QBrush(haze))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(
-                QRectF(center_x - radius, center_y - radius, radius * 2, radius * 2)
-            )
-
-        sheen = QLinearGradient(rect.left(), rect.top(), rect.right(), rect.top())
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 0))
-        sheen.setColorAt(0.18, QColor(255, 255, 255, 18))
-        sheen.setColorAt(0.38, QColor(145, 182, 255, 12))
-        sheen.setColorAt(0.72, QColor(255, 125, 198, 10))
-        sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setPen(QPen(QBrush(sheen), 1.4))
-        painter.drawLine(rect.left() + 18, rect.top() + 16, rect.right() - 18, rect.top() + 16)
-
+        red_wash = QLinearGradient(rect.topRight(), rect.center())
+        red_wash.setColorAt(0.0, QColor(210, 70, 80, 20))
+        red_wash.setColorAt(1.0, QColor(210, 70, 80, 0))
+        painter.fillPath(rounded_rect, QBrush(red_wash))
         painter.setClipping(False)
 
-        outer_border = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        outer_border.setColorAt(0.0, QColor(127, 113, 255, 148))
-        outer_border.setColorAt(0.35, QColor(78, 93, 212, 90))
-        outer_border.setColorAt(0.75, QColor(42, 170, 255, 82))
-        outer_border.setColorAt(1.0, QColor(132, 176, 255, 126))
+        border = QLinearGradient(rect.topLeft(), rect.topRight())
+        border.setColorAt(0.0, QColor(70, 140, 230, 90))
+        border.setColorAt(0.5, QColor(60, 180, 120, 70))
+        border.setColorAt(1.0, QColor(220, 80, 90, 80))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QBrush(outer_border), 2.2))
-        painter.drawRoundedRect(rect, 28, 28)
-
-        inner_rect = rect.adjusted(6, 6, -6, -6)
-        painter.setPen(QPen(QColor(115, 149, 255, 16), 1.0))
-        painter.drawRoundedRect(inner_rect, 24, 24)
+        painter.setPen(QPen(QBrush(border), 1.4))
+        painter.drawRoundedRect(rect, 16, 16)
 
         super().paintEvent(event)
 
 
 class TrafficLightButton(QPushButton):
-    """Mac-style traffic light control with glossy finish."""
+    """Mac-style traffic light control."""
 
     def __init__(self, tone: str, symbol: str, parent=None):
         super().__init__(parent)
         self._tone = QColor(tone)
         self._symbol = symbol
-        self._core_inset = 1
-        if self._tone.lightness() > 150:
-            self._core_inset = 0
-        self.setFixedSize(16, 16)
+        self.setFixedSize(14, 14)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFlat(True)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override        del event
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
+        del event
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         rect = self.rect().adjusted(1, 1, -1, -1)
-        core_rect = rect.adjusted(
-            self._core_inset,
-            self._core_inset,
-            -self._core_inset,
-            -self._core_inset,
-        )
-        glow = QColor(self._tone)
-        glow.setAlpha(58 if self.underMouse() else 34)
+        fill = QColor(self._tone)
+        if self.underMouse():
+            fill = fill.lighter(112)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(glow)
-        painter.drawEllipse(rect.adjusted(-1, -1, 1, 1))
-
-        fill = QRadialGradient(
-            core_rect.center().x(),
-            core_rect.center().y(),
-            core_rect.width() * 0.82,
-        )
-        fill.setColorAt(0.0, self._tone.lighter(124))
-        fill.setColorAt(0.55, self._tone)
-        fill.setColorAt(1.0, self._tone.darker(130))
-        painter.setBrush(QBrush(fill))
-        painter.drawEllipse(core_rect)
-
-        gloss_rect = QRectF(
-            core_rect.left() + 1,
-            core_rect.top() + 1,
-            core_rect.width() - 2,
-            core_rect.height() * 0.50,
-        )
-        gloss = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-        gloss.setColorAt(0.0, QColor(255, 255, 255, 152))
-        gloss.setColorAt(0.5, QColor(255, 255, 255, 38))
-        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setBrush(QBrush(gloss))
-        painter.drawEllipse(gloss_rect)
-
-        painter.setPen(QPen(QColor(255, 255, 255, 88), 1.0))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawEllipse(core_rect)
-
-        rim = QColor(self._tone.darker(138))
-        rim.setAlpha(110)
-        painter.setPen(QPen(rim, 1.0))
-        painter.drawEllipse(core_rect.adjusted(0, 0, -1, -1))
+        painter.setBrush(fill)
+        painter.drawEllipse(rect)
 
         if self.underMouse():
             font = painter.font()
-            font.setPointSize(8)
+            font.setPointSize(7)
             font.setWeight(QFont.Weight.Bold)
             painter.setFont(font)
-            painter.setPen(QColor(48, 32, 32, 176))
-            painter.drawText(core_rect, Qt.AlignmentFlag.AlignCenter, self._symbol)
+            painter.setPen(QColor(40, 28, 28, 180))
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, self._symbol)
 
 
 class WindowTitleBar(QWidget):
-    """Custom glossy title bar so the window reads as a single shell."""
+    """Custom title bar for the frameless window shell."""
 
     def __init__(self, target_window: QWidget, title: str = "Nexus", parent=None):
         super().__init__(parent)
         self._target_window = target_window
         self._drag_offset: QPoint | None = None
-        self.setFixedHeight(42)
+        self.setFixedHeight(36)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(18, 10, 18, 4)
+        layout.setContentsMargins(16, 10, 16, 4)
         layout.setSpacing(0)
 
         controls = QWidget(self)
         controls.setStyleSheet("background: transparent;")
         controls_layout = QHBoxLayout(controls)
         controls_layout.setContentsMargins(0, 0, 0, 0)
-        controls_layout.setSpacing(9)
+        controls_layout.setSpacing(8)
 
-        self.close_button = TrafficLightButton("#F46B73", "×", controls)
-        self.minimize_button = TrafficLightButton("#FFBD2E", "−", controls)
+        self.close_button = TrafficLightButton("#FF5F57", "×", controls)
+        self.minimize_button = TrafficLightButton("#FEBC2E", "−", controls)
         self.zoom_button = TrafficLightButton("#28C840", "+", controls)
 
         controls_layout.addWidget(self.close_button)
         controls_layout.addWidget(self.minimize_button)
         controls_layout.addWidget(self.zoom_button)
-        controls.setFixedWidth(102)
+        controls.setFixedWidth(72)
 
         self.title_label = QLabel("", self)
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
-                color: rgba(242, 247, 255, 0.92);
-                font-family: "Avenir Next";
-                font-size: 15px;
-                font-weight: 700;
-                letter-spacing: 0.4px;
+                color: rgba(232, 236, 244, 0.88);
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 13px;
+                font-weight: 600;
                 background: transparent;
             }
         """)
@@ -495,28 +226,6 @@ class WindowTitleBar(QWidget):
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         del event
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        rect = self.rect()
-        band_rect = QRectF(rect.left(), rect.top(), rect.width(), rect.height() + 16)
-        band = QLinearGradient(band_rect.topLeft(), band_rect.bottomLeft())
-        band.setColorAt(0.0, QColor(42, 22, 104, 72))
-        band.setColorAt(0.28, QColor(12, 16, 40, 42))
-        band.setColorAt(0.76, QColor(4, 8, 20, 16))
-        band.setColorAt(1.0, QColor(3, 6, 16, 0))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(band))
-        painter.drawRoundedRect(band_rect, 20, 20)
-
-        sheen = QLinearGradient(rect.left(), rect.top(), rect.right(), rect.top())
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 0))
-        sheen.setColorAt(0.12, QColor(255, 255, 255, 22))
-        sheen.setColorAt(0.48, QColor(148, 173, 255, 12))
-        sheen.setColorAt(0.84, QColor(101, 186, 255, 14))
-        sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setPen(QPen(QBrush(sheen), 1.0))
-        painter.drawLine(rect.left() + 10, rect.top() + 2, rect.right() - 10, rect.top() + 2)
 
     def mouseDoubleClickEvent(self, event):  # noqa: N802 - Qt override
         if event.button() == Qt.MouseButton.LeftButton:
@@ -552,7 +261,7 @@ class WindowTitleBar(QWidget):
 
 
 class BookmarkTreeDelegate(QStyledItemDelegate):
-    """Custom bookmark tree renderer that paints the colored folder pills."""
+    """Custom bookmark tree renderer for folder rows and links."""
 
     def paint(self, painter, option, index):  # noqa: ANN001
         data = index.data(Qt.ItemDataRole.UserRole) or {}
@@ -561,75 +270,56 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        rect = option.rect.adjusted(14, 6, -14, -6)
+        rect = option.rect.adjusted(10, 4, -10, -4)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
 
         if is_folder:
             style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
-            start = QColor(style.get("start", "#4556D8"))
-            end = QColor(style.get("end", "#243B91"))
-            border = QColor(style.get("border", "#8AA7FF"))
-            start = start.darker(112)
-            end = end.darker(110)
+            accent = QColor(style.get("start", "#5B8DEF"))
+            fill = QColor("#1C1F27")
+            border = QColor(255, 255, 255, 18)
 
             if selected or hovered:
-                start = start.lighter(108)
-                end = end.lighter(104)
-                border = border.lighter(112)
+                fill = QColor("#232733")
+                border = QColor(accent.red(), accent.green(), accent.blue(), 90)
 
-            pill_rect = rect.adjusted(1, 3, -1, -3)
-            background = QLinearGradient(pill_rect.topLeft(), pill_rect.bottomRight())
-            background.setColorAt(0.0, start.lighter(102))
-            background.setColorAt(0.42, start)
-            background.setColorAt(1.0, end)
-
-            glow_rect = pill_rect.adjusted(-1, -1, 1, 1)
+            pill_rect = rect.adjusted(0, 2, 0, -2)
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(border.red(), border.green(), border.blue(), 24))
-            painter.drawRoundedRect(glow_rect, 14, 14)
-            painter.setBrush(QBrush(background))
-            painter.drawRoundedRect(pill_rect, 14, 14)
-            gloss_rect = QRectF(
-                pill_rect.left() + 2,
-                pill_rect.top() + 2,
-                pill_rect.width() - 4,
-                pill_rect.height() * 0.46,
-            )
-            gloss = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-            gloss.setColorAt(0.0, QColor(255, 255, 255, 72))
-            gloss.setColorAt(0.55, QColor(255, 255, 255, 16))
-            gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
-            painter.setBrush(QBrush(gloss))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRoundedRect(gloss_rect, 12, 12)
-            painter.setPen(QPen(QColor(255, 255, 255, 26), 1.0))
-            painter.drawRoundedRect(pill_rect.adjusted(1, 1, -1, -1), 13, 13)
-            painter.setPen(QPen(border, 1.2))
-            painter.drawRoundedRect(pill_rect, 14, 14)
+            painter.setBrush(fill)
+            painter.drawRoundedRect(pill_rect, 10, 10)
+            painter.setPen(QPen(border, 1.0))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(pill_rect, 10, 10)
 
-            text_rect = pill_rect.adjusted(18, 0, -18, 0)
+            # Accent bar on the left
+            bar = QRectF(pill_rect.left() + 8, pill_rect.top() + 10, 3, pill_rect.height() - 20)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(accent)
+            painter.drawRoundedRect(bar, 1.5, 1.5)
+
+            text_rect = pill_rect.adjusted(22, 0, -14, 0)
             font = option.font
-            font.setPointSize(17)
-            font.setWeight(QFont.Weight.Bold)
+            font.setPointSize(14)
+            font.setWeight(QFont.Weight.DemiBold)
             painter.setFont(font)
-            painter.setPen(QColor("#F7FAFF"))
+            painter.setPen(QColor("#E8ECF4"))
             painter.drawText(
                 text_rect,
-                Qt.AlignmentFlag.AlignCenter,
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
         else:
-            text_rect = rect.adjusted(18, 0, -10, 0)
+            text_rect = rect.adjusted(22, 0, -10, 0)
             if hovered or selected:
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(QColor(255, 255, 255, 18 if hovered else 26))
-                painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 10, 10)
+                painter.setBrush(QColor(255, 255, 255, 12 if hovered else 18))
+                painter.drawRoundedRect(rect.adjusted(2, 1, -2, -1), 8, 8)
             font = option.font
-            font.setPointSize(12)
-            font.setWeight(QFont.Weight.Medium)
+            font.setPointSize(13)
+            font.setWeight(QFont.Weight.Normal)
             painter.setFont(font)
-            painter.setPen(QColor("#C8D4FF"))
+            painter.setPen(QColor("#A8B0C0"))
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -642,7 +332,7 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
         data = index.data(Qt.ItemDataRole.UserRole) or {}
         return QSize(
             option.rect.width(),
-            72 if data.get("type") == "folder" else 34,
+            52 if data.get("type") == "folder" else 34,
         )
 
     def _draw_folder_icon(self, painter: QPainter, rect, icon_color: QColor):
@@ -673,13 +363,13 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
 
 
 class NeonURLItemDelegate(QStyledItemDelegate):
-    """Paints the URL rows as inset neon capsules with status dots."""
+    """Paints URL rows as clean list items with status indicators."""
 
     STATE_COLORS = {
-        "ready": QColor("#9BE98D"),
-        "opening": QColor("#F8D66A"),
-        "opened": QColor("#7EE7A8"),
-        "failed": QColor("#FF7E8A"),
+        "ready": QColor("#6BCB8B"),
+        "opening": QColor("#E0B84A"),
+        "opened": QColor("#5BBF8A"),
+        "failed": QColor("#E57373"),
     }
 
     def paint(self, painter, option, index):  # noqa: ANN001
@@ -689,112 +379,65 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        cell_rect = option.rect.adjusted(4, 6, -4, -6)
-        capsule_rect = (
-            cell_rect.adjusted(0, 0, 10, 0)
+        cell_rect = option.rect.adjusted(6, 4, -6, -4)
+        row_rect = (
+            cell_rect.adjusted(0, 0, 8, 0)
             if index.column() == 1
-            else cell_rect.adjusted(-10, 0, 0, 0)
+            else cell_rect.adjusted(-8, 0, 0, 0)
         )
 
-        base = QLinearGradient(capsule_rect.topLeft(), capsule_rect.bottomLeft())
-        base.setColorAt(0.0, QColor("#141B40"))
-        base.setColorAt(0.50, QColor("#0B112F"))
-        base.setColorAt(1.0, QColor("#090D21"))
-
-        border_color = QColor("#315BCE")
+        fill = QColor("#181B22")
+        border = QColor(255, 255, 255, 14)
         if option.state & QStyle.StateFlag.State_Selected:
-            border_color = QColor("#55D8FF")
+            fill = QColor("#1E2430")
+            border = QColor(91, 141, 239, 70)
         elif option.state & QStyle.StateFlag.State_MouseOver:
-            border_color = QColor("#8D71FF")
+            fill = QColor("#1C2029")
+            border = QColor(255, 255, 255, 22)
 
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(88, 122, 255, 22))
-        painter.drawRoundedRect(capsule_rect.adjusted(0, 0, 0, 1), 13, 13)
-        painter.setBrush(QBrush(base))
-        painter.drawRoundedRect(capsule_rect, 13, 13)
-        gloss_rect = QRectF(
-            capsule_rect.left() + 2,
-            capsule_rect.top() + 2,
-            capsule_rect.width() - 4,
-            capsule_rect.height() * 0.46,
-        )
-        gloss = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-        gloss.setColorAt(0.0, QColor(255, 255, 255, 66))
-        gloss.setColorAt(0.42, QColor(255, 255, 255, 16))
-        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QBrush(gloss))
-        painter.drawRoundedRect(gloss_rect, 12, 12)
-        spectrum = QLinearGradient(
-            capsule_rect.left(),
-            capsule_rect.center().y(),
-            capsule_rect.right(),
-            capsule_rect.center().y(),
-        )
-        spectrum.setColorAt(0.0, QColor(255, 255, 255, 0))
-        spectrum.setColorAt(0.22, QColor(43, 230, 255, 24))
-        spectrum.setColorAt(0.52, QColor(244, 69, 168, 26))
-        spectrum.setColorAt(0.78, QColor(130, 83, 255, 18))
-        spectrum.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setBrush(QBrush(spectrum))
-        painter.drawRoundedRect(capsule_rect.adjusted(6, 8, -6, -8), 10, 10)
-        bloom = QRadialGradient(
-            capsule_rect.center().x(),
-            capsule_rect.center().y(),
-            capsule_rect.width() * 0.26,
-        )
-        bloom.setColorAt(0.0, QColor(115, 152, 255, 24))
-        bloom.setColorAt(1.0, QColor(115, 152, 255, 0))
-        painter.setBrush(QBrush(bloom))
-        painter.drawRoundedRect(capsule_rect, 13, 13)
-        painter.setPen(QPen(border_color, 1.1))
-        painter.drawRoundedRect(capsule_rect, 13, 13)
-        painter.setPen(QPen(QColor(255, 255, 255, 24), 1.0))
-        painter.drawLine(
-            capsule_rect.left() + 14,
-            capsule_rect.top() + 2,
-            capsule_rect.right() - 14,
-            capsule_rect.top() + 2,
-        )
+        painter.setBrush(fill)
+        painter.drawRoundedRect(row_rect, 10, 10)
+        painter.setPen(QPen(border, 1.0))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(row_rect, 10, 10)
 
         if index.column() == 1:
             font = option.font
-            font.setPointSize(15)
-            font.setWeight(QFont.Weight.DemiBold)
+            font.setPointSize(14)
+            font.setWeight(QFont.Weight.Medium)
             painter.setFont(font)
-            painter.setPen(QColor("#F8FAFF"))
+            painter.setPen(QColor("#E8ECF4"))
             painter.drawText(
-                capsule_rect.adjusted(24, 0, -14, 0),
+                row_rect.adjusted(16, 0, -12, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
         else:
             status_state = index.data(Qt.ItemDataRole.UserRole) or "ready"
             status_label = str(index.data(Qt.ItemDataRole.DisplayRole))
-            status_color = self.STATE_COLORS.get(status_state, QColor("#9BE98D"))
+            status_color = self.STATE_COLORS.get(status_state, QColor("#6BCB8B"))
 
             font = option.font
             font.setPointSize(13)
             font.setWeight(QFont.Weight.Medium)
             painter.setFont(font)
             text_width = painter.fontMetrics().horizontalAdvance(status_label)
-            group_width = 14 + 10 + text_width
-            group_left = capsule_rect.left() + max(
-                18,
-                int((capsule_rect.width() - group_width) / 2),
+            group_width = 10 + 8 + text_width
+            group_left = row_rect.left() + max(
+                14,
+                int((row_rect.width() - group_width) / 2),
             )
 
-            glow_center_x = group_left + 7
-            glow_center_y = capsule_rect.center().y()
-            painter.setBrush(QColor(status_color.red(), status_color.green(), status_color.blue(), 68))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(glow_center_x - 7, glow_center_y - 7, 14, 14)
+            dot_x = group_left + 4
+            dot_y = row_rect.center().y()
             painter.setBrush(status_color)
-            painter.drawEllipse(glow_center_x - 4, glow_center_y - 4, 8, 8)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(dot_x - 3, int(dot_y) - 3, 6, 6)
 
-            painter.setPen(QColor("#F4F8FF"))
+            painter.setPen(QColor("#C8CEDA"))
             painter.drawText(
-                capsule_rect.adjusted(group_left + 18 - capsule_rect.left(), 0, -10, 0),
+                row_rect.adjusted(group_left + 14 - row_rect.left(), 0, -10, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 status_label,
             )
@@ -803,8 +446,8 @@ class NeonURLItemDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):  # noqa: ANN001
         if index.column() == 0:
-            return QSize(0, 52)
-        return QSize(option.rect.width(), 52)
+            return QSize(0, 44)
+        return QSize(option.rect.width(), 44)
 
 
 class URLTableWidget(QTableWidget):
@@ -850,7 +493,7 @@ class URLTableWidget(QTableWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # URL column
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)  # Status column
         self.setColumnWidth(0, 0)  # Hide number column
-        self.setColumnWidth(2, 168)  # Status column width
+        self.setColumnWidth(2, 140)  # Status column width
         self.setColumnHidden(0, True)
 
         # Enable drag and drop
@@ -875,7 +518,7 @@ class URLTableWidget(QTableWidget):
             self.url_counter += 1
             row = self.rowCount()
             self.insertRow(row)
-            self.setRowHeight(row, 52)
+            self.setRowHeight(row, 44)
 
             # Number column
             number_item = QTableWidgetItem(str(self.url_counter))
@@ -939,7 +582,7 @@ class URLTableWidget(QTableWidget):
             self.url_counter += 1
             row = self.rowCount()
             self.insertRow(row)
-            self.setRowHeight(row, 52)
+            self.setRowHeight(row, 44)
 
             number_item = QTableWidgetItem(str(self.url_counter))
             number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1081,44 +724,39 @@ class URLTableWidget(QTableWidget):
 
 
 class NeonButton(QPushButton):
-    """A custom button with a neon glow effect on hover."""
+    """A custom button with a subtle hover glow."""
 
     def __init__(
-        self, text: str = "", color: str = "#00f5ff"
-    ):  # Default to a neon blue
+        self, text: str = "", color: str = "#5B8DEF"
+    ):
         super().__init__(text)
         self.color = color
         self._setup_shadow_effect()
-        self.update_style(color)  # Use update_style for initial setup
+        self.update_style(color)
         self._setup_animations()
 
     def _setup_shadow_effect(self):
         self.shadow = QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(0)
-        self.shadow.setOffset(0, 0)  # Offset 0,0 for central glow
+        self.shadow.setOffset(0, 0)
         self.setGraphicsEffect(self.shadow)
 
     def update_style(self, new_color: str):
         """Updates the button's color and stylesheet."""
         self.color = new_color
         self.shadow.setColor(QColor(self.color))
-
-        # Create a darker version for the gradient stop and pressed state
-        darker_color = QColor(self.color).darker(150).name()  # Darker by 50%
-
+        darker_color = QColor(self.color).darker(150).name()
         self.setStyleSheet(
             f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {self.color}, stop:1 {darker_color});
-                color: #d0d0d0;
+                color: #E8ECF4;
                 border: none;
                 border-radius: 8px;
                 padding: 10px 20px;
-                font-weight: bold;
-                font-size: 14px;
-                text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+                font-weight: 600;
+                font-size: 13px;
             }}
-            QPushButton:hover {{ /* Glow effect handled by QGraphicsDropShadowEffect */ }}
             QPushButton:pressed {{ background: {darker_color}; }}
             QPushButton:disabled {{ background: rgba(100,100,100,0.5); color: rgba(255,255,255,0.5); }}
         """
@@ -1127,7 +765,7 @@ class NeonButton(QPushButton):
     def _setup_animations(self):
         self.glow_in_anim = QPropertyAnimation(self.shadow, b"blurRadius")
         self.glow_in_anim.setDuration(Config.ANIMATION_DURATION)
-        self.glow_in_anim.setEndValue(Config.GLOW_RADIUS)
+        self.glow_in_anim.setEndValue(12)
         self.glow_in_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         self.glow_out_anim = QPropertyAnimation(self.shadow, b"blurRadius")
@@ -1149,7 +787,7 @@ class NeonButton(QPushButton):
 
 
 class GlassButton(QPushButton):
-    """A modern glass-styled button with animated glow effects for the Glass Noir theme."""
+    """A clean solid button with subtle hover feedback."""
 
     def __init__(self, text: str = "", variant: str = "primary"):
         """Initialize GlassButton.
@@ -1166,9 +804,9 @@ class GlassButton(QPushButton):
         self._setup_animations()
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFlat(True)
-        self.setMinimumHeight(50)
+        self.setMinimumHeight(46)
         if text != "+":
-            self.setMinimumWidth(176)
+            self.setMinimumWidth(140)
 
     def _setup_glow_effect(self):
         """Setup the drop shadow effect for glow."""
@@ -1180,16 +818,16 @@ class GlassButton(QPushButton):
     def _get_glow_color(self) -> str:
         """Get the glow color based on variant."""
         colors = {
-            "primary": "#67AFFF",
-            "secondary": "#FF6CAA",
-            "tertiary": "#6EEDC3",
-            "quaternary": "#C078FF",
-            "danger": "#FF6A79",
+            "primary": "#4A90E8",
+            "secondary": "#3DB88A",
+            "tertiary": "#5B8DEF",
+            "quaternary": "#E05A5A",
+            "danger": "#E05A5A",
         }
-        return colors.get(self.variant, "#3b82f6")
+        return colors.get(self.variant, "#4A90E8")
 
-    def _disabled_tint(self, color_hex: str, lift: int = 112, alpha: int = 234) -> QColor:
-        """Keep disabled controls colorful instead of flattening them to gray."""
+    def _disabled_tint(self, color_hex: str, lift: int = 112, alpha: int = 160) -> QColor:
+        """Keep disabled controls readable without going flat gray."""
         color = QColor(color_hex).lighter(lift)
         color.setAlpha(alpha)
         return color
@@ -1200,12 +838,12 @@ class GlassButton(QPushButton):
         self.shadow.setColor(QColor(glow_color))
 
         self.glow_in = QPropertyAnimation(self.shadow, b"blurRadius")
-        self.glow_in.setDuration(200)
-        self.glow_in.setEndValue(20)
+        self.glow_in.setDuration(160)
+        self.glow_in.setEndValue(12)
         self.glow_in.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         self.glow_out = QPropertyAnimation(self.shadow, b"blurRadius")
-        self.glow_out.setDuration(300)
+        self.glow_out.setDuration(200)
         self.glow_out.setEndValue(0)
         self.glow_out.setEasingCurve(QEasingCurve.Type.OutCubic)
 
@@ -1224,67 +862,58 @@ class GlassButton(QPushButton):
         super().leaveEvent(event)
 
     def _apply_variant_style(self):
-        """Store the neon palette used by the custom glossy button paint."""
+        """Store the palette used by the custom button paint."""
         palettes = {
             "primary": {
-                "start": "#2D66E8",
-                "end": "#183FAD",
-                "hover_start": "#59A0FF",
-                "hover_end": "#2E67D9",
-                "border": "#A7CEFF",
-                "gloss": "#F3F8FF",
-                "flare": "#6BC6FF",
+                "start": "#3B7AD4",
+                "end": "#2D63B5",
+                "hover_start": "#4A90E8",
+                "hover_end": "#3B7AD4",
+                "border": "#6BA4F0",
                 "text": "#FFFFFF",
             },
             "secondary": {
-                "start": "#DE467D",
-                "end": "#911F57",
-                "hover_start": "#FF73A8",
-                "hover_end": "#C03272",
-                "border": "#FFB8D2",
-                "gloss": "#FFF1F7",
-                "flare": "#FF74B8",
+                "start": "#2FA876",
+                "end": "#248A60",
+                "hover_start": "#3DB88A",
+                "hover_end": "#2FA876",
+                "border": "#55D0A0",
                 "text": "#FFFFFF",
             },
             "tertiary": {
-                "start": "#3CB68D",
-                "end": "#1C6B5B",
-                "hover_start": "#63DAB0",
-                "hover_end": "#2B8B75",
-                "border": "#B8F7E3",
-                "gloss": "#F2FFF9",
-                "flare": "#76FFD3",
-                "text": "#FFFFFF",
+                "start": "#2A3A55",
+                "end": "#223048",
+                "hover_start": "#354A68",
+                "hover_end": "#2A3A55",
+                "border": "#4A6A9A",
+                "text": "#D6E4FF",
             },
             "quaternary": {
-                "start": "#8346E4",
-                "end": "#5627A7",
-                "hover_start": "#B173FF",
-                "hover_end": "#733DE0",
-                "border": "#DFC0FF",
-                "gloss": "#FBF3FF",
-                "flare": "#D48BFF",
+                "start": "#C94A4A",
+                "end": "#A83A3A",
+                "hover_start": "#E05A5A",
+                "hover_end": "#C94A4A",
+                "border": "#F08080",
                 "text": "#FFFFFF",
             },
             "danger": {
-                "start": "#C43753",
-                "end": "#7C1836",
-                "hover_start": "#F05F7A",
-                "hover_end": "#A7264C",
-                "border": "#FFB0C3",
-                "gloss": "#FFF0F4",
-                "flare": "#FF7896",
+                "start": "#C94A4A",
+                "end": "#A83A3A",
+                "hover_start": "#E05A5A",
+                "hover_end": "#C94A4A",
+                "border": "#F08080",
                 "text": "#FFFFFF",
             },
         }
         self._variant_palette = palettes.get(self.variant, palettes["primary"])
         self.update()
 
-    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override        del event
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
+        del event
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        rect = self.rect().adjusted(2, 2, -2, -2)
+        rect = self.rect().adjusted(1, 1, -1, -1)
         pressed = self.isDown()
         hovered = self.underMouse()
         palette = self._variant_palette
@@ -1296,78 +925,40 @@ class GlassButton(QPushButton):
             palette["hover_end"] if hovered or self.isChecked() else palette["end"]
         )
         if pressed:
-            start = start.darker(120)
-            end = end.darker(120)
+            start = start.darker(112)
+            end = end.darker(112)
         if not enabled:
-            start = self._disabled_tint(palette["start"], lift=114, alpha=236)
-            end = self._disabled_tint(palette["end"], lift=108, alpha=230)
+            start = self._disabled_tint(palette["start"], lift=108, alpha=140)
+            end = self._disabled_tint(palette["end"], lift=104, alpha=130)
 
-        fill = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        fill = QLinearGradient(rect.topLeft(), rect.bottomLeft())
         fill.setColorAt(0.0, start)
         fill.setColorAt(1.0, end)
 
         painter.setPen(Qt.PenStyle.NoPen)
-        flare_alpha = 48 if enabled else 30
-        painter.setBrush(QColor(QColor(palette["flare"]).red(), QColor(palette["flare"]).green(), QColor(palette["flare"]).blue(), flare_alpha))
-        painter.drawRoundedRect(rect.adjusted(-1, -1, 1, 1), 17, 17)
         painter.setBrush(QBrush(fill))
-        painter.drawRoundedRect(rect, 17, 17)
+        painter.drawRoundedRect(rect, 10, 10)
 
-        flare = QRadialGradient(
-            rect.left() + rect.width() * 0.24,
-            rect.center().y(),
-            rect.width() * 0.38,
-        )
-        flare_color = QColor(palette["flare"])
-        flare_color.setAlpha(84 if enabled and (hovered or self.isChecked()) else 58 if enabled else 30)
-        flare.setColorAt(0.0, flare_color)
-        flare.setColorAt(1.0, QColor(palette["flare"]).darker(150))
-        edge = QColor(palette["flare"])
-        edge.setAlpha(0)
-        flare.setColorAt(1.0, edge)
-        painter.setBrush(QBrush(flare))
-        painter.drawRoundedRect(rect, 17, 17)
-        sheen = QLinearGradient(rect.left(), rect.center().y(), rect.right(), rect.center().y())
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 0))
-        sheen.setColorAt(0.18, QColor(QColor(palette["flare"]).red(), QColor(palette["flare"]).green(), QColor(palette["flare"]).blue(), 28 if enabled else 18))
-        sheen.setColorAt(0.48, QColor(255, 255, 255, 24 if enabled else 14))
-        sheen.setColorAt(0.82, QColor(QColor(palette["border"]).red(), QColor(palette["border"]).green(), QColor(palette["border"]).blue(), 30 if enabled else 20))
-        sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.setBrush(QBrush(sheen))
-        painter.drawRoundedRect(rect.adjusted(10, 10, -10, -10), 11, 11)
-
-        gloss_rect = QRectF(rect.left() + 2, rect.top() + 2, rect.width() - 4, rect.height() * 0.48)
-        gloss = QLinearGradient(gloss_rect.topLeft(), gloss_rect.bottomLeft())
-        gloss_top_alpha = 150 if enabled else 76
-        gloss_mid_alpha = 42 if enabled else 20
-        gloss.setColorAt(0.0, QColor(QColor(palette["gloss"]).red(), QColor(palette["gloss"]).green(), QColor(palette["gloss"]).blue(), gloss_top_alpha))
-        gloss.setColorAt(0.35, QColor(QColor(palette["gloss"]).red(), QColor(palette["gloss"]).green(), QColor(palette["gloss"]).blue(), gloss_mid_alpha))
-        gloss.setColorAt(1.0, QColor(QColor(palette["gloss"]).red(), QColor(palette["gloss"]).green(), QColor(palette["gloss"]).blue(), 0))
-        painter.setBrush(QBrush(gloss))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawRoundedRect(gloss_rect, 14, 14)
-
-        border_color = QColor(palette["border"]) if enabled else QColor(QColor(palette["border"]).red(), QColor(palette["border"]).green(), QColor(palette["border"]).blue(), 148)
-        painter.setPen(QPen(border_color, 1.45))
-        painter.drawRoundedRect(rect, 17, 17)
-        inner_border = QColor(255, 255, 255, 56 if enabled else 34)
-        painter.setPen(QPen(inner_border, 1.0))
-        painter.drawRoundedRect(rect.adjusted(1, 1, -1, -1), 16, 16)
+        border = QColor(palette["border"])
+        if not enabled:
+            border.setAlpha(90)
+        painter.setPen(QPen(border, 1.0))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect, 10, 10)
 
         font = self.font()
-        font.setPointSize(17)
-        font.setWeight(QFont.Weight.ExtraBold)
+        font.setPointSize(14)
+        font.setWeight(QFont.Weight.DemiBold)
         painter.setFont(font)
-        painter.setPen(QColor(palette["text"]) if enabled else QColor(244, 247, 255, 208))
-        if pressed:
-            text_rect = rect.adjusted(0, 1, 0, 1)
-        else:
-            text_rect = rect
+        painter.setPen(
+            QColor(palette["text"]) if enabled else QColor(200, 206, 218, 140)
+        )
+        text_rect = rect.adjusted(0, 1, 0, 1) if pressed else rect
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self.text())
 
         if enabled and self.hasFocus():
-            painter.setPen(QPen(QColor(255, 255, 255, 150), 1.1))
-            painter.drawRoundedRect(rect.adjusted(3, 3, -3, -3), 13, 13)
+            painter.setPen(QPen(QColor(74, 144, 232, 130), 1.0))
+            painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 8, 8)
 
 
 class OutlinedLabel(QLabel):

@@ -93,7 +93,7 @@ def test_bookmark_delegate_gives_folders_more_height():
     bookmark_height = delegate.sizeHint(option, tree.indexFromItem(bookmark)).height()
 
     assert folder_height > bookmark_height
-    assert folder_height >= 64
+    assert folder_height >= 44
 
 
 def test_main_window_starts_with_empty_url_state(tmp_path, monkeypatch):
@@ -152,8 +152,8 @@ def test_main_window_uses_custom_titlebar_shell_on_macos(tmp_path, monkeypatch):
             assert hasattr(window, "window_titlebar")
             assert window.window_titlebar.title_label.text() == ""
             assert window.window_titlebar.title_label.isHidden()
-            assert window.window_titlebar.close_button.width() == 16
-            assert window.window_titlebar.minimize_button.width() == 16
+            assert window.window_titlebar.close_button.width() == 14
+            assert window.window_titlebar.minimize_button.width() == 14
     finally:
         window.close()
 
@@ -219,6 +219,6 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
         assert child_item.text(0) == "Example"
 
         misc_style = misc_item.data(0, Qt.ItemDataRole.UserRole + 1)
-        assert misc_style["start"] == "#7025CF"
+        assert misc_style["start"] == "#9B7AE8"
     finally:
         window.close()

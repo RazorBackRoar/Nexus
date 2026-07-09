@@ -13,11 +13,9 @@ from PySide6.QtCore import (
     QStandardPaths,
     Qt,
 )
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -266,7 +264,7 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(self.chrome_frame)
 
         main_layout = QVBoxLayout(self.chrome_frame)
-        main_layout.setContentsMargins(22, 8, 22, 14)
+        main_layout.setContentsMargins(22, 6, 22, 16)
         main_layout.setSpacing(10)
 
         if sys.platform == "darwin":
@@ -276,10 +274,10 @@ class MainWindow(QMainWindow):
         header_widget = QWidget()
         header_widget.setStyleSheet("background: transparent;")
         header_layout = QVBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(0)
+        header_layout.setContentsMargins(0, 4, 0, 0)
+        header_layout.setSpacing(6)
 
-        self.title_label = QLabel("NEXUS")
+        self.title_label = QLabel("Nexus")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setToolTip("Double-click for About · Right-click for updates")
         self.title_label.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -290,33 +288,48 @@ class MainWindow(QMainWindow):
         self.title_label.installEventFilter(self)
         self.title_label.setStyleSheet("""
             QLabel {
-                color: #f8faff;
-                font-family: "Avenir Next";
-                font-size: 40px;
-                font-weight: 800;
-                letter-spacing: 8px;
+                color: #F0F4FA;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 42px;
+                font-weight: 700;
+                letter-spacing: 1.2px;
+                padding-bottom: 0px;
+            }
+        """)
+        header_layout.addWidget(self.title_label)
+
+        self.summary_label = QLabel(
+            "Safari bookmark manager and batch URL opener — paste links, organize folders, open everything at once."
+        )
+        self.summary_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.summary_label.setWordWrap(True)
+        self.summary_label.setStyleSheet("""
+            QLabel {
+                color: #9AA8BC;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 15px;
+                font-weight: 400;
+                letter-spacing: 0.2px;
+                padding-left: 48px;
+                padding-right: 48px;
                 padding-bottom: 4px;
             }
         """)
-        title_glow = QGraphicsDropShadowEffect()
-        title_glow.setBlurRadius(26)
-        title_glow.setColor(QColor(216, 227, 255, 120))
-        title_glow.setOffset(0, 0)
-        self.title_label.setGraphicsEffect(title_glow)
-        header_layout.addWidget(self.title_label)
+        header_layout.addWidget(self.summary_label)
         main_layout.addWidget(header_widget)
 
         header_rule = QFrame()
-        header_rule.setFixedHeight(1)
+        header_rule.setFixedHeight(2)
         header_rule.setStyleSheet(
             """
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(124, 92, 255, 0.0),
-                stop:0.22 rgba(124, 92, 255, 0.12),
-                stop:0.5 rgba(77, 223, 255, 0.10),
-                stop:0.78 rgba(245, 74, 169, 0.12),
-                stop:1 rgba(124, 92, 255, 0.0));
+                stop:0 rgba(74, 144, 232, 0.0),
+                stop:0.18 rgba(74, 144, 232, 0.55),
+                stop:0.50 rgba(61, 184, 138, 0.50),
+                stop:0.82 rgba(224, 90, 90, 0.55),
+                stop:1 rgba(224, 90, 90, 0.0));
             border: none;
+            border-radius: 1px;
             """
         )
         main_layout.addWidget(header_rule)
@@ -325,74 +338,74 @@ class MainWindow(QMainWindow):
         content_widget.setStyleSheet("background: transparent;")
         content_layout = QHBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(28)
+        content_layout.setSpacing(22)
 
         self.sidebar = QWidget()
-        self.sidebar.setFixedWidth(272)
+        self.sidebar.setFixedWidth(260)
         self.sidebar.setObjectName("bookmarkSidebar")
         self.sidebar.setStyleSheet("""
             QWidget#bookmarkSidebar {
-                background: qlineargradient(x1:0, y1:0, x2:0.92, y2:1,
-                    stop:0 rgba(20, 10, 44, 0.22),
-                    stop:0.38 rgba(5, 8, 22, 0.16),
-                    stop:1 rgba(2, 4, 12, 0.10));
-                border-right: 1px solid rgba(88, 116, 255, 0.10);
+                background: rgba(255, 255, 255, 0.035);
+                border-right: 1px solid rgba(74, 144, 232, 0.18);
+                border-radius: 0px;
             }
         """)
         sidebar_layout = QVBoxLayout(self.sidebar)
-        sidebar_layout.setContentsMargins(12, 20, 18, 12)
-        sidebar_layout.setSpacing(18)
+        sidebar_layout.setContentsMargins(12, 16, 14, 12)
+        sidebar_layout.setSpacing(14)
 
         sidebar_header = QWidget()
         sidebar_header_layout = QHBoxLayout(sidebar_header)
         sidebar_header_layout.setContentsMargins(4, 0, 4, 0)
         sidebar_header_layout.setSpacing(4)
 
-        sidebar_title = QLabel("BOOKMARKS")
+        sidebar_title = QLabel("Bookmarks")
         sidebar_title.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         sidebar_title.setStyleSheet("""
             QLabel {
-                color: #f5f8ff;
-                font-family: "Avenir Next";
-                font-size: 15px;
-                font-weight: 700;
-                letter-spacing: 3.4px;
-                padding-left: 12px;
-                padding-bottom: 4px;
+                color: #B8C4D6;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 14px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                padding-left: 4px;
+                padding-bottom: 2px;
             }
         """)
         sidebar_header_layout.addWidget(sidebar_title, 1)
 
         self.add_folder_btn = QPushButton("+")
         self.add_folder_btn.clicked.connect(self.add_bookmark_section)
-        self.add_folder_btn.setFixedSize(24, 24)
+        self.add_folder_btn.setFixedSize(26, 26)
         self.add_folder_btn.setToolTip("Add folder")
         self.add_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_folder_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.add_folder_btn.setStyleSheet("""
             QPushButton {
-                background: transparent;
-                border: none;
-                color: rgba(250, 252, 255, 0.96);
-                font-family: "Avenir Next";
-                font-size: 28px;
+                background: rgba(74, 144, 232, 0.16);
+                border: 1px solid rgba(74, 144, 232, 0.35);
+                border-radius: 7px;
+                color: #D6E4FF;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 18px;
                 font-weight: 500;
                 padding: 0px;
                 margin: 0px;
             }
             QPushButton:hover {
-                color: rgba(255, 255, 255, 1.0);
+                background: rgba(74, 144, 232, 0.28);
+                color: #FFFFFF;
             }
             QPushButton:pressed {
-                color: rgba(214, 226, 255, 0.86);
+                background: rgba(74, 144, 232, 0.12);
             }
         """)
         sidebar_header_layout.addWidget(
             self.add_folder_btn,
             0,
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
         )
         sidebar_layout.addWidget(sidebar_header)
 
@@ -401,23 +414,21 @@ class MainWindow(QMainWindow):
         self.search_bar.textChanged.connect(self._filter_bookmarks)
         self.search_bar.setStyleSheet("""
             QLineEdit {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(6, 9, 24, 0.94),
-                    stop:1 rgba(3, 5, 16, 0.90));
-                border: 1px solid rgba(54, 164, 255, 0.26);
-                border-radius: 14px;
-                color: #ecf2ff;
-                padding: 10px 15px;
-                font-size: 13px;
-                font-family: "Avenir Next";
-                selection-background-color: rgba(129, 160, 255, 0.35);
+                background: rgba(0, 0, 0, 0.30);
+                border: 1px solid rgba(74, 144, 232, 0.22);
+                border-radius: 9px;
+                color: #E8ECF4;
+                padding: 9px 14px;
+                font-size: 14px;
+                font-family: "Helvetica Neue", sans-serif;
+                selection-background-color: rgba(74, 144, 232, 0.40);
             }
             QLineEdit:focus {
-                border: 1px solid rgba(183, 87, 255, 0.46);
-                background: rgba(8, 12, 30, 0.96);
+                border: 1px solid rgba(61, 184, 138, 0.55);
+                background: rgba(0, 0, 0, 0.38);
             }
             QLineEdit::placeholder {
-                color: rgba(223, 231, 255, 0.55);
+                color: rgba(168, 176, 192, 0.70);
             }
         """)
         self.search_bar.setFixedHeight(38)
@@ -456,17 +467,17 @@ class MainWindow(QMainWindow):
             }
             QScrollBar:vertical {
                 background: transparent;
-                width: 8px;
-                margin: 8px 0;
-                border-radius: 4px;
+                width: 6px;
+                margin: 4px 0;
+                border-radius: 3px;
             }
             QScrollBar::handle:vertical {
-                background: rgba(178, 194, 255, 0.28);
-                border-radius: 4px;
-                min-height: 30px;
+                background: rgba(255, 255, 255, 0.16);
+                border-radius: 3px;
+                min-height: 24px;
             }
             QScrollBar::handle:vertical:hover {
-                background: rgba(208, 218, 255, 0.4);
+                background: rgba(255, 255, 255, 0.26);
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -482,71 +493,35 @@ class MainWindow(QMainWindow):
         main_content = QWidget()
         main_content.setStyleSheet("background: transparent;")
         main_content_layout = QVBoxLayout(main_content)
-        main_content_layout.setContentsMargins(0, 14, 0, 0)
-        main_content_layout.setSpacing(14)
+        main_content_layout.setContentsMargins(4, 12, 0, 0)
+        main_content_layout.setSpacing(12)
 
-        tagline = QLabel("Paste URLs. Open in Safari. Instantly.")
-        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tagline = QLabel("Paste URLs. Open in Safari.")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignLeft)
         tagline.setStyleSheet("""
             QLabel {
-                color: #ff5cae;
-                font-family: "Avenir Next";
-                font-size: 25px;
-                font-weight: 600;
-                font-style: italic;
-                letter-spacing: 0.7px;
-                padding-bottom: 6px;
+                color: #7EB8F0;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 16px;
+                font-weight: 550;
+                letter-spacing: 0.2px;
+                padding-bottom: 2px;
             }
         """)
-        tagline_glow = QGraphicsDropShadowEffect()
-        tagline_glow.setBlurRadius(24)
-        tagline_glow.setOffset(0, 0)
-        tagline_glow.setColor(QColor(255, 96, 182, 86))
-        tagline.setGraphicsEffect(tagline_glow)
         main_content_layout.addWidget(tagline)
-
-        tagline_beam = QFrame()
-        tagline_beam.setFixedHeight(3)
-        tagline_beam.setStyleSheet("""
-            QFrame {
-                border: none;
-                border-radius: 1px;
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba(89, 132, 255, 0.0),
-                    stop:0.18 rgba(58, 212, 255, 0.30),
-                    stop:0.5 rgba(255, 74, 169, 0.92),
-                    stop:0.82 rgba(93, 108, 255, 0.36),
-                    stop:1 rgba(89, 132, 255, 0.0));
-            }
-        """)
-        beam_glow = QGraphicsDropShadowEffect()
-        beam_glow.setBlurRadius(18)
-        beam_glow.setOffset(0, 0)
-        beam_glow.setColor(QColor(156, 96, 255, 102))
-        tagline_beam.setGraphicsEffect(beam_glow)
-        main_content_layout.addWidget(tagline_beam)
 
         url_panel = QWidget()
         url_panel.setObjectName("urlWell")
         url_panel.setStyleSheet("""
             QWidget#urlWell {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(8, 8, 24, 0.92),
-                    stop:0.32 rgba(4, 8, 20, 0.94),
-                    stop:0.70 rgba(10, 8, 26, 0.88),
-                    stop:1 rgba(2, 6, 15, 0.96));
-                border: 1px solid rgba(69, 132, 255, 0.20);
-                border-radius: 22px;
+                background: rgba(0, 0, 0, 0.24);
+                border: 1px solid rgba(74, 144, 232, 0.20);
+                border-radius: 12px;
             }
         """)
-        url_panel_shadow = QGraphicsDropShadowEffect()
-        url_panel_shadow.setBlurRadius(34)
-        url_panel_shadow.setOffset(0, 0)
-        url_panel_shadow.setColor(QColor(52, 66, 180, 34))
-        url_panel.setGraphicsEffect(url_panel_shadow)
         url_panel_layout = QVBoxLayout(url_panel)
-        url_panel_layout.setContentsMargins(16, 16, 16, 12)
-        url_panel_layout.setSpacing(10)
+        url_panel_layout.setContentsMargins(14, 14, 14, 12)
+        url_panel_layout.setSpacing(8)
 
         self.url_table = URLTableWidget()
         self.url_table.itemChanged.connect(self._update_url_counter)
@@ -559,7 +534,7 @@ class MainWindow(QMainWindow):
             QTableWidget {
                 background: transparent;
                 border: none;
-                color: #f8faff;
+                color: #E8ECF4;
                 font-size: 15px;
                 outline: none;
                 selection-background-color: transparent;
@@ -572,23 +547,23 @@ class MainWindow(QMainWindow):
             QTableWidget QLineEdit {
                 background: transparent;
                 border: none;
-                color: #f8faff;
-                padding-left: 24px;
+                color: #E8ECF4;
+                padding-left: 16px;
                 font-size: 15px;
-                selection-background-color: rgba(129, 160, 255, 0.35);
+                selection-background-color: rgba(74, 144, 232, 0.40);
             }
             QScrollBar:vertical {
                 background: transparent;
-                width: 8px;
-                margin: 8px 0;
+                width: 6px;
+                margin: 4px 0;
             }
             QScrollBar::handle:vertical {
-                background: rgba(178, 194, 255, 0.28);
-                border-radius: 4px;
-                min-height: 30px;
+                background: rgba(255, 255, 255, 0.16);
+                border-radius: 3px;
+                min-height: 24px;
             }
             QScrollBar::handle:vertical:hover {
-                background: rgba(208, 218, 255, 0.4);
+                background: rgba(255, 255, 255, 0.26);
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -601,41 +576,36 @@ class MainWindow(QMainWindow):
         self.url_empty_state = QWidget()
         self.url_empty_state.setStyleSheet("background: transparent;")
         empty_layout = QVBoxLayout(self.url_empty_state)
-        empty_layout.setContentsMargins(34, 36, 34, 36)
+        empty_layout.setContentsMargins(28, 28, 28, 28)
         empty_layout.setSpacing(10)
         empty_layout.addStretch()
 
-        self.url_empty_title = QLabel("Paste URLs to Fill This List")
+        self.url_empty_title = QLabel("Paste URLs to get started")
         self.url_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.url_empty_title.setStyleSheet("""
             QLabel {
-                color: rgba(238, 246, 255, 0.94);
-                font-family: "Avenir Next";
-                font-size: 26px;
-                font-weight: 700;
-                letter-spacing: 0.4px;
+                color: #E8ECF4;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 20px;
+                font-weight: 600;
+                letter-spacing: 0.2px;
             }
         """)
-        title_glow = QGraphicsDropShadowEffect()
-        title_glow.setBlurRadius(22)
-        title_glow.setOffset(0, 0)
-        title_glow.setColor(QColor(138, 198, 255, 90))
-        self.url_empty_title.setGraphicsEffect(title_glow)
         empty_layout.addWidget(self.url_empty_title)
 
         self.url_empty_note = QLabel(
-            "Copied links appear here automatically, then each row reports Ready or Failed."
+            "Copied links appear here automatically. Each row shows Ready, Opening, or Failed."
         )
         self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.url_empty_note.setWordWrap(True)
         self.url_empty_note.setStyleSheet("""
             QLabel {
-                color: rgba(188, 206, 255, 0.66);
-                font-family: "Avenir Next";
-                font-size: 14px;
-                font-weight: 500;
-                padding-left: 60px;
-                padding-right: 60px;
+                color: #8A96A8;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 15px;
+                font-weight: 400;
+                padding-left: 40px;
+                padding-right: 40px;
             }
         """)
         empty_layout.addWidget(self.url_empty_note)
@@ -653,19 +623,19 @@ class MainWindow(QMainWindow):
         self.url_counter_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.url_counter_label.setStyleSheet("""
             QLabel {
-                color: rgba(124, 220, 255, 0.72);
-                font-size: 12px;
-                font-weight: 600;
-                letter-spacing: 0.8px;
+                color: #3DB88A;
+                font-size: 13px;
+                font-weight: 550;
+                letter-spacing: 0.2px;
                 padding-top: 2px;
-                padding-right: 8px;
+                padding-right: 4px;
             }
         """)
         main_content_layout.addWidget(self.url_counter_label)
 
         button_row = QHBoxLayout()
-        button_row.setContentsMargins(18, 2, 18, 0)
-        button_row.setSpacing(18)
+        button_row.setContentsMargins(8, 6, 8, 2)
+        button_row.setSpacing(28)
 
         self.run_btn = GlassButton("Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
@@ -685,7 +655,7 @@ class MainWindow(QMainWindow):
             self.undo_btn,
             self.clear_btn,
         ):
-            button.setFixedSize(184, 50)
+            button.setFixedSize(148, 46)
 
         button_row.addStretch()
         button_row.addWidget(self.run_btn)
@@ -702,9 +672,9 @@ class MainWindow(QMainWindow):
         self.status_bar.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.status_bar.setStyleSheet("""
             QLabel {
-                color: rgba(175, 190, 255, 0.48);
-                font-size: 11px;
-                padding-right: 6px;
+                color: #6A7890;
+                font-size: 12px;
+                padding-right: 4px;
             }
         """)
         main_layout.addWidget(self.status_bar)
@@ -1043,94 +1013,94 @@ class MainWindow(QMainWindow):
         return self._create_tree_item(folder_data)
 
     def _resolve_folder_style(self, folder_name: str) -> dict[str, str]:
-        """Return a stable color palette for a bookmark folder row."""
+        """Return a stable accent color for a bookmark folder row."""
         named_styles = {
             "favorites": {
-                "start": "#991647",
+                "start": "#E5738A",
                 "end": "#3D081E",
                 "border": "#E8A5C2",
                 "icon": "#FFE7F0",
             },
             "tech": {
-                "start": "#0B6EB6",
+                "start": "#5B8DEF",
                 "end": "#082A56",
                 "border": "#94D5FF",
                 "icon": "#E6FCFF",
             },
             "misc": {
-                "start": "#7025CF",
+                "start": "#9B7AE8",
                 "end": "#23074F",
                 "border": "#D6B1FF",
                 "icon": "#F6E9FF",
             },
             "work": {
-                "start": "#0C8B77",
+                "start": "#4DB6A0",
                 "end": "#072F2A",
                 "border": "#9DE9D8",
                 "icon": "#EDFFF9",
             },
             "later": {
-                "start": "#A45B0A",
+                "start": "#D4A05A",
                 "end": "#492403",
                 "border": "#F0C88F",
                 "icon": "#FFF4D0",
             },
             "news": {
-                "start": "#3467D6",
+                "start": "#6B9AF5",
                 "end": "#10235D",
                 "border": "#AFC7FF",
                 "icon": "#EEF5FF",
             },
             "reading": {
-                "start": "#D7DBEE",
+                "start": "#A8B0C0",
                 "end": "#717AA8",
                 "border": "#F3F5FF",
                 "icon": "#FFFFFF",
             },
             "apple": {
-                "start": "#5EC4FF",
+                "start": "#7AB8E8",
                 "end": "#2767C7",
                 "border": "#C1E5FF",
                 "icon": "#EAF7FF",
             },
             "google": {
-                "start": "#62F5D9",
+                "start": "#5BC4B0",
                 "end": "#238B8A",
                 "border": "#C7FFF5",
                 "icon": "#EBFFFB",
             },
             "github": {
-                "start": "#9880FF",
+                "start": "#8B7AE8",
                 "end": "#4720BE",
                 "border": "#D1C9FF",
                 "icon": "#EEEBFF",
             },
             "fun": {
-                "start": "#FF67E2",
+                "start": "#D48BC8",
                 "end": "#A11BB7",
                 "border": "#FFC7F2",
                 "icon": "#FFEAFB",
             },
             "personal": {
-                "start": "#4E90DE",
+                "start": "#6B9AF5",
                 "end": "#265CB2",
                 "border": "#BADEFF",
                 "icon": "#DFF0FF",
             },
             "youtube": {
-                "start": "#CE425B",
+                "start": "#E57373",
                 "end": "#8A203A",
                 "border": "#FFB8C4",
                 "icon": "#FFE2E7",
             },
             "guides": {
-                "start": "#D39A36",
+                "start": "#D4A05A",
                 "end": "#945F1E",
                 "border": "#FFE0A7",
                 "icon": "#FFF1D8",
             },
             "random": {
-                "start": "#55A58B",
+                "start": "#5BC4A8",
                 "end": "#2F6B58",
                 "border": "#C2F4E4",
                 "icon": "#E3FFF6",
@@ -1138,37 +1108,37 @@ class MainWindow(QMainWindow):
         }
         fallback_styles = [
             {
-                "start": "#0F6DAF",
+                "start": "#5B8DEF",
                 "end": "#092B59",
                 "border": "#9AD4FF",
                 "icon": "#E8F7FF",
             },
             {
-                "start": "#7227CE",
+                "start": "#9B7AE8",
                 "end": "#250854",
                 "border": "#D6B5FF",
                 "icon": "#F3E8FF",
             },
             {
-                "start": "#0D8B77",
+                "start": "#4DB6A0",
                 "end": "#07312B",
                 "border": "#9CE8D8",
                 "icon": "#ECFFF8",
             },
             {
-                "start": "#9B174B",
+                "start": "#E5738A",
                 "end": "#3E081F",
                 "border": "#EAB0C9",
                 "icon": "#FFE5EF",
             },
             {
-                "start": "#A7600E",
+                "start": "#D4A05A",
                 "end": "#4A2603",
                 "border": "#F0CB93",
                 "icon": "#FFF5D7",
             },
             {
-                "start": "#496EDA",
+                "start": "#6B9AF5",
                 "end": "#162B67",
                 "border": "#B5C5FF",
                 "icon": "#F1F3FF",
@@ -1396,18 +1366,23 @@ class MainWindow(QMainWindow):
         menu = QMenu(self)
         # Apply theme styling to the context menu
         menu.setStyleSheet(
-            f"""
-            QMenu {{
-                background-color: #2a2a2a;
-                color: #fff;
-                border: 1px solid {self.current_theme["bookmarks"]["primary"]}; # Use bookmarks primary
-                border-radius: 5px;
-            }}
-            QMenu::item:selected {{
-                background-color: {self.current_theme["bookmarks"]["primary"]};
-                color: #000;
-            }}
-        """
+            """
+            QMenu {
+                background-color: #1C1F27;
+                color: #E8ECF4;
+                border: 1px solid rgba(255, 255, 255, 0.10);
+                border-radius: 8px;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 16px;
+                border-radius: 4px;
+            }
+            QMenu::item:selected {
+                background-color: rgba(91, 141, 239, 0.28);
+                color: #E8ECF4;
+            }
+            """
         )
 
         data = item.data(0, Qt.ItemDataRole.UserRole)
