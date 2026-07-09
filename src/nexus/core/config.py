@@ -3,12 +3,10 @@
 import hashlib
 import logging
 import os
-import sys
 from pathlib import Path
 
-from PySide6.QtCore import QStandardPaths
-
 from razorcore.config import get_version
+from razorcore.logging import setup_logging as razorcore_setup_logging
 
 
 class Config:
@@ -67,9 +65,9 @@ def _resolve_log_dir() -> Path:
     override = os.getenv("NEXUS_LOG_DIR")
     if override:
         return Path(override).expanduser()
-    return Path(
-        QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-    )
+    from razorcore.logging import get_log_directory
+
+    return get_log_directory(Config.APP_NAME)
 
 
 def _env_flag(name: str) -> bool:
@@ -86,32 +84,40 @@ def privacy_fingerprint(value: str, label: str = "value") -> str:
 
 
 def setup_logging(force: bool = False) -> logging.Logger:
-    """Configure application logging lazily at runtime."""
+    """Configure application logging lazily at runtime.
+
+    File logging stays opt-in (``NEXUS_LOG_DIR`` or ``NEXUS_ENABLE_FILE_LOGGING``)
+    because pasted URLs may be sensitive.
+    """
     global _LOGGER_INITIALIZED
     if _LOGGER_INITIALIZED and not force:
         return logging.getLogger("nexus")
-
-    handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
 
     explicit_log_dir = os.getenv("NEXUS_LOG_DIR")
     file_logging_enabled = bool(explicit_log_dir) or _env_flag(
         "NEXUS_ENABLE_FILE_LOGGING"
     )
 
-    # Persistent file logs are opt-in because pasted URLs may be sensitive.
+    log_dir: Path | None = None
     if file_logging_enabled:
         try:
             log_dir = _resolve_log_dir()
             log_dir.mkdir(parents=True, exist_ok=True)
-            handlers.insert(0, logging.FileHandler(log_dir / Config.LOG_FILE))
         except OSError as exc:
             print(f"Warning: could not initialize Nexus file logger: {exc}")
+            file_logging_enabled = False
+            log_dir = None
 
-    logging.basicConfig(
+    razorcore_setup_logging(
+        app_name=Config.APP_NAME,
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=handlers,
-        force=True,
+        log_to_file=file_logging_enabled,
+        log_to_console=True,
+        colored_console=True,
+        log_filename=Config.LOG_FILE,
+        log_dir=log_dir,
+        logger_name="nexus",
+        configure_root=True,
     )
     _LOGGER_INITIALIZED = True
     return logging.getLogger("nexus")

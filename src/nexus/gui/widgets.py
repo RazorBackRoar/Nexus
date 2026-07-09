@@ -1,6 +1,5 @@
 """Custom UI widgets for the Nexus application."""
 
-import asyncio
 import re
 
 from PySide6.QtCore import (
@@ -11,7 +10,6 @@ from PySide6.QtCore import (
     QRectF,
     QSize,
     Qt,
-    QThread,
     Signal,
 )
 from PySide6.QtGui import (
@@ -40,51 +38,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from nexus.core.config import Config, logger
+from nexus.core.config import Config
 from nexus.utils.url_processor import URLProcessor
+from razorcore.threading import AsyncTaskWorker
 
 
-class BaseWorker(QThread):
-    finished = Signal(dict)
-    error = Signal(str)
-
-    def do_work(self):
-        raise NotImplementedError
-
-    def run(self):
-        try:
-            result = self.do_work() or {}
-            self.finished.emit(result)
-        except Exception as e:
-            logger.error("Worker error: %s", e, exc_info=True)
-            self.error.emit(str(e))
-            self.finished.emit({"error": str(e)})
-
-
-class AsyncWorker(BaseWorker):
-    """Generic worker for running asynchronous tasks off the main UI thread."""
+class AsyncWorker(AsyncTaskWorker):
+    """Nexus async worker on razorcore.AsyncTaskWorker with result_ready alias."""
 
     result_ready = Signal(object)
 
     def __init__(self, coro_func, *args, **kwargs):
-        super().__init__()
-        self.coro_func = coro_func
-        self.args = args
-        self.kwargs = kwargs
-
-    def do_work(self):
-        loop = None
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(self.coro_func(*self.args, **self.kwargs))
-            self.result_ready.emit(result)
-            return {"result": result}
-        finally:
-            if loop:
-                asyncio.set_event_loop(None)
-                if not loop.is_closed():
-                    loop.close()
+        super().__init__(coro_func, *args, **kwargs)
+        # Preserve the historical Nexus signal name used by MainWindow.
+        self.finished.connect(self.result_ready.emit)
 
 
 class CosmicFrame(QWidget):
@@ -112,7 +79,10 @@ class CosmicFrame(QWidget):
         painter.fillPath(rounded_rect, QBrush(blue_wash))
 
         green_wash = QLinearGradient(
-            rect.left(), rect.bottom(), rect.left() + rect.width() * 0.45, rect.center().y()
+            rect.left(),
+            rect.bottom(),
+            rect.left() + rect.width() * 0.45,
+            rect.center().y(),
         )
         green_wash.setColorAt(0.0, QColor(40, 170, 110, 22))
         green_wash.setColorAt(1.0, QColor(40, 170, 110, 0))
@@ -211,7 +181,9 @@ class WindowTitleBar(QWidget):
         """)
         self.title_label.hide()
 
-        layout.addWidget(controls, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(
+            controls, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addStretch()
 
         self.close_button.clicked.connect(self._target_window.close)
@@ -234,9 +206,8 @@ class WindowTitleBar(QWidget):
 
     def mousePressEvent(self, event):  # noqa: N802 - Qt override
         child = self.childAt(event.position().toPoint())
-        if (
-            event.button() == Qt.MouseButton.LeftButton
-            and not isinstance(child, TrafficLightButton)
+        if event.button() == Qt.MouseButton.LeftButton and not isinstance(
+            child, TrafficLightButton
         ):
             self._drag_offset = (
                 event.globalPosition().toPoint()
@@ -293,7 +264,9 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             painter.drawRoundedRect(pill_rect, 10, 10)
 
             # Accent bar on the left
-            bar = QRectF(pill_rect.left() + 8, pill_rect.top() + 10, 3, pill_rect.height() - 20)
+            bar = QRectF(
+                pill_rect.left() + 8, pill_rect.top() + 10, 3, pill_rect.height() - 20
+            )
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(accent)
             painter.drawRoundedRect(bar, 1.5, 1.5)
@@ -343,11 +316,15 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
         body_path = QPainterPath()
         body_path.addRoundedRect(rect.adjusted(1, 12, -2, -1), 8, 8)
 
-        top_gradient = QLinearGradient(rect.left(), rect.top(), rect.left(), rect.bottom())
+        top_gradient = QLinearGradient(
+            rect.left(), rect.top(), rect.left(), rect.bottom()
+        )
         top_gradient.setColorAt(0.0, icon_color.lighter(135))
         top_gradient.setColorAt(1.0, icon_color)
 
-        body_gradient = QLinearGradient(rect.left(), rect.top(), rect.right(), rect.bottom())
+        body_gradient = QLinearGradient(
+            rect.left(), rect.top(), rect.right(), rect.bottom()
+        )
         body_gradient.setColorAt(0.0, icon_color.lighter(120))
         body_gradient.setColorAt(1.0, icon_color.darker(118))
 
@@ -626,10 +603,7 @@ class URLTableWidget(QTableWidget):
             Qt.KeyboardModifier.ControlModifier,
             Qt.KeyboardModifier.MetaModifier,
         )
-        if (
-            event.key() == Qt.Key.Key_V
-            and event.modifiers() in paste_modifiers
-        ):
+        if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
             # Handle Ctrl+V paste
             clipboard = QApplication.clipboard()
             mime_data = clipboard.mimeData()
@@ -726,9 +700,7 @@ class URLTableWidget(QTableWidget):
 class NeonButton(QPushButton):
     """A custom button with a subtle hover glow."""
 
-    def __init__(
-        self, text: str = "", color: str = "#5B8DEF"
-    ):
+    def __init__(self, text: str = "", color: str = "#5B8DEF"):
         super().__init__(text)
         self.color = color
         self._setup_shadow_effect()
@@ -826,7 +798,9 @@ class GlassButton(QPushButton):
         }
         return colors.get(self.variant, "#4A90E8")
 
-    def _disabled_tint(self, color_hex: str, lift: int = 112, alpha: int = 160) -> QColor:
+    def _disabled_tint(
+        self, color_hex: str, lift: int = 112, alpha: int = 160
+    ) -> QColor:
         """Keep disabled controls readable without going flat gray."""
         color = QColor(color_hex).lighter(lift)
         color.setAlpha(alpha)
