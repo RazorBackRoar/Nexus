@@ -8,9 +8,9 @@
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
-[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
-[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
-[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)
+[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)]()
+[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)]()
+[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)]()
 
 ```text
 ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
@@ -22,7 +22,7 @@
 ```
 
 > **Native macOS Safari bookmark manager and batch URL opener.**
-> Organize bookmarks, batch open URLs, and manage your browsing workflow with a modern, neon-themed interface.
+> Organize bookmarks, batch open URLs, and manage your browsing workflow with a dark native interface.
 
 ---
 
@@ -68,6 +68,7 @@
 ```bash
 git clone https://github.com/RazorBackRoar/Nexus.git
 cd Nexus
+# Workspace layout: sibling Apps/.razorcore provides editable razorcore
 uv sync
 uv run python -m nexus.main
 ```
@@ -104,5 +105,5 @@ For developers:
 - Primary development/build target: Python 3.14 with `uv`.
 - Source/build target: Python 3.14 only.
 - Setup: `uv sync`
-- Run: `uv run python -m nexus`
+- Run: `uv run python -m nexus.main`
 <!-- razorcore:runtime:end -->
