@@ -28,24 +28,64 @@ class BookmarkManager:
         self.url_processor = URLProcessor()
 
     def load_bookmarks(self) -> list[BookmarkNode]:
-        """Loads bookmarks, handles errors, and creates defaults."""
-        if not self.file_path.exists():
-            logger.info("No bookmark file found, creating defaults")
-            return self._create_default_bookmarks()
+        """Loads bookmarks, handles errors, and creates defaults.
+
+        Prefer the primary file; if it is missing or unreadable, fall back to
+        ``.bak`` (left behind by an interrupted atomic save) before defaults.
+        """
+        for candidate in (self.file_path, self.file_path.with_suffix(".bak")):
+            if not candidate.exists():
+                continue
+            loaded = self._load_bookmarks_from_path(candidate)
+            if loaded is not None:
+                if candidate != self.file_path:
+                    logger.warning(
+                        "Restored bookmarks from backup %s after primary file "
+                        "was missing or unreadable",
+                        candidate,
+                    )
+                    # Re-materialize the primary file so the next save does not
+                    # treat an empty library as authoritative.
+                    self.save_bookmarks(loaded)
+                return loaded
+
+        logger.info("No bookmark file found, creating defaults")
+        return self._create_default_bookmarks()
+
+    def _load_bookmarks_from_path(self, path: Path) -> list[BookmarkNode] | None:
+        """Parse one bookmark JSON file.
+
+        Returns ``None`` when the file is corrupt or not a bookmark array so
+        callers can try ``.bak`` / defaults. Individual bad nodes are skipped
+        without discarding the rest of the library.
+        """
         try:
-            with open(self.file_path, encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
-            bookmarks: list[BookmarkNode] = []
-            for node_data in data:
-                try:
-                    bookmarks.append(self._deserialize_node(node_data))
-                except ValueError as e:
-                    logger.warning("Skipping invalid bookmark entry: %s", e)
-            logger.info("Loaded %d top-level bookmark sections", len(bookmarks))
-            return bookmarks
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            logger.error("Failed to load bookmarks, creating defaults: %s", e)
-            return self._create_default_bookmarks()
+        except (OSError, json.JSONDecodeError) as e:
+            logger.error("Failed to read bookmarks from %s: %s", path, e)
+            return None
+
+        if not isinstance(data, list):
+            logger.error(
+                "Bookmark file %s is not a JSON array (got %s)",
+                path,
+                type(data).__name__,
+            )
+            return None
+
+        bookmarks: list[BookmarkNode] = []
+        for node_data in data:
+            try:
+                bookmarks.append(self._deserialize_node(node_data))
+            except (ValueError, KeyError, TypeError, AttributeError) as e:
+                logger.warning("Skipping invalid bookmark entry: %s", e)
+        logger.info(
+            "Loaded %d top-level bookmark sections from %s",
+            len(bookmarks),
+            path,
+        )
+        return bookmarks
 
     def save_bookmarks(self, bookmarks: list[BookmarkNode]) -> bool:
         """Saves bookmarks using an atomic write process to prevent data loss."""
@@ -85,12 +125,14 @@ class BookmarkManager:
 
     def _deserialize_node(self, data: dict[str, Any]) -> BookmarkNode:
         """Converts dictionaries from JSON back into dataclass objects."""
+        if not isinstance(data, dict):
+            raise TypeError(f"Bookmark node must be an object, got {type(data).__name__}")
         if data.get("type") == "folder":
             children = []
             for child in data.get("children", []):
                 try:
                     children.append(self._deserialize_node(child))
-                except ValueError as e:
+                except (ValueError, KeyError, TypeError, AttributeError) as e:
                     logger.warning("Skipping invalid bookmark child entry: %s", e)
             return BookmarkFolder(name=data["name"], children=children)
         else:  # It's a bookmark
