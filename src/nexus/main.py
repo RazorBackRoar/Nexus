@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Nexus.
 
-A fully themeable, production-ready PySide6 app with a "neon outline" aesthetic,
-hierarchical bookmarks, and powerful Safari automation.
+A fully themeable, production-ready PySide6 app with a muted dark aesthetic,
+hierarchical bookmarks, and Safari automation.
 """
 
 import sys

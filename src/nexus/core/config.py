@@ -26,7 +26,7 @@ class Config:
 
     # UI settings
     ANIMATION_DURATION = 200
-    GLOW_RADIUS = 25  # Increased glow radius for more prominent neon effect
+    GLOW_RADIUS = 12  # Subtle hover glow (muted dark UI)
 
     # Stealth mode settings
     STEALTH_MODE = True

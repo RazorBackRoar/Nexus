@@ -86,118 +86,131 @@ class MainWindow(QMainWindow):
         )
 
     def _setup_themes(self):
-        """Defines the available color themes with 3 distinct colors for each main tab."""
+        """Defines muted dark color themes (3 accents per main tab)."""
         self.themes = {
-            "Neon Blue": {
+            "Midnight Blue": {
                 "safari": {
-                    "primary": "#00f5ff",
-                    "secondary": "#00aaff",
-                    "accent": "#ff1744",
+                    "primary": "#4A8FC0",
+                    "secondary": "#3A6F98",
+                    "accent": "#C45A5A",
                 },
                 "bookmarks": {
-                    "primary": "#9933ff",
-                    "secondary": "#6600cc",
-                    "accent": "#39ff14",
+                    "primary": "#6B5B95",
+                    "secondary": "#534670",
+                    "accent": "#5BA86A",
                 },
                 "theme_settings": {
-                    "primary": "#00f5ff",
-                    "secondary": "#9933ff",
-                    "accent": "#ffeb3b",
-                },  # Primary is Blue
+                    "primary": "#4A8FC0",
+                    "secondary": "#6B5B95",
+                    "accent": "#C4A84A",
+                },
             },
-            "Hot Pink": {
+            "Rose": {
                 "safari": {
-                    "primary": "#ff2d92",
-                    "secondary": "#cc0066",
-                    "accent": "#4caf50",
+                    "primary": "#C45A8A",
+                    "secondary": "#9A456C",
+                    "accent": "#5BA86A",
                 },
                 "bookmarks": {
-                    "primary": "#b200ff",
-                    "secondary": "#8000cc",
-                    "accent": "#ffeb3b",
+                    "primary": "#7A6BB0",
+                    "secondary": "#5C5085",
+                    "accent": "#C4A84A",
                 },
                 "theme_settings": {
-                    "primary": "#ff2d92",
-                    "secondary": "#b200ff",
-                    "accent": "#39ff14",
-                },  # Primary is Pink
+                    "primary": "#C45A8A",
+                    "secondary": "#7A6BB0",
+                    "accent": "#5BA86A",
+                },
             },
-            "Cyber Green": {
+            "Forest": {
                 "safari": {
-                    "primary": "#39ff14",
-                    "secondary": "#00cc00",
-                    "accent": "#ff5722",
+                    "primary": "#5BA86A",
+                    "secondary": "#458054",
+                    "accent": "#C4711A",
                 },
                 "bookmarks": {
-                    "primary": "#ffff00",
-                    "secondary": "#cccc00",
-                    "accent": "#ff2d92",
+                    "primary": "#C4A84A",
+                    "secondary": "#9A8238",
+                    "accent": "#C45A8A",
                 },
                 "theme_settings": {
-                    "primary": "#39ff14",
-                    "secondary": "#ffff00",
-                    "accent": "#00f5ff",
-                },  # Primary is Green
+                    "primary": "#5BA86A",
+                    "secondary": "#C4A84A",
+                    "accent": "#4A8FC0",
+                },
             },
-            "Electric Purple": {
+            "Violet": {
                 "safari": {
-                    "primary": "#b200ff",
-                    "secondary": "#8000cc",
-                    "accent": "#ffeb3b",
+                    "primary": "#7A6BB0",
+                    "secondary": "#5C5085",
+                    "accent": "#C4A84A",
                 },
                 "bookmarks": {
-                    "primary": "#00f5ff",
-                    "secondary": "#00aaff",
-                    "accent": "#ff1744",
+                    "primary": "#4A8FC0",
+                    "secondary": "#3A6F98",
+                    "accent": "#C45A5A",
                 },
                 "theme_settings": {
-                    "primary": "#b200ff",
-                    "secondary": "#ff2d92",
-                    "accent": "#4caf50",
-                },  # Primary is Purple
+                    "primary": "#7A6BB0",
+                    "secondary": "#C45A8A",
+                    "accent": "#5BA86A",
+                },
             },
-            "Sunset Orange": {
+            "Ember": {
                 "safari": {
-                    "primary": "#ff6d00",
-                    "secondary": "#cc5500",
-                    "accent": "#2196f3",
+                    "primary": "#C4711A",
+                    "secondary": "#9A5814",
+                    "accent": "#4A8FC0",
                 },
                 "bookmarks": {
-                    "primary": "#ff2d92",
-                    "secondary": "#cc0066",
-                    "accent": "#39ff14",
+                    "primary": "#C45A8A",
+                    "secondary": "#9A456C",
+                    "accent": "#5BA86A",
                 },
                 "theme_settings": {
-                    "primary": "#ff6d00",
-                    "secondary": "#ff2d92",
-                    "accent": "#b200ff",
-                },  # Primary is Orange
+                    "primary": "#C4711A",
+                    "secondary": "#C45A8A",
+                    "accent": "#7A6BB0",
+                },
             },
         }
 
     def _load_settings(self):
         """Loads theme settings from QSettings."""
-        default_theme_name = "Neon Blue"
+        default_theme_name = "Midnight Blue"
         default_theme_colors = self.themes[default_theme_name]
 
-        self.current_theme_name = self.settings.value("theme/name", default_theme_name)
+        saved_name = self.settings.value("theme/name", default_theme_name)
+        # Migrate legacy neon theme names to muted equivalents
+        legacy_theme_map = {
+            "Neon Blue": "Midnight Blue",
+            "Hot Pink": "Rose",
+            "Cyber Green": "Forest",
+            "Electric Purple": "Violet",
+            "Sunset Orange": "Ember",
+        }
+        self.current_theme_name = legacy_theme_map.get(saved_name, saved_name)
+        if self.current_theme_name not in self.themes:
+            self.current_theme_name = default_theme_name
+        if saved_name != self.current_theme_name:
+            self.settings.setValue("theme/name", self.current_theme_name)
 
         # Initialize current_theme with default structure
         self.current_theme = {
             "safari": {
-                "primary": "#00f5ff",
-                "secondary": "#00aaff",
-                "accent": "#ff1744",
+                "primary": "#4A8FC0",
+                "secondary": "#3A6F98",
+                "accent": "#C45A5A",
             },
             "bookmarks": {
-                "primary": "#9933ff",
-                "secondary": "#6600cc",
-                "accent": "#39ff14",
+                "primary": "#6B5B95",
+                "secondary": "#534670",
+                "accent": "#5BA86A",
             },
             "theme_settings": {
-                "primary": "#00f5ff",
-                "secondary": "#9933ff",
-                "accent": "#ffeb3b",
+                "primary": "#4A8FC0",
+                "secondary": "#6B5B95",
+                "accent": "#C4A84A",
             },
         }
 

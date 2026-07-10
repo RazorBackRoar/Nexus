@@ -737,7 +737,7 @@ class NeonButton(QPushButton):
     def _setup_animations(self):
         self.glow_in_anim = QPropertyAnimation(self.shadow, b"blurRadius")
         self.glow_in_anim.setDuration(Config.ANIMATION_DURATION)
-        self.glow_in_anim.setEndValue(12)
+        self.glow_in_anim.setEndValue(Config.GLOW_RADIUS)
         self.glow_in_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         self.glow_out_anim = QPropertyAnimation(self.shadow, b"blurRadius")
@@ -813,7 +813,7 @@ class GlassButton(QPushButton):
 
         self.glow_in = QPropertyAnimation(self.shadow, b"blurRadius")
         self.glow_in.setDuration(160)
-        self.glow_in.setEndValue(12)
+        self.glow_in.setEndValue(Config.GLOW_RADIUS)
         self.glow_in.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         self.glow_out = QPropertyAnimation(self.shadow, b"blurRadius")
