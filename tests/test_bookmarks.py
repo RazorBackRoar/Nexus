@@ -229,3 +229,86 @@ def test_load_bookmarks_skips_invalid_bookmark_urls(tmp_path):
     child = bookmarks[0].children[0]
     assert isinstance(child, Bookmark)
     assert child.url == "https://example.com"
+
+
+def test_load_bookmarks_keeps_valid_nodes_when_sibling_is_malformed(tmp_path):
+    """One bad top-level entry must not wipe the rest of the library."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Keep Me",
+                            "type": "bookmark",
+                            "url": "https://example.com",
+                        }
+                    ],
+                },
+                # Missing required "name" — KeyError must not discard Favorites.
+                {"type": "folder", "children": []},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
+    assert bookmarks[0].name == "Favorites"
+    assert len(bookmarks[0].children) == 1
+    assert bookmarks[0].children[0].name == "Keep Me"
+
+
+def test_load_bookmarks_recovers_from_bak_when_primary_missing(tmp_path):
+    """Interrupted atomic save leaves only .bak — load must restore it."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    backup = manager.file_path.with_suffix(".bak")
+    backup.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Recovered",
+                            "type": "bookmark",
+                            "url": "https://example.com/recovered",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
+    assert bookmarks[0].children[0].name == "Recovered"
+    assert manager.file_path.exists()
+
+
+def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps({"folders": []}),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert [node.name for node in bookmarks] == [
+        "Favorites",
+        "Tech",
+        "Misc",
+        "Work",
+        "Later",
+        "News",
+    ]
