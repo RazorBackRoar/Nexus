@@ -18,6 +18,12 @@ Native macOS Safari bookmark manager and batch URL opener (PySide6).
 
 Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 
+## CI: vendored razorcore wheel
+
+GitHub Actions installs razorcore from `ci/vendor/` (not the private repo).
+After changing `.razorcore`, run `razorvendor` from the Apps workspace root.
+See `ci/vendor/README.md`.
+
 ## razorcore integration (v1.1)
 
 | Surface | Usage |
@@ -28,6 +34,12 @@ Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 | `appinfo` / `updates` | Startup banner, About, update check |
 
 Bookmark persistence and Safari automation remain Nexus-local.
+
+## Theme settings
+
+Five muted dark themes live in `MainWindow._setup_themes`. Saved theme names in
+`QSettings` are migrated from legacy neon names on load (`legacy_theme_map` in
+`main_window.py`). Default: **Midnight Blue**.
 
 ## Non-obvious rules
 
