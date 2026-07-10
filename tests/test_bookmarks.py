@@ -312,3 +312,90 @@ def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
         "Later",
         "News",
     ]
+
+
+def test_load_bookmarks_recovers_from_bak_when_primary_corrupt(tmp_path):
+    """Corrupt primary JSON must not block recovery from a valid .bak file."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text("{not valid json", encoding="utf-8")
+    backup = manager.file_path.with_suffix(".bak")
+    backup.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "From Backup",
+                            "type": "bookmark",
+                            "url": "https://example.com/backup",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
+    assert bookmarks[0].children[0].name == "From Backup"
+    assert manager.file_path.exists()
+
+
+def test_load_bookmarks_skips_non_dict_top_level_entries(tmp_path):
+    """A string or other non-object node must not abort loading valid siblings."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [],
+                },
+                "orphan string entry",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert bookmarks[0].name == "Favorites"
+
+
+def test_load_bookmarks_keeps_valid_children_when_sibling_child_malformed(tmp_path):
+    """One bad nested bookmark must not discard its valid siblings in the folder."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Keep Me",
+                            "type": "bookmark",
+                            "url": "https://example.com",
+                        },
+                        {"type": "bookmark", "url": "https://example.com/bad"},
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    folder = bookmarks[0]
+    assert isinstance(folder, BookmarkFolder)
+    assert len(folder.children) == 1
+    assert folder.children[0].name == "Keep Me"
