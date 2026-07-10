@@ -33,6 +33,7 @@
 - **Smart URL Extraction** — find valid links in any pasted text
 - **Private Browsing** — one-click stealth/private mode support
 - **Export / Import** — back up your collections as JSON
+- **Themeable UI** — five muted dark color themes with per-tab accents
 - **Apple Silicon Native** — arm64 build optimized for M-series Macs
 
 ---
@@ -52,6 +53,20 @@
 2. **Organize** — create folders and drag to rearrange
 3. **Batch Open** — select multiple bookmarks → **Open in Safari**
 4. **Extract URLs** — paste any block of text and Nexus finds all valid links automatically
+
+### Themes
+
+Nexus ships five muted dark themes, each with distinct accent colors for the Safari, Bookmarks, and Settings tabs:
+
+| Theme | Notes |
+|-------|-------|
+| **Midnight Blue** | Default |
+| **Rose** | Warm pink accents |
+| **Forest** | Green and gold |
+| **Violet** | Purple and blue |
+| **Ember** | Orange and coral |
+
+Pick a theme under **Settings → Theme**. Upgrades from older builds automatically migrate legacy neon theme names (e.g. `Neon Blue` → `Midnight Blue`).
 
 ---
 
@@ -87,6 +102,17 @@ uv run ruff check .
 uv run ty check src --python-version 3.14
 uv run pytest tests/ -q
 ```
+
+### Developer notes
+
+**File logging is opt-in** because pasted URLs may be sensitive. Console logging is always on.
+
+| Variable | Effect |
+|----------|--------|
+| `NEXUS_LOG_DIR` | Write logs to this directory (implies file logging) |
+| `NEXUS_ENABLE_FILE_LOGGING=1` | Enable file logging at the default Application Support path |
+
+Sensitive values in logs are fingerprinted via `privacy_fingerprint()` in `src/nexus/core/config.py`.
 
 ---
 

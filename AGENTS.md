@@ -29,6 +29,15 @@ Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 
 Bookmark persistence and Safari automation remain Nexus-local.
 
+## UI themes
+
+Five muted dark themes: **Midnight Blue** (default), **Rose**, **Forest**, **Violet**, **Ember**.
+Each defines `safari`, `bookmarks`, and `theme_settings` accent triples in `main_window.py`.
+
+On load, `legacy_theme_map` migrates saved QSettings names from the old neon palette
+(`Neon Blue`, `Hot Pink`, `Cyber Green`, `Electric Purple`, `Sunset Orange`).
+`Config.GLOW_RADIUS` (12) drives hover glow on `NeonButton` / `GlassButton`.
+
 ## Non-obvious rules
 
 - Bookmarks persist as `bookmarks_v2.json`, not Safari’s `Bookmarks.plist`.
