@@ -295,6 +295,41 @@ def test_load_bookmarks_recovers_from_bak_when_primary_missing(tmp_path):
     assert manager.file_path.exists()
 
 
+def test_load_bookmarks_keeps_valid_children_when_sibling_is_malformed(tmp_path):
+    """One bad child inside a folder must not discard its siblings."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Keep Me",
+                            "type": "bookmark",
+                            "url": "https://example.com",
+                        },
+                        # Missing required "name" — must not wipe Keep Me.
+                        {"type": "bookmark", "url": "https://bad.example.com"},
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    folder = bookmarks[0]
+    assert isinstance(folder, BookmarkFolder)
+    assert folder.name == "Favorites"
+    assert len(folder.children) == 1
+    assert folder.children[0].name == "Keep Me"
+    assert folder.children[0].url == "https://example.com"
+
+
 def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
     manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
     manager.file_path.write_text(
