@@ -90,6 +90,13 @@ uv run pytest tests/ -q
 
 ---
 
+## Community & docs
+
+- [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) — prerequisites, build, packaging, release, versioning
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
+- [SECURITY.md](SECURITY.md) — vulnerability reporting
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
