@@ -381,6 +381,39 @@ def test_load_bookmarks_recovers_from_bak_when_primary_corrupt(tmp_path):
     assert manager.file_path.exists()
 
 
+def test_load_bookmarks_recovers_from_bak_when_primary_empty(tmp_path):
+    """Empty primary must not block recovery from a valid .bak file."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text("[]", encoding="utf-8")
+    backup = manager.file_path.with_suffix(".bak")
+    backup.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "From Backup",
+                            "type": "bookmark",
+                            "url": "https://example.com/backup",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
+    assert bookmarks[0].children[0].name == "From Backup"
+    assert manager.file_path.exists()
+    assert backup.exists()
+
+
 def test_load_bookmarks_skips_non_dict_top_level_entries(tmp_path):
     """A string or other non-object node must not abort loading valid siblings."""
     manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
