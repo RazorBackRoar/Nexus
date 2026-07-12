@@ -103,7 +103,7 @@ dev = [
 requires-dist = [
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "pyside6", specifier = ">=6.6.0,<7.0.0" },
-    { name = "razorcore", editable = "../.razorcore" },
+    { name = "razorcore", specifier = ">=1.211.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -310,19 +310,12 @@ wheels = [
 [[package]]
 name = "razorcore"
 version = "1.211.0"
-source = { editable = "../.razorcore" }
+source = { registry = "ci/vendor" }
 dependencies = [
     { name = "pyside6" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "pyside6", specifier = ">=6.6.0,<7.0.0" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.15.20" },
-    { name = "ty", specifier = ">=0.0.57" },
+wheels = [
+    { path = "razorcore-1.211.0-py3-none-any.whl" },
 ]
 
 [[package]]
