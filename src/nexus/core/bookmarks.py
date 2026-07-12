@@ -30,24 +30,31 @@ class BookmarkManager:
     def load_bookmarks(self) -> list[BookmarkNode]:
         """Loads bookmarks, handles errors, and creates defaults.
 
-        Prefer the primary file; if it is missing or unreadable, fall back to
-        ``.bak`` (left behind by an interrupted atomic save) before defaults.
+        Prefer the primary file; if it is missing, unreadable, or empty, fall
+        back to ``.bak`` (left behind by an interrupted atomic save) before
+        defaults.
         """
-        for candidate in (self.file_path, self.file_path.with_suffix(".bak")):
+        backup_path = self.file_path.with_suffix(".bak")
+        for candidate in (self.file_path, backup_path):
             if not candidate.exists():
                 continue
             loaded = self._load_bookmarks_from_path(candidate)
-            if loaded is not None:
-                if candidate != self.file_path:
-                    logger.warning(
-                        "Restored bookmarks from backup %s after primary file "
-                        "was missing or unreadable",
-                        candidate,
-                    )
-                    # Re-materialize the primary file so the next save does not
-                    # treat an empty library as authoritative.
-                    self.save_bookmarks(loaded)
-                return loaded
+            if loaded is None:
+                continue
+            if not loaded:
+                # An empty primary usually means a bad save (e.g. pre-recovery
+                # wipe). Keep looking for a populated backup before defaults.
+                continue
+            if candidate != self.file_path:
+                logger.warning(
+                    "Restored bookmarks from backup %s after primary file "
+                    "was missing, unreadable, or empty",
+                    candidate,
+                )
+                # Re-materialize the primary file so the next save does not
+                # treat an empty library as authoritative.
+                self.save_bookmarks(loaded)
+            return loaded
 
         logger.info("No bookmark file found, creating defaults")
         return self._create_default_bookmarks()
