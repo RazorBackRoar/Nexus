@@ -15,6 +15,10 @@ updates:
     labels:
       - "dependencies"
       - "python"
+    ignore:
+      # razorcore is vendored in ci/vendor; workspace bumps use razorvendor.
+      - dependency-name: "razorcore"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
     groups:
       python-dev-minor-patch:
         dependency-type: "development"
