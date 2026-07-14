@@ -414,6 +414,70 @@ def test_load_bookmarks_recovers_from_bak_when_primary_empty(tmp_path):
     assert backup.exists()
 
 
+def test_save_empty_library_clears_backup_and_stays_empty_on_reload(tmp_path):
+    """Intentionally clearing all bookmarks must not resurrect from .bak."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Gone",
+                            "type": "bookmark",
+                            "url": "https://example.com/gone",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    backup = manager.file_path.with_suffix(".bak")
+
+    assert manager.save_bookmarks([]) is True
+    assert manager.file_path.read_text(encoding="utf-8").strip() == "[]"
+    assert not backup.exists()
+
+    bookmarks = manager.load_bookmarks()
+    assert bookmarks == []
+
+
+def test_recovery_resave_does_not_overwrite_populated_backup_with_empty_primary(
+    tmp_path,
+):
+    """Re-materializing primary from .bak must not clobber the backup with []."""
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text("[]", encoding="utf-8")
+    backup = manager.file_path.with_suffix(".bak")
+    backup.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "From Backup",
+                            "type": "bookmark",
+                            "url": "https://example.com/backup",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    bookmarks = manager.load_bookmarks()
+
+    assert len(bookmarks) == 1
+    assert backup.read_text(encoding="utf-8")
+    assert "From Backup" in backup.read_text(encoding="utf-8")
+
+
 def test_load_bookmarks_skips_non_dict_top_level_entries(tmp_path):
     """A string or other non-object node must not abort loading valid siblings."""
     manager = BookmarkManager(tmp_path / "bookmarks_v2.json")

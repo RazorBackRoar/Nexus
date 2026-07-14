@@ -44,6 +44,8 @@ class BookmarkManager:
             if not loaded:
                 # An empty primary usually means a bad save (e.g. pre-recovery
                 # wipe). Keep looking for a populated backup before defaults.
+                if candidate == self.file_path and not backup_path.exists():
+                    return []
                 continue
             if candidate != self.file_path:
                 logger.warning(
@@ -94,6 +96,17 @@ class BookmarkManager:
         )
         return bookmarks
 
+    def _primary_has_bookmarks(self) -> bool:
+        """True when the primary file contains at least one saved bookmark node."""
+        if not self.file_path.exists():
+            return False
+        try:
+            with open(self.file_path, encoding="utf-8") as f:
+                existing = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return True
+        return isinstance(existing, list) and len(existing) > 0
+
     def save_bookmarks(self, bookmarks: list[BookmarkNode]) -> bool:
         """Saves bookmarks using an atomic write process to prevent data loss."""
         backup_path = self.file_path.with_suffix(".bak")
@@ -102,9 +115,11 @@ class BookmarkManager:
             data = [self._serialize_node(node) for node in bookmarks]
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            if self.file_path.exists():
+            if self._primary_has_bookmarks():
                 self.file_path.replace(backup_path)
             temp_path.replace(self.file_path)
+            if not data and backup_path.exists():
+                backup_path.unlink()
             logger.info("Saved bookmarks successfully.")
             return True
         except OSError as e:
