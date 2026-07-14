@@ -58,3 +58,6 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.56",
 ]
+
+[tool.uv.sources]
+razorcore = { path = "ci/vendor/razorcore-1.211.0-py3-none-any.whl" }
