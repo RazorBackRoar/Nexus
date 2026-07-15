@@ -467,3 +467,84 @@ def test_load_bookmarks_keeps_valid_children_when_sibling_child_malformed(tmp_pa
     assert isinstance(folder, BookmarkFolder)
     assert len(folder.children) == 1
     assert folder.children[0].name == "Keep Me"
+
+
+def test_save_bookmarks_writes_primary_and_creates_backup(tmp_path):
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Old",
+                            "type": "bookmark",
+                            "url": "https://example.com/old",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    updated = [
+        BookmarkFolder(
+            name="Favorites",
+            children=[Bookmark(name="New", url="https://example.com/new")],
+        )
+    ]
+    assert manager.save_bookmarks(updated) is True
+
+    saved = json.loads(manager.file_path.read_text(encoding="utf-8"))
+    assert saved[0]["children"][0]["name"] == "New"
+    backup = json.loads(manager.file_path.with_suffix(".bak").read_text(encoding="utf-8"))
+    assert backup[0]["children"][0]["name"] == "Old"
+
+
+def test_save_bookmarks_restores_backup_when_replace_fails(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    manager = BookmarkManager(tmp_path / "bookmarks_v2.json")
+    manager.file_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "Favorites",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Keep",
+                            "type": "bookmark",
+                            "url": "https://example.com/keep",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    backup_path = manager.file_path.with_suffix(".bak")
+    original_replace = Path.replace
+
+    def fail_replace(self, target):
+        if self.suffix == ".tmp" and target == manager.file_path:
+            raise OSError("disk full")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+
+    updated = [
+        BookmarkFolder(
+            name="Favorites",
+            children=[Bookmark(name="Lost", url="https://example.com/lost")],
+        )
+    ]
+    assert manager.save_bookmarks(updated) is False
+
+    assert manager.file_path.exists()
+    restored = json.loads(manager.file_path.read_text(encoding="utf-8"))
+    assert restored[0]["children"][0]["name"] == "Keep"
+    assert not backup_path.exists()
