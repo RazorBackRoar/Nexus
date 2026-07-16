@@ -79,7 +79,26 @@ class CosmicFrame(QWidget):
         (0.67, 0.08, 1.1, 140),
         (0.86, 0.92, 0.8, 90),
         (0.05, 0.86, 1.3, 120),
+        (0.19, 0.56, 2.0, 185),
+        (0.61, 0.28, 2.2, 200),
+        (0.44, 0.71, 1.8, 175),
     ]
+
+    # Four-point glints — kept to the outer frame, away from the URL well
+    _GLINTS = [
+        (0.08, 0.10, 5),
+        (0.92, 0.12, 5),
+        (0.06, 0.90, 4),
+        (0.94, 0.88, 4),
+    ]
+
+    def _draw_glint(self, painter: QPainter, rect, sx: float, sy: float, size: float) -> None:
+        cx = rect.left() + rect.width() * sx
+        cy = rect.top() + rect.height() * sy
+        half = size / 2
+        painter.setPen(QPen(QColor(236, 242, 252, 210), 1.2))
+        painter.drawLine(int(cx - half), int(cy), int(cx + half), int(cy))
+        painter.drawLine(int(cx), int(cy - half), int(cx), int(cy + half))
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         painter = QPainter(self)
@@ -89,20 +108,34 @@ class CosmicFrame(QWidget):
         rounded_rect = QPainterPath()
         rounded_rect.addRoundedRect(rect, 18, 18)
 
-        # Deep-space navy base, echoing the galaxy inside the icon
+        # Deep abyss navy — darker than before so accents pop harder
         base = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        base.setColorAt(0.0, QColor("#0B1226"))
-        base.setColorAt(0.45, QColor("#0A0F1F"))
-        base.setColorAt(1.0, QColor("#060A16"))
+        base.setColorAt(0.0, QColor("#030810"))
+        base.setColorAt(0.45, QColor("#02060E"))
+        base.setColorAt(1.0, QColor("#010408"))
         painter.fillPath(rounded_rect, QBrush(base))
 
         painter.setClipPath(rounded_rect)
 
         # Faint galactic swirl — cool blue washes drifting across the window
         swirl = QLinearGradient(rect.topRight(), rect.center())
-        swirl.setColorAt(0.0, QColor(70, 110, 200, 34))
-        swirl.setColorAt(1.0, QColor(70, 110, 200, 0))
+        swirl.setColorAt(0.0, QColor(50, 90, 200, 48))
+        swirl.setColorAt(1.0, QColor(50, 90, 200, 0))
         painter.fillPath(rounded_rect, QBrush(swirl))
+
+        # Purple nebula band through the center, like the icon backdrop
+        nebula = QLinearGradient(
+            rect.left(),
+            rect.top() + rect.height() * 0.35,
+            rect.right(),
+            rect.top() + rect.height() * 0.65,
+        )
+        nebula.setColorAt(0.0, QColor(90, 60, 150, 0))
+        nebula.setColorAt(0.35, QColor(120, 70, 210, 52))
+        nebula.setColorAt(0.55, QColor(60, 110, 230, 44))
+        nebula.setColorAt(0.75, QColor(110, 70, 190, 46))
+        nebula.setColorAt(1.0, QColor(90, 60, 150, 0))
+        painter.fillPath(rounded_rect, QBrush(nebula))
 
         swirl_low = QLinearGradient(
             rect.left(),
@@ -126,6 +159,10 @@ class CosmicFrame(QWidget):
                     radius * 2,
                 )
             )
+
+        for sx, sy, size in self._GLINTS:
+            self._draw_glint(painter, rect, sx, sy, size)
+
         painter.setClipping(False)
 
         # Brushed-silver metallic border, like the icon's bezel
@@ -145,6 +182,121 @@ class CosmicFrame(QWidget):
         painter.drawRoundedRect(inner, 15, 15)
 
         super().paintEvent(event)
+
+
+class MetallicLabel(QLabel):
+    """Silver-gradient label that echoes the icon's brushed metal lettering."""
+
+    _VARIANTS = {
+        "hero": {
+            "size": 48,
+            "weight": QFont.Weight.Bold,
+            "spacing": 7.0,
+            "top": "#FFFFFF",
+            "mid": "#C8D6EC",
+            "bottom": "#8EA4C8",
+            "shadow": QColor(0, 0, 0, 120),
+        },
+        "body": {
+            "size": 15,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.4,
+            "top": "#F2F6FC",
+            "mid": "#D0DAEA",
+            "bottom": "#A8B8D0",
+            "shadow": QColor(0, 0, 0, 80),
+        },
+        "section": {
+            "size": 20,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.3,
+            "top": "#FFFFFF",
+            "mid": "#D8E4F4",
+            "bottom": "#A8BCD8",
+            "shadow": QColor(0, 0, 0, 90),
+        },
+        "accent": {
+            "size": 16,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.3,
+            "top": "#B8D8FF",
+            "mid": "#7EB8F8",
+            "bottom": "#4A90E8",
+            "shadow": QColor(0, 0, 0, 90),
+        },
+        "dim": {
+            "size": 15,
+            "weight": QFont.Weight.Normal,
+            "spacing": 0.2,
+            "top": "#B8C4D8",
+            "mid": "#98A8C0",
+            "bottom": "#7888A0",
+            "shadow": QColor(0, 0, 0, 70),
+        },
+    }
+
+    def __init__(self, text: str = "", variant: str = "body", parent=None):
+        super().__init__(text, parent)
+        self._variant = variant
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self._apply_variant()
+
+    def set_variant(self, variant: str) -> None:
+        self._variant = variant
+        self._apply_variant()
+        self.update()
+
+    def _apply_variant(self) -> None:
+        spec = self._VARIANTS.get(self._variant, self._VARIANTS["body"])
+        font = self.font()
+        font.setFamily("Helvetica Neue")
+        font.setPointSize(spec["size"])
+        font.setWeight(spec["weight"])
+        font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, spec["spacing"])
+        self.setFont(font)
+
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
+        del event
+        spec = self._VARIANTS.get(self._variant, self._VARIANTS["body"])
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+
+        text = self.text()
+        font = self.font()
+        painter.setFont(font)
+        metrics = painter.fontMetrics()
+        text_width = metrics.horizontalAdvance(text)
+        text_height = metrics.height()
+
+        if self.alignment() & Qt.AlignmentFlag.AlignHCenter:
+            x = (self.width() - text_width) / 2
+        elif self.alignment() & Qt.AlignmentFlag.AlignRight:
+            x = self.width() - text_width
+        else:
+            x = 4.0
+
+        if self.alignment() & Qt.AlignmentFlag.AlignVCenter:
+            y = (self.height() + metrics.ascent() - metrics.descent()) / 2
+        else:
+            y = metrics.ascent() + 2
+
+        path = QPainterPath()
+        path.addText(x, y, font, text)
+
+        shadow = spec["shadow"]
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(shadow)
+        painter.translate(0, 1.2)
+        painter.drawPath(path)
+        painter.translate(0, -1.2)
+
+        gradient = QLinearGradient(x, y - text_height, x, y + 4)
+        gradient.setColorAt(0.0, QColor(spec["top"]))
+        gradient.setColorAt(0.45, QColor(spec["mid"]))
+        gradient.setColorAt(1.0, QColor(spec["bottom"]))
+        painter.setBrush(QBrush(gradient))
+        painter.drawPath(path)
 
 
 class TrafficLightButton(QPushButton):
@@ -290,12 +442,12 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
         if is_folder:
             style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
             accent = QColor(style.get("start", "#5B8DEF"))
-            fill = QColor("#1C1F27")
-            border = QColor(255, 255, 255, 18)
+            fill = QColor("#08101C")
+            border = QColor(accent.red(), accent.green(), accent.blue(), 70)
 
             if selected or hovered:
-                fill = QColor("#232733")
-                border = QColor(accent.red(), accent.green(), accent.blue(), 90)
+                fill = QColor("#0E1828")
+                border = QColor(accent.red(), accent.green(), accent.blue(), 150)
 
             pill_rect = rect.adjusted(0, 2, 0, -2)
             painter.setPen(Qt.PenStyle.NoPen)
@@ -318,7 +470,7 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             font.setPointSize(14)
             font.setWeight(QFont.Weight.DemiBold)
             painter.setFont(font)
-            painter.setPen(QColor("#E8ECF4"))
+            painter.setPen(QColor("#F0F4FA"))
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -334,7 +486,7 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             font.setPointSize(13)
             font.setWeight(QFont.Weight.Normal)
             painter.setFont(font)
-            painter.setPen(QColor("#A8B0C0"))
+            painter.setPen(QColor("#B8C4D8"))
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -385,10 +537,10 @@ class NeonURLItemDelegate(QStyledItemDelegate):
     """Paints URL rows as clean list items with status indicators."""
 
     STATE_COLORS = {
-        "ready": QColor("#6BCB8B"),
-        "opening": QColor("#E0B84A"),
-        "opened": QColor("#5BBF8A"),
-        "failed": QColor("#E57373"),
+        "ready": QColor("#4AE89A"),
+        "opening": QColor("#FFD166"),
+        "opened": QColor("#3DDB88"),
+        "failed": QColor("#FF6B6B"),
     }
 
     def paint(self, painter, option, index):  # noqa: ANN001
@@ -398,37 +550,26 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        cell_rect = option.rect.adjusted(6, 4, -6, -4)
-        row_rect = (
-            cell_rect.adjusted(0, 0, 8, 0)
-            if index.column() == 1
-            else cell_rect.adjusted(-8, 0, 0, 0)
-        )
+        cell_rect = option.rect.adjusted(8, 2, -8, -2)
+        row_rect = cell_rect
 
-        fill = QColor("#181B22")
-        border = QColor(255, 255, 255, 14)
         if option.state & QStyle.StateFlag.State_Selected:
-            fill = QColor("#1E2430")
-            border = QColor(91, 141, 239, 70)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(74, 144, 232, 36))
+            painter.drawRect(row_rect)
         elif option.state & QStyle.StateFlag.State_MouseOver:
-            fill = QColor("#1C2029")
-            border = QColor(255, 255, 255, 22)
-
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(fill)
-        painter.drawRoundedRect(row_rect, 10, 10)
-        painter.setPen(QPen(border, 1.0))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(row_rect, 10, 10)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(255, 255, 255, 10))
+            painter.drawRect(row_rect)
 
         if index.column() == 1:
             font = option.font
             font.setPointSize(14)
             font.setWeight(QFont.Weight.Medium)
             painter.setFont(font)
-            painter.setPen(QColor("#E8ECF4"))
+            painter.setPen(QColor("#F0F4FA"))
             painter.drawText(
-                row_rect.adjusted(16, 0, -12, 0),
+                row_rect.adjusted(12, 0, -8, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
@@ -454,7 +595,7 @@ class NeonURLItemDelegate(QStyledItemDelegate):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(dot_x - 3, int(dot_y) - 3, 6, 6)
 
-            painter.setPen(QColor("#C8CEDA"))
+            painter.setPen(QColor("#D0DAEA"))
             painter.drawText(
                 row_rect.adjusted(group_left + 14 - row_rect.left(), 0, -10, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -832,13 +973,13 @@ class GlassButton(QPushButton):
     def _get_glow_color(self) -> str:
         """Get the glow color based on variant."""
         colors = {
-            "primary": "#5B8DEF",
-            "secondary": "#C8D0DC",
+            "primary": "#4A90E8",
+            "secondary": "#2EC4A0",
             "tertiary": "#7A8BA8",
-            "quaternary": "#9AA6B8",
-            "danger": "#E05A5A",
+            "quaternary": "#E85A5A",
+            "danger": "#E85A5A",
         }
-        return colors.get(self.variant, "#5B8DEF")
+        return colors.get(self.variant, "#4A90E8")
 
     def _disabled_tint(
         self, color_hex: str, lift: int = 112, alpha: int = 160
@@ -881,43 +1022,43 @@ class GlassButton(QPushButton):
         """Store the palette used by the custom button paint."""
         palettes = {
             "primary": {
-                "start": "#3B7AD4",
-                "end": "#2D63B5",
-                "hover_start": "#4A90E8",
-                "hover_end": "#3B7AD4",
-                "border": "#6BA4F0",
+                "start": "#4A90E8",
+                "end": "#2D6FD4",
+                "hover_start": "#5BA4FF",
+                "hover_end": "#3B82F0",
+                "border": "#8EC4FF",
                 "text": "#FFFFFF",
             },
             "secondary": {
-                "start": "#2FA876",
-                "end": "#248A60",
-                "hover_start": "#3DB88A",
-                "hover_end": "#2FA876",
-                "border": "#55D0A0",
+                "start": "#2EC4A0",
+                "end": "#1A9E78",
+                "hover_start": "#3DDBB0",
+                "hover_end": "#24B088",
+                "border": "#7AF0D0",
                 "text": "#FFFFFF",
             },
             "tertiary": {
                 "start": "#2A3A55",
-                "end": "#223048",
-                "hover_start": "#354A68",
-                "hover_end": "#2A3A55",
-                "border": "#4A6A9A",
-                "text": "#D6E4FF",
+                "end": "#1A2438",
+                "hover_start": "#3A4E70",
+                "hover_end": "#243048",
+                "border": "#6A8CC0",
+                "text": "#E8F0FF",
             },
             "quaternary": {
-                "start": "#C94A4A",
-                "end": "#A83A3A",
-                "hover_start": "#E05A5A",
-                "hover_end": "#C94A4A",
-                "border": "#F08080",
+                "start": "#E85A5A",
+                "end": "#C04040",
+                "hover_start": "#FF7070",
+                "hover_end": "#D04A4A",
+                "border": "#FFB0B0",
                 "text": "#FFFFFF",
             },
             "danger": {
-                "start": "#C94A4A",
-                "end": "#A83A3A",
-                "hover_start": "#E05A5A",
-                "hover_end": "#C94A4A",
-                "border": "#F08080",
+                "start": "#E85A5A",
+                "end": "#C04040",
+                "hover_start": "#FF7070",
+                "hover_end": "#D04A4A",
+                "border": "#FFB0B0",
                 "text": "#FFFFFF",
             },
         }
@@ -955,6 +1096,14 @@ class GlassButton(QPushButton):
         painter.setBrush(QBrush(fill))
         painter.drawRoundedRect(rect, 10, 10)
 
+        # Brushed-metal sheen across the button face
+        sheen = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        sheen.setColorAt(0.0, QColor(255, 255, 255, 28))
+        sheen.setColorAt(0.45, QColor(255, 255, 255, 0))
+        sheen.setColorAt(1.0, QColor(0, 0, 0, 36))
+        painter.setBrush(QBrush(sheen))
+        painter.drawRoundedRect(rect, 10, 10)
+
         border = QColor(palette["border"])
         if not enabled:
             border.setAlpha(90)
@@ -973,7 +1122,7 @@ class GlassButton(QPushButton):
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self.text())
 
         if enabled and self.hasFocus():
-            painter.setPen(QPen(QColor(74, 144, 232, 130), 1.0))
+            painter.setPen(QPen(QColor(148, 168, 198, 130), 1.0))
             painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 8, 8)
 
 

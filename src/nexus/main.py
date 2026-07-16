@@ -12,10 +12,8 @@ from PySide6.QtWidgets import QApplication
 
 from nexus.core.config import Config, setup_logging
 from nexus.gui.main_window import MainWindow
+from nexus.utils.path_helpers import get_resource_path
 from razorcore.appinfo import print_startup_info
-
-
-_PACKAGE_DIR = Path(__file__).resolve().parent
 
 
 def main():
@@ -27,7 +25,7 @@ def main():
     app.setApplicationName(Config.APP_NAME)
 
     # Set app icon
-    icon_path = _PACKAGE_DIR.parent / "assets" / "icons" / "Nexus.icns"
+    icon_path = Path(get_resource_path("assets/icons/Nexus.icns"))
     if icon_path.exists():
         from PySide6.QtGui import QIcon
 
