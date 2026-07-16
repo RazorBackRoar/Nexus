@@ -133,7 +133,9 @@ class BookmarkManager:
     def _deserialize_node(self, data: dict[str, Any]) -> BookmarkNode:
         """Converts dictionaries from JSON back into dataclass objects."""
         if not isinstance(data, dict):
-            raise TypeError(f"Bookmark node must be an object, got {type(data).__name__}")
+            raise TypeError(
+                f"Bookmark node must be an object, got {type(data).__name__}"
+            )
         if data.get("type") == "folder":
             children = []
             for child in data.get("children", []):

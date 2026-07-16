@@ -55,52 +55,94 @@ class AsyncWorker(AsyncTaskWorker):
 
 
 class CosmicFrame(QWidget):
-    """Rounded dark shell for the frameless macOS window."""
+    """Rounded deep-space shell with a brushed-silver metallic border."""
+
+    # Deterministic starfield: (x%, y%, radius, alpha)
+    _STARS = [
+        (0.08, 0.12, 1.0, 150),
+        (0.16, 0.68, 1.4, 110),
+        (0.22, 0.30, 0.8, 90),
+        (0.29, 0.85, 1.1, 130),
+        (0.34, 0.15, 1.6, 170),
+        (0.41, 0.52, 0.9, 100),
+        (0.47, 0.78, 1.2, 120),
+        (0.53, 0.22, 1.0, 140),
+        (0.58, 0.62, 1.5, 100),
+        (0.64, 0.40, 0.8, 90),
+        (0.71, 0.90, 1.3, 150),
+        (0.76, 0.18, 1.0, 120),
+        (0.82, 0.55, 1.7, 160),
+        (0.88, 0.34, 0.9, 100),
+        (0.93, 0.74, 1.2, 130),
+        (0.12, 0.44, 0.7, 80),
+        (0.38, 0.94, 1.0, 110),
+        (0.67, 0.08, 1.1, 140),
+        (0.86, 0.92, 0.8, 90),
+        (0.05, 0.86, 1.3, 120),
+    ]
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        rect = self.rect().adjusted(0, 0, -1, -1)
+        rect = self.rect().adjusted(1, 1, -2, -2)
         rounded_rect = QPainterPath()
-        rounded_rect.addRoundedRect(rect, 16, 16)
+        rounded_rect.addRoundedRect(rect, 18, 18)
 
-        base = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-        base.setColorAt(0.0, QColor("#141820"))
-        base.setColorAt(0.45, QColor("#10141C"))
-        base.setColorAt(1.0, QColor("#0C1016"))
+        # Deep-space navy base, echoing the galaxy inside the icon
+        base = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        base.setColorAt(0.0, QColor("#0B1226"))
+        base.setColorAt(0.45, QColor("#0A0F1F"))
+        base.setColorAt(1.0, QColor("#060A16"))
         painter.fillPath(rounded_rect, QBrush(base))
 
         painter.setClipPath(rounded_rect)
-        # Soft RGB corner washes — blue top-left, green bottom-left, red top-right
-        blue_wash = QLinearGradient(rect.topLeft(), rect.center())
-        blue_wash.setColorAt(0.0, QColor(45, 120, 220, 28))
-        blue_wash.setColorAt(1.0, QColor(45, 120, 220, 0))
-        painter.fillPath(rounded_rect, QBrush(blue_wash))
 
-        green_wash = QLinearGradient(
+        # Faint galactic swirl — cool blue washes drifting across the window
+        swirl = QLinearGradient(rect.topRight(), rect.center())
+        swirl.setColorAt(0.0, QColor(70, 110, 200, 34))
+        swirl.setColorAt(1.0, QColor(70, 110, 200, 0))
+        painter.fillPath(rounded_rect, QBrush(swirl))
+
+        swirl_low = QLinearGradient(
             rect.left(),
             rect.bottom(),
-            rect.left() + rect.width() * 0.45,
+            rect.left() + rect.width() * 0.5,
             rect.center().y(),
         )
-        green_wash.setColorAt(0.0, QColor(40, 170, 110, 22))
-        green_wash.setColorAt(1.0, QColor(40, 170, 110, 0))
-        painter.fillPath(rounded_rect, QBrush(green_wash))
+        swirl_low.setColorAt(0.0, QColor(90, 120, 190, 26))
+        swirl_low.setColorAt(1.0, QColor(90, 120, 190, 0))
+        painter.fillPath(rounded_rect, QBrush(swirl_low))
 
-        red_wash = QLinearGradient(rect.topRight(), rect.center())
-        red_wash.setColorAt(0.0, QColor(210, 70, 80, 20))
-        red_wash.setColorAt(1.0, QColor(210, 70, 80, 0))
-        painter.fillPath(rounded_rect, QBrush(red_wash))
+        # Starfield
+        painter.setPen(Qt.PenStyle.NoPen)
+        for sx, sy, radius, alpha in self._STARS:
+            painter.setBrush(QColor(226, 234, 248, alpha))
+            painter.drawEllipse(
+                QRectF(
+                    rect.left() + rect.width() * sx,
+                    rect.top() + rect.height() * sy,
+                    radius * 2,
+                    radius * 2,
+                )
+            )
         painter.setClipping(False)
 
-        border = QLinearGradient(rect.topLeft(), rect.topRight())
-        border.setColorAt(0.0, QColor(70, 140, 230, 90))
-        border.setColorAt(0.5, QColor(60, 180, 120, 70))
-        border.setColorAt(1.0, QColor(220, 80, 90, 80))
+        # Brushed-silver metallic border, like the icon's bezel
+        border = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        border.setColorAt(0.0, QColor(235, 238, 244, 230))
+        border.setColorAt(0.25, QColor(140, 148, 160, 210))
+        border.setColorAt(0.5, QColor(216, 222, 232, 235))
+        border.setColorAt(0.75, QColor(120, 128, 142, 205))
+        border.setColorAt(1.0, QColor(228, 232, 240, 225))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QBrush(border), 1.4))
-        painter.drawRoundedRect(rect, 16, 16)
+        painter.setPen(QPen(QBrush(border), 2.4))
+        painter.drawRoundedRect(rect, 18, 18)
+
+        # Thin inner steel line for machined depth
+        inner = rect.adjusted(3, 3, -3, -3)
+        painter.setPen(QPen(QColor(150, 165, 195, 60), 1.0))
+        painter.drawRoundedRect(inner, 15, 15)
 
         super().paintEvent(event)
 
@@ -790,13 +832,13 @@ class GlassButton(QPushButton):
     def _get_glow_color(self) -> str:
         """Get the glow color based on variant."""
         colors = {
-            "primary": "#4A90E8",
-            "secondary": "#3DB88A",
-            "tertiary": "#5B8DEF",
-            "quaternary": "#E05A5A",
+            "primary": "#5B8DEF",
+            "secondary": "#C8D0DC",
+            "tertiary": "#7A8BA8",
+            "quaternary": "#9AA6B8",
             "danger": "#E05A5A",
         }
-        return colors.get(self.variant, "#4A90E8")
+        return colors.get(self.variant, "#5B8DEF")
 
     def _disabled_tint(
         self, color_hex: str, lift: int = 112, alpha: int = 160

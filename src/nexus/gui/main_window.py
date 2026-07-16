@@ -13,7 +13,9 @@ from PySide6.QtCore import (
     QStandardPaths,
     Qt,
 )
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -80,6 +82,9 @@ class MainWindow(QMainWindow):
         self._setup_ui()  # Setup UI components
         self.load_bookmarks()  # Load bookmarks into the tree
         self._apply_theme()  # Apply theme after all UI is set up
+
+        quick_save_shortcut = QShortcut(QKeySequence("Ctrl+Shift+S"), self)
+        quick_save_shortcut.activated.connect(self._quick_save_urls)
 
         logger.info(
             "MainWindow initialized successfully with hierarchical bookmark support."
@@ -648,13 +653,16 @@ class MainWindow(QMainWindow):
 
         button_row = QHBoxLayout()
         button_row.setContentsMargins(8, 6, 8, 2)
-        button_row.setSpacing(28)
+        button_row.setSpacing(14)
 
         self.run_btn = GlassButton("Open All", "primary")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
         self.save_btn = GlassButton("Save", "secondary")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
+
+        self.quick_save_btn = GlassButton("Quick Save", "primary")
+        self.quick_save_btn.clicked.connect(self._quick_save_urls)
 
         self.undo_btn = GlassButton("Undo", "tertiary")
         self.undo_btn.clicked.connect(self._undo_url_change)
@@ -665,14 +673,16 @@ class MainWindow(QMainWindow):
         for button in (
             self.run_btn,
             self.save_btn,
+            self.quick_save_btn,
             self.undo_btn,
             self.clear_btn,
         ):
-            button.setFixedSize(148, 46)
+            button.setFixedSize(120, 46)
 
         button_row.addStretch()
         button_row.addWidget(self.run_btn)
         button_row.addWidget(self.save_btn)
+        button_row.addWidget(self.quick_save_btn)
         button_row.addWidget(self.undo_btn)
         button_row.addWidget(self.clear_btn)
         button_row.addStretch()
@@ -871,6 +881,33 @@ class MainWindow(QMainWindow):
         self._show_message(
             f"Successfully saved {len(urls)} URLs organized by domain!", "info"
         )
+
+    def _quick_save_urls(self):
+        """Save URLs straight to the Quick Saves folder with auto-generated names."""
+        urls = self.url_table.get_all_urls()
+        if not urls:
+            clipboard = QApplication.clipboard()
+            if clipboard:
+                urls = self.url_processor.extract_urls(clipboard.text())
+
+        if not urls:
+            self._show_message(
+                "No URLs found to quick save. Paste or copy a URL first.", "warning"
+            )
+            return
+
+        folder_item = self._find_or_create_folder("Quick Saves")
+        for url in urls:
+            bookmark_data = {
+                "name": self._generate_bookmark_name(url),
+                "type": "bookmark",
+                "url": self.url_processor._normalize_url(url) or url,
+            }
+            self._create_tree_item(bookmark_data, folder_item)
+        folder_item.setExpanded(True)
+
+        self.save_bookmarks()
+        self._show_message(f"Quick saved {len(urls)} URL(s) to Quick Saves!", "info")
 
     def _filter_bookmarks(self, text: str):
         """Filters the bookmark tree based on search text."""
