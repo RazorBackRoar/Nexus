@@ -15,7 +15,7 @@ Let a Nexus user paste a Safari "Copy All Tabs" batch into the URL table,
 save the batch as a **named group** under a chosen sidebar tab, and reuse
 the group later (open it in Safari, drop it into another tab, or delete
 it). The visual treatment must match the existing cosmic-glass design
-language and the seven default tabs must use the explicit color palette
+language and the ten default tabs must use the explicit color palette
 the user requested.
 
 ## Non-goals
@@ -36,7 +36,7 @@ the user requested.
 2. User clicks **Save** in the button row.
 3. A modal dialog appears with two fields:
    - **Group name** — text input, required, max 60 chars.
-   - **Save into** — combo box listing the seven default tabs in
+   - **Save into** — combo box listing the ten default tabs in
      fixed order followed by any user-created tabs. The currently
      selected sidebar tab is preselected.
 4. User clicks **Save Group**.
@@ -50,22 +50,31 @@ today; no change).
 ### Visual treatment
 
 - **Default tabs** in the sidebar, top to bottom, with their fixed
-  accent colors:
+  accent colors (final list, confirmed against the user's reference
+  mockup `tabs.png`):
 
-  | Tab | Color | Accent hex |
-  |---|---|---|
-  | Favorites | Green | `#5BA86A` |
-  | Work | Red | `#E85A5A` |
-  | Private | Brown | `#A87A5A` |
-  | Fun | Pink | `#E5738A` |
-  | Extra | Grey | `#8A95A8` |
-  | Special | White | `#F0F4FA` |
-  | Sort | Black | `#2A2A35` |
+  | # | Tab | Color | Accent hex |
+  |---|---|---|---|
+  | 1 | Fun | Pink | `#E5738A` |
+  | 2 | Misc | Orange | `#D4A05A` |
+  | 3 | Tech | Blue | `#5B8DEF` |
+  | 4 | Work | Red | `#E85A5A` |
+  | 5 | Extra | Grey | `#8A95A8` |
+  | 6 | Future | Brown | `#A87A5A` |
+  | 7 | Hidden | Black | `#2A2A35` |
+  | 8 | Special | White | `#F0F4FA` |
+  | 9 | Favorites | Green | `#5BA86A` |
+  | 10 | Sort | Black | `#2A2A35` |
 
   These names and colors **replace** the current six defaults
-  (Favorites / Tech / Misc / Work / Later / News). The new Favorites
-  keeps the name but gets a green accent; Work keeps the name but
-  moves to red. The other five are renamed.
+  (Favorites / Tech / Misc / Work / Later / News). Note: Hidden
+  replaces the previously-suggested Private — its purpose is the
+  same (a black tab where private/sensitive bookmarks go) but the
+  user explicitly chose "Hidden" as the name.
+
+  The ten fixed tabs ship in this order and are not reorderable.
+  Custom folders added via the `+` button are appended after the
+  ten defaults in creation order.
 
 - **Groups** appear as a single indented row beneath their parent
   folder: small stack icon, group name (truncated with ellipsis),
@@ -73,9 +82,25 @@ today; no change).
   the pill that wraps each default tab. Hover shows a drag handle
   (or simply permits the drag from anywhere on the row).
 
-- The existing **+** button keeps working for adding arbitrary
-  custom folders. Custom folders are sorted after the seven
-  defaults in creation order.
+- The existing **+** button is repurposed to open a new
+  `NewFolderDialog` (see below) instead of the bare `QInputDialog`
+  it uses today.
+
+### New Folder dialog (replaces `QInputDialog`)
+
+The "New Folder" modal — currently a single text field — grows a
+color picker to the right of the name field:
+
+- **Folder name** — text input, required, max 40 chars (matches the
+  sidebar width).
+- **Color** — a small palette of swatches (the ten default-tab
+  colors, plus a "Custom…" option that opens `QColorDialog`).
+  Selected swatch shows a thin border; clicking a swatch selects it.
+- **OK / Cancel** as today.
+
+The chosen color is persisted as the folder's accent and rendered
+in the sidebar exactly like the ten defaults. This is what enables
+the user's "create new bookmarks with a color" request.
 
 ### Drag and drop
 
@@ -91,10 +116,28 @@ today; no change).
   current open-in-front-window path.
 - **Rename** — inline edit on the row, with a `QInputDialog`
   fallback.
-- **Move to…** — submenu listing the seven defaults + any custom
+- **Move to…** — submenu listing the ten defaults + any custom
   tabs.
 - **Delete** — confirm dialog, then remove from both the tree
   widget and `bookmark_groups.json`.
+
+### Context menu (right-click a bookmark)
+
+The current implementation has a Rename / Delete entry on bookmark
+context menus. v1 makes the **Delete** action more discoverable and
+adds a **Color** submenu so a user can recolor any individual
+bookmark:
+
+- **Open in Safari** — open the single bookmark.
+- **Rename** — `QInputDialog` for a new name.
+- **Color** — submenu listing the ten default swatches + Custom.
+  Picking one updates the bookmark's accent and persists immediately.
+- **Delete** — confirm dialog, then remove. (Already supported, but
+  promoted to the top of the menu so it's the obvious action.)
+
+The bookmark's color is stored on the `Bookmark` dataclass as an
+optional accent (e.g. `accent: str | None = None`). When `None`, the
+delegate uses the parent folder's accent.
 
 ### Persistence
 
@@ -111,7 +154,39 @@ today; no change).
 
 ## Data model
 
-New dataclasses in `src/nexus/core/models.py`:
+The existing `Bookmark` and `BookmarkFolder` dataclasses grow two
+new fields and a new marker type. New dataclasses for groups live
+alongside them in `src/nexus/core/models.py`:
+
+```python
+@dataclass
+class Bookmark:
+    name: str
+    url: str
+    type: str = "bookmark"
+    accent: str | None = None  # hex color, e.g. "#E5738A"; None = inherit folder
+    color: str | None = field(default=None, init=False)  # alias kept for legacy
+
+@dataclass
+class BookmarkFolder:
+    name: str
+    children: list[BookmarkFolder | Bookmark | "GroupRef"] = field(default_factory=list)
+    type: str = "folder"
+    accent: str | None = None  # hex color set via the NewFolderDialog
+
+
+@dataclass
+class GroupItem:
+    title: str   # may be "" if source had no title
+    url: str
+
+@dataclass
+class BookmarkGroup:
+    id: str               # 8-char random hex
+    name: str
+    created_at: str       # ISO 8601, e.g. "2026-07-16T18:20:00"
+    items: list[GroupItem]
+```
 
 ```python
 @dataclass
@@ -190,12 +265,17 @@ on first render.
   upsert, delete, get-by-id).
 - `src/nexus/gui/dialogs/save_group_dialog.py` — modal `QDialog`
   with a name field and a target-folder combo box.
+- `src/nexus/gui/dialogs/new_folder_dialog.py` — modal `QDialog`
+  with a name field, a swatch palette, and a "Custom…" option
+  that opens `QColorDialog`.
 - `src/nexus/gui/widgets/group_row_delegate.py` — paint delegate
   for the indented group rows.
 - `tests/core/test_group_store.py` — round-trip, atomic save, bad
   JSON recovery, missing-file default, `.bak` fallback.
 - `tests/gui/test_save_group_dialog.py` — name validation, folder
   list, preselect, disabled state.
+- `tests/gui/test_new_folder_dialog.py` — swatch selection,
+  custom color, name validation, OK disabled when name is empty.
 - `tests/gui/test_group_row_paint.py` — smoke test that paint
   doesn't crash with a 0/1/N-item group.
 
@@ -210,9 +290,12 @@ on first render.
   serializer to emit group markers when walking a tree that
   contains them.
 - `src/nexus/gui/main_window.py`:
-  - Replace `DEFAULT_BOOKMARK_FOLDER_NAMES` with the new seven.
+  - Replace `DEFAULT_BOOKMARK_FOLDER_NAMES` with the new ten
+    (Fun, Misc, Tech, Work, Extra, Future, Hidden, Special,
+    Favorites, Sort).
   - Replace the `_resolve_folder_style` named-style map with one
-    keyed on the new tab names + colors.
+    keyed on the new tab names + colors, plus a fallback that
+    honors a folder's own `accent` field for user-created tabs.
   - Wire the **Save** button to a new `_save_urls_as_group` slot
     that opens the `SaveGroupDialog`, then writes the group via
     `GroupStore` and adds the row.
@@ -286,14 +369,21 @@ def _save_urls_as_group(self) -> None:
 
 ## Migration
 
-- The seven default tab names replace the existing six. On
-  `load_bookmarks`, the existing migration logic
-  (`_normalize_bookmark_nodes`) will keep any user-created folders
-  and remove empties named `apple`, `google`, `github`, `fun`.
-  After this PR, **remove** `apple`, `google`, `github` from the
-  removable list and **add** the old default names (`tech`,
-  `misc`, `later`, `news`) to the removal list so users who never
-  touched them get a tidy migration.
+- The **ten** new default tab names replace the existing **six**.
+  On `load_bookmarks`, `_normalize_bookmark_nodes` keeps any
+  user-created folders and removes empty ones matching the *old*
+  default set (`favorites`, `tech`, `misc`, `work`, `later`,
+  `news`) so a user who never touched the defaults gets a tidy
+  sidebar. The `apple`, `google`, `github`, `fun` removals are
+  removed (those tabs no longer get auto-pruned; only the old
+  defaults do).
+- The new tabs are created in the fixed order Fun → Misc → Tech
+  → Work → Extra → Future → Hidden → Special → Favorites → Sort,
+  in the position the user saw in `tabs.png`. If a user already
+  had a folder named, say, "Tech" with content, that folder is
+  preserved in its original position and the new "Tech" tab is
+  not duplicated — the existing folder is simply renamed to keep
+  its data and shown in the new palette.
 - Existing groups (none, since v1 ships with no prior version)
   need no migration.
 
