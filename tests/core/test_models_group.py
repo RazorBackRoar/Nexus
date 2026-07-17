@@ -19,4 +19,4 @@ def test_bookmark_group_minimum_fields():
     assert g.id == "grp_a1b2c3d4"
     assert g.name == "Sunday reading"
     assert g.items == []
-    assert g.created_at  # populated by callers, defaults to ""
+    assert g.created_at  # auto-populated by default_factory=_now_iso

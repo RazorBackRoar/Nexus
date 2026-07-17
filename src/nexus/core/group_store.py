@@ -53,7 +53,7 @@ class GroupStore:
         for entry in data:
             try:
                 out.append(self._deserialize(entry))
-            except (KeyError, TypeError, ValueError) as e:
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
                 logger.warning("Skipping invalid group entry: %s", e)
         return out
 
@@ -92,16 +92,16 @@ class GroupStore:
         for i, existing in enumerate(groups):
             if existing.id == group.id:
                 groups[i] = group
-                self.save_groups(groups)
-                return
-        groups.append(group)
+                break
+        else:
+            groups.append(group)
         self.save_groups(groups)
 
     def delete_group(self, group_id: str) -> None:
         """Remove a group by id.  No-op if not present."""
         groups = self.load_groups()
         kept = [g for g in groups if g.id != group_id]
-        if len(kept) != len(groups):
+        if len(kept) < len(groups):
             self.save_groups(kept)
 
     # ------------------------------------------------------------------

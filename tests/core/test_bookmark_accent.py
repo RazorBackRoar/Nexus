@@ -1,7 +1,5 @@
 """Round-trip the new `accent` field on Bookmark and BookmarkFolder."""
 
-import json
-
 from nexus.core.bookmarks import BookmarkManager
 from nexus.core.models import Bookmark, BookmarkFolder
 

@@ -77,7 +77,9 @@ def test_load_falls_back_to_backup_on_corruption(tmp_path: Path):
     backup = tmp_path / "groups.json.bak"
     primary.write_text("not valid json", encoding="utf-8")
     backup.write_text(
-        json.dumps([{"id": "grp_a", "name": "from bak", "created_at": "", "items": []}]),
+        json.dumps(
+            [{"id": "grp_a", "name": "from bak", "created_at": "", "items": []}]
+        ),
         encoding="utf-8",
     )
     store = GroupStore(primary)
@@ -97,3 +99,32 @@ def test_get_group_returns_payload(tmp_path: Path):
 def test_get_group_missing_returns_none(tmp_path: Path):
     store = GroupStore(tmp_path / "groups.json")
     assert store.get_group("grp_missing") is None
+
+
+def test_corrupted_items_in_one_group_does_not_lose_others(tmp_path: Path):
+    """A single group with malformed items must not crash the whole load."""
+    primary = tmp_path / "groups.json"
+    primary.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "grp_good",
+                    "name": "good",
+                    "created_at": "",
+                    "items": [{"title": "t", "url": "https://x.com"}],
+                },
+                {
+                    "id": "grp_bad",
+                    "name": "bad",
+                    "created_at": "",
+                    "items": ["not a dict", {"title": "no url"}],
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    store = GroupStore(primary)
+    groups = store.load_groups()
+    # The good group survives; the bad group is dropped (its items
+    # path raises AttributeError on the bare-string entry).
+    assert [g.id for g in groups] == ["grp_good"]
