@@ -98,9 +98,16 @@ class NewFolderDialog(QDialog):
         idx = self._accent_combo.findData(value)
         if idx >= 0:
             self._accent_combo.setCurrentIndex(idx)
-        else:
-            self._custom_color = value
-            self._accent_combo.setCurrentIndex(self._accent_combo.count() - 1)
+            return
+        # Custom hex — stash it and switch to the "Custom…" entry without
+        # triggering the QColorDialog that ``_on_combo_changed`` would
+        # otherwise open.  Programmatic callers want the setter to be
+        # non-interactive.
+        self._custom_color = value
+        custom_idx = self._accent_combo.findData("__custom__")
+        self._accent_combo.blockSignals(True)
+        self._accent_combo.setCurrentIndex(custom_idx)
+        self._accent_combo.blockSignals(False)
 
     # ------------------------------------------------------------------
     # Internals
@@ -119,9 +126,16 @@ class NewFolderDialog(QDialog):
             "Pick a folder color",
         )
         if chosen.isValid():
+            # Persist the picked color and re-select "Custom…" so the
+            # ``accent`` getter keeps returning it.  blockSignals prevents
+            # a recursive currentIndexChanged -> _on_combo_changed.
             self._custom_color = chosen.name()
-        # Always reset to the previous selection so the user can retry.
-        previous_index = max(0, index - 1) if self._custom_color is None else 0
+            self._accent_combo.blockSignals(True)
+            self._accent_combo.setCurrentIndex(index)
+            self._accent_combo.blockSignals(False)
+            return
+        # User cancelled the color dialog — revert the combo to the
+        # previously chosen palette color.
         self._accent_combo.blockSignals(True)
-        self._accent_combo.setCurrentIndex(previous_index)
+        self._accent_combo.setCurrentIndex(max(0, index - 1))
         self._accent_combo.blockSignals(False)
