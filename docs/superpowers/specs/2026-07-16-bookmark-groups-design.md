@@ -165,7 +165,6 @@ class Bookmark:
     url: str
     type: str = "bookmark"
     accent: str | None = None  # hex color, e.g. "#E5738A"; None = inherit folder
-    color: str | None = field(default=None, init=False)  # alias kept for legacy
 
 @dataclass
 class BookmarkFolder:
@@ -188,23 +187,10 @@ class BookmarkGroup:
     items: list[GroupItem]
 ```
 
-```python
-@dataclass
-class GroupItem:
-    title: str   # may be "" if source had no title
-    url: str
-
-@dataclass
-class BookmarkGroup:
-    id: str               # 8-char random hex
-    name: str
-    created_at: str       # ISO 8601, e.g. "2026-07-16T18:20:00"
-    items: list[GroupItem]
-```
-
-`BookmarkFolder.children` already accepts a union type; extend it to
-`list[BookmarkFolder | Bookmark | "GroupRef"]` where `GroupRef` is
-`{"type": "group", "id": str}` (a marker, not the full payload).
+`GroupRef` is a marker dict, not a dataclass: `{"type": "group",
+"id": str}`. It is deserialized by `BookmarkManager` as a raw
+`dict` and resolved to a `QTreeWidgetItem` only at render time in
+`MainWindow.load_bookmarks`.
 
 ## Storage
 
@@ -245,8 +231,10 @@ reference markers alongside `Bookmark` and `BookmarkFolder`:
 {
   "name": "Favorites",
   "type": "folder",
+  "accent": "#5BA86A",
   "children": [
     {"name": "Example", "type": "bookmark", "url": "https://example.com"},
+    {"name": "Pink Site", "type": "bookmark", "url": "https://x.com", "accent": "#E5738A"},
     {"type": "group", "id": "grp_a1b2c3d4"}
   ]
 }
