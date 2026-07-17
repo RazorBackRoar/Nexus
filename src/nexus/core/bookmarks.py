@@ -119,6 +119,45 @@ class BookmarkManager:
                     )
             return False
 
+    def save_bookmarks_raw(self, data: list[dict]) -> bool:
+        """Persist a pre-serialized list of dicts using the same atomic
+        write protocol as :meth:`save_bookmarks`.  Used by callers that
+        want to embed group markers (raw dicts) alongside dataclass nodes.
+        """
+        backup_path = self.file_path.with_suffix(".bak")
+        temp_path = self.file_path.with_suffix(".tmp")
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            if self.file_path.exists():
+                self.file_path.replace(backup_path)
+            temp_path.replace(self.file_path)
+            return True
+        except OSError as e:
+            logger.error("Failed to save bookmarks (raw): %s", e)
+            if backup_path.exists() and not self.file_path.exists():
+                try:
+                    backup_path.replace(self.file_path)
+                except OSError:
+                    pass
+            return False
+
+    def load_bookmarks_raw(self) -> list[dict]:
+        """Read the bookmark file as raw dicts, tolerating partial
+        corruption.  Returns ``[]`` if the file is missing or unreadable.
+        """
+        if not self.file_path.exists():
+            return []
+        try:
+            with open(self.file_path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            logger.error("Failed to read raw bookmarks from %s: %s", self.file_path, e)
+            return []
+        if not isinstance(data, list):
+            return []
+        return data
+
     def _serialize_node(self, node: BookmarkNode) -> dict[str, Any]:
         """Converts dataclass objects to dictionaries for JSON saving."""
         if isinstance(node, BookmarkFolder):
