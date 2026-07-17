@@ -125,10 +125,16 @@ class BookmarkManager:
             return {
                 "name": node.name,
                 "type": "folder",
+                "accent": node.accent,
                 "children": [self._serialize_node(child) for child in node.children],
             }
         else:  # It's a Bookmark
-            return {"name": node.name, "type": "bookmark", "url": node.url}
+            return {
+                "name": node.name,
+                "type": "bookmark",
+                "url": node.url,
+                "accent": node.accent,
+            }
 
     def _deserialize_node(self, data: dict[str, Any]) -> BookmarkNode:
         """Converts dictionaries from JSON back into dataclass objects."""
@@ -136,6 +142,7 @@ class BookmarkManager:
             raise TypeError(
                 f"Bookmark node must be an object, got {type(data).__name__}"
             )
+        accent = data.get("accent")
         if data.get("type") == "folder":
             children = []
             for child in data.get("children", []):
@@ -143,12 +150,12 @@ class BookmarkManager:
                     children.append(self._deserialize_node(child))
                 except (ValueError, KeyError, TypeError, AttributeError) as e:
                     logger.warning("Skipping invalid bookmark child entry: %s", e)
-            return BookmarkFolder(name=data["name"], children=children)
+            return BookmarkFolder(name=data["name"], children=children, accent=accent)
         else:  # It's a bookmark
             normalized_url = self.url_processor._normalize_url(str(data["url"]))
             if not normalized_url:
                 raise ValueError("Bookmark URL failed validation")
-            return Bookmark(name=data["name"], url=normalized_url)
+            return Bookmark(name=data["name"], url=normalized_url, accent=accent)
 
     def _create_default_bookmarks(self) -> list[BookmarkNode]:
         """Creates default bookmark folders for common categories."""

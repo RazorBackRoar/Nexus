@@ -19,6 +19,7 @@ class Bookmark:
     name: str
     url: str
     type: str = "bookmark"  # Used for serialization/deserialization
+    accent: str | None = None  # hex color, e.g. "#E5738A"; None = inherit folder
 
 
 @dataclass
@@ -28,6 +29,7 @@ class BookmarkFolder:
     name: str
     children: list[BookmarkFolder | Bookmark] = field(default_factory=list)
     type: str = "folder"  # Used for serialization/deserialization
+    accent: str | None = None  # hex color set via NewFolderDialog
 
 
 # Union type for items that can exist in the bookmark tree
