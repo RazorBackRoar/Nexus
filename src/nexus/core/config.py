@@ -19,6 +19,7 @@ class Config:
 
     # File paths
     BOOKMARKS_FILE = "bookmarks_v2.json"  # New filename to avoid conflicts
+    BOOKMARK_GROUPS_FILE = "bookmark_groups.json"  # Sidecar for saved groups
     LOG_FILE = "nexus.log"
 
     # Network settings

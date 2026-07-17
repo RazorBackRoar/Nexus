@@ -54,3 +54,9 @@ def test_setup_logging_honors_file_logging_opt_in(tmp_path: Path, monkeypatch) -
 
     assert reloaded._LOGGER_INITIALIZED is True
     assert (tmp_path / reloaded.Config.LOG_FILE).exists()
+
+
+def test_bookmark_groups_file_constant_present():
+    """The new sidecar file is wired into Config."""
+    from nexus.core.config import Config
+    assert Config.BOOKMARK_GROUPS_FILE == "bookmark_groups.json"
