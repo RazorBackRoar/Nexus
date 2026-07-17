@@ -195,11 +195,9 @@ def test_default_bookmark_folders_match_glossy_sidebar(tmp_path):
         "Tech",
         "Work",
         "Extra",
-        "Future",
         "Hidden",
         "Special",
         "Favorites",
-        "Sort",
     ]
 
 
@@ -349,11 +347,9 @@ def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
         "Tech",
         "Work",
         "Extra",
-        "Future",
         "Hidden",
         "Special",
         "Favorites",
-        "Sort",
     ]
 
 

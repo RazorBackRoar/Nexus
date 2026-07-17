@@ -73,11 +73,9 @@ class MainWindow(QMainWindow):
         "Tech": "#5B8DEF",
         "Work": "#E85A5A",
         "Extra": "#8A95A8",
-        "Future": "#A87A5A",
         "Hidden": "#2A2A35",
         "Special": "#F0F4FA",
         "Favorites": "#5BA86A",
-        "Sort": "#6B6B7A",
     }
 
     def __init__(self):

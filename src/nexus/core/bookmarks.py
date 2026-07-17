@@ -15,11 +15,9 @@ DEFAULT_BOOKMARK_FOLDER_NAMES: tuple[str, ...] = (
     "Tech",
     "Work",
     "Extra",
-    "Future",
     "Hidden",
     "Special",
     "Favorites",
-    "Sort",
 )
 
 

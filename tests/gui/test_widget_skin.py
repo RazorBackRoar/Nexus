@@ -214,11 +214,9 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             "Tech",
             "Work",
             "Extra",
-            "Future",
             "Hidden",
             "Special",
             "Favorites",
-            "Sort",
             "Reading",
         ]
 
