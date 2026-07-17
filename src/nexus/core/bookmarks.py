@@ -120,9 +120,11 @@ class BookmarkManager:
             return False
 
     def save_bookmarks_raw(self, data: list[dict]) -> bool:
-        """Persist a pre-serialized list of dicts using the same atomic
-        write protocol as :meth:`save_bookmarks`.  Used by callers that
-        want to embed group markers (raw dicts) alongside dataclass nodes.
+        """Persist pre-serialized list of dicts.
+
+        Uses the same atomic write protocol as :meth:`save_bookmarks`.
+        Callers that want to embed group markers (raw dicts) alongside
+        dataclass nodes go through this method.
         """
         backup_path = self.file_path.with_suffix(".bak")
         temp_path = self.file_path.with_suffix(".tmp")
@@ -143,8 +145,10 @@ class BookmarkManager:
             return False
 
     def load_bookmarks_raw(self) -> list[dict]:
-        """Read the bookmark file as raw dicts, tolerating partial
-        corruption.  Returns ``[]`` if the file is missing or unreadable.
+        """Read the bookmark file as raw dicts.
+
+        Tolerates partial corruption; returns ``[]`` if the file is missing
+        or unreadable.
         """
         if not self.file_path.exists():
             return []

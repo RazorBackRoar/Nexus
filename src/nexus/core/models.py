@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def _now_iso() -> str:
     """Return the current UTC time as an ISO 8601 string (seconds precision)."""
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 # Note: ``type`` is a built-in but not a reserved word.  It is used here
