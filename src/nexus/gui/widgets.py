@@ -1,6 +1,7 @@
 """Custom UI widgets for the Nexus application."""
 
 import re
+from typing import TypedDict
 
 from PySide6.QtCore import (
     QEasingCurve,
@@ -184,10 +185,20 @@ class CosmicFrame(QWidget):
         super().paintEvent(event)
 
 
+class _MetallicVariantSpec(TypedDict):
+    size: int
+    weight: QFont.Weight
+    spacing: float
+    top: str
+    mid: str
+    bottom: str
+    shadow: QColor
+
+
 class MetallicLabel(QLabel):
     """Silver-gradient label that echoes the icon's brushed metal lettering."""
 
-    _VARIANTS = {
+    _VARIANTS: dict[str, _MetallicVariantSpec] = {
         "hero": {
             "size": 48,
             "weight": QFont.Weight.Bold,
