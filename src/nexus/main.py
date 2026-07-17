@@ -16,11 +16,6 @@ from nexus.utils.path_helpers import get_resource_path
 from razorcore.appinfo import print_startup_info
 
 
-# Resolved once at import time so tests can monkeypatch this attribute
-# (see ``tests/test_main.py``) without re-running filesystem traversal.
-_PACKAGE_DIR = Path(__file__).resolve().parent
-
-
 def main():
     setup_logging()
     print_startup_info(Config.APP_NAME)
