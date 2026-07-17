@@ -30,6 +30,20 @@ def test_escape_applescript_string():
     assert "\\r" in escaped
 
 
+def test_escape_applescript_strips_remaining_control_characters():
+    """Tab, vertical tab, form feed, and NUL must be neutralized for osascript."""
+    raw = "https://example.com/\t\v\fmid\x00end"
+    escaped = escape_string(raw)
+
+    # None of the raw control characters should survive.
+    for ch in ("\t", "\v", "\f", "\0"):
+        assert ch not in escaped
+    # The safe AppleScript backslash-escapes should appear in their place.
+    assert "\\t" in escaped
+    assert "\\v" in escaped
+    assert "\\f" in escaped
+
+
 def test_check_safari_status_fails_when_launch_fails(monkeypatch):
     """Return False when Safari launch returns non-zero."""
     processes = [

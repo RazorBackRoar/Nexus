@@ -97,7 +97,7 @@ class SafariController:
                 return False
             return True
         except Exception as e:
-            logger.error("Failed to run bookmark AppleScript: %s", e)
+            logger.error("Failed to run bookmark AppleScript: %s", e, exc_info=True)
             return False
 
     # ------------------------------------------------------------------
@@ -213,7 +213,7 @@ class SafariController:
 
             return True
         except Exception as e:
-            logger.error("Error in staggered opening: %s", e)
+            logger.error("Error in staggered opening: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -248,5 +248,5 @@ class SafariController:
                 return False
             return True
         except Exception as e:
-            logger.error("Failed to run AppleScript: %s", e)
+            logger.error("Failed to run AppleScript: %s", e, exc_info=True)
             return False

@@ -6,12 +6,22 @@ This module has **no** macOS-permission imports and is fully testable on any pla
 
 
 def escape_string(value: str) -> str:
-    """Escape a user-provided string for safe embedding in AppleScript."""
+    r"""Escape a user-provided string for safe embedding in AppleScript.
+
+    AppleScript string literals have no concept of raw control characters, and
+    ``osascript`` will reject unescaped tabs, vertical tabs, form feeds, and
+    null bytes. We also strip ``\0`` because AppleScript treats it as a
+    string terminator in some scripting additions.
+    """
     return (
         value.replace("\\", "\\\\")
         .replace('"', '\\"')
         .replace("\n", "\\n")
         .replace("\r", "\\r")
+        .replace("\t", "\\t")
+        .replace("\v", "\\v")
+        .replace("\f", "\\f")
+        .replace("\0", "")
     )
 
 

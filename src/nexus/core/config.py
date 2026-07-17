@@ -131,17 +131,29 @@ def get_logger() -> logging.Logger:
 
 
 def cleanup_logs():
-    """Remove all log files and clear browsing traces for privacy."""
+    """Remove all log files and clear browsing traces for privacy.
+
+    Closes the active file handler before unlinking so the logger does not
+    continue writing to a now-anonymous inode (macOS allows unlinking open
+    files, which would silently leak disk space until the handler is GC'd).
+    """
+    # Close any file handlers the nexus logger has open so the FD is
+    # released before we delete the file underneath it.
+    nexus_logger = logging.getLogger("nexus")
+    for handler in list(nexus_logger.handlers):
+        if isinstance(handler, logging.FileHandler):
+            try:
+                handler.close()
+            except OSError:
+                pass
+            nexus_logger.removeHandler(handler)
+
     try:
         log_dir = _resolve_log_dir()
         log_file = log_dir / Config.LOG_FILE
 
         if log_file.exists():
             log_file.unlink()
-            # logging.shutdown() might be needed before unlink in some OS, but let's trust unlink for now
-            # Actually, if we unlink an open file on Windows it fails, but on Mac/Linux it's fine.
-            # However, logger might keep it open.
-            pass
 
         # Clear any temporary files
         temp_files = log_dir.glob("*.tmp")

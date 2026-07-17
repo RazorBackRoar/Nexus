@@ -10,7 +10,13 @@ class URLProcessor:
     """Handles all logic for extracting, cleaning, and validating URLs with enhanced accuracy."""
 
     def __init__(self):
-        # Enhanced regex patterns for different URL formats
+        # Enhanced regex patterns for different URL formats.
+        #
+        # All patterns are evaluated against text bounded by
+        # ``Config.MAX_URL_EXTRACTION_LENGTH`` (default 10 000 chars), so
+        # the catastrophic-backtracking risk in the domain pattern is
+        # contained.  The length cap is enforced in :meth:`extract_urls`
+        # before any regex runs.
         self.url_patterns = {
             # Standard URLs with protocols
             "protocol": re.compile(
@@ -173,27 +179,29 @@ class URLProcessor:
 
     def _remove_shortened_url_substrings(self, urls: list[str]) -> list[str]:
         """Remove URLs that are substrings of other URLs to avoid duplicates."""
-        # Sort URLs by length (longest first) to process longer URLs first
+        # Sort URLs by length (longest first) so the longest candidate is
+        # always the one we keep when two are substrings of each other.
         sorted_urls: list[str] = sorted(urls, key=lambda item: len(item), reverse=True)
         filtered_urls: list[str] = []
 
+        # Boundary characters that prove a match ends at a real URL
+        # delimiter rather than mid-word.  ``startswith`` covers the case
+        # where the long URL begins with the short one (e.g. the bare host
+        # of a longer URL).
+        boundary_chars = ("/", "?", "#")
+
         for url in sorted_urls:
-            # Check if this URL is a substring of any already processed URL
             is_substring = False
             for existing_url in filtered_urls:
-                if url in existing_url and url != existing_url:
-                    # Check if it's a proper substring (not just a prefix) and the existing URL is valid
-                    if self._is_valid_url(existing_url):
-                        # Additional check: make sure it's not just a partial match at word boundaries
-                        if (
-                            url + "/" in existing_url
-                            or url + "?" in existing_url
-                            or url + "#" in existing_url
-                            or url == existing_url[: len(url)]
-                            and len(existing_url) > len(url)
-                        ):
-                            is_substring = True
-                            break
+                if url == existing_url or url not in existing_url:
+                    continue
+                if not self._is_valid_url(existing_url):
+                    continue
+                if any(
+                    url + boundary in existing_url for boundary in boundary_chars
+                ) or existing_url.startswith(url):
+                    is_substring = True
+                    break
 
             if not is_substring:
                 filtered_urls.append(url)

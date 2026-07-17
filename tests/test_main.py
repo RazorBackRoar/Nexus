@@ -39,6 +39,7 @@ class _FakeApp:
         self.organization_name: str | None = None
         self.organization_domain: str | None = None
         self.application_name: str | None = None
+        self.window_icon: str | None = None
 
     def setOrganizationName(self, value: str):  # noqa: N802 - mimic Qt API
         self.organization_name = value
@@ -48,6 +49,9 @@ class _FakeApp:
 
     def setApplicationName(self, value: str):  # noqa: N802 - mimic Qt API
         self.application_name = value
+
+    def setWindowIcon(self, icon):  # noqa: N802 - mimic Qt API
+        self.window_icon = getattr(icon, "path", repr(icon))
 
     def primaryScreen(self):  # noqa: N802 - mimic Qt API
         return SimpleNamespace(

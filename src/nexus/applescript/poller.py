@@ -11,7 +11,11 @@ from nexus.core.config import logger
 
 
 async def run_applescript(script: str) -> tuple[str, str, int]:
-    """Run an AppleScript snippet via ``osascript`` and return *(stdout, stderr, returncode)*."""
+    """Run an AppleScript snippet via ``osascript`` and return *(stdout, stderr, returncode)*.
+
+    ``asyncio.CancelledError`` is intentionally not caught so callers can
+    shut down cleanly during app exit.
+    """
     process = await asyncio.create_subprocess_exec(
         "osascript",
         "-e",

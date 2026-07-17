@@ -67,3 +67,18 @@ CI covers lint, types, and unit tests. It does **not** prove Safari permissions,
 - Keep changes scoped to this app unless asked otherwise.
 - Do not create branches, commit, or push unless explicitly requested.
 - Behavioral guidelines inherit from `../AGENTS.md`.
+
+## Learned User Preferences
+
+- Canonical app icon is `assets/icons/Nexus.icns`; load it via `get_resource_path()` in dev and packaged builds.
+- Prefer `./run_preview.sh` for the latest dev build over an `/Applications/Nexus.app` copy unless the user asks for the installed or DMG build.
+- Nexus UI should echo the icon: near-black navy shell, metallic silver typography, and vivid accent colors — avoid muted or washed-out palettes.
+- Past-URLs rows stay borderless; no boxed cells or divider lines in the URL table.
+- Hero "Nexus" title uses metallic silver gradient lettering with wider tracking, positioned slightly higher in the header.
+- Eject mounted `Nexus` DMG volumes when done (`hdiutil detach /Volumes/Nexus`).
+
+## Learned Workspace Facts
+
+- `assets/icons/Nexus.icns` is gitignored; shipping icon changes requires `git add -f assets/icons/Nexus.icns`.
+- Packaged smoke path: `razorbuild Nexus` → `dist/Nexus.dmg` → mount and launch `Nexus.app` from `/Volumes/Nexus`.
+- GitHub release surface is a single `v2.0.0` DMG; older releases were removed Jul 2026.
