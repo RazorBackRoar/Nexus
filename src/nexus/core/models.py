@@ -3,6 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+
+def _now_iso() -> str:
+    """Return the current UTC time as an ISO 8601 string (seconds precision)."""
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 # Note: ``type`` is a built-in but not a reserved word.  It is used here
@@ -34,3 +40,21 @@ class BookmarkFolder:
 
 # Union type for items that can exist in the bookmark tree
 BookmarkNode = BookmarkFolder | Bookmark
+
+
+@dataclass
+class GroupItem:
+    """A single URL captured in a bookmark group."""
+
+    title: str
+    url: str
+
+
+@dataclass
+class BookmarkGroup:
+    """A saved bundle of URLs, identified by a stable id."""
+
+    id: str
+    name: str
+    created_at: str = field(default_factory=_now_iso)  # ISO 8601 timestamp
+    items: list[GroupItem] = field(default_factory=list)
