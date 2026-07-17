@@ -11,8 +11,8 @@ Use with `../AGENTS.md`. Keep this file Nexus-specific.
 Native macOS Safari bookmark manager and batch URL opener (PySide6).
 
 - Main: `src/nexus/main.py`
-- Core: `src/nexus/core/bookmarks.py`, `src/nexus/core/safari.py`
-- UI: `src/nexus/gui/main_window.py`, `src/nexus/gui/widgets.py`
+- Core: `src/nexus/core/bookmarks.py`, `src/nexus/core/group_store.py`, `src/nexus/core/models.py`, `src/nexus/core/safari.py`
+- UI: `src/nexus/gui/main_window.py`, `src/nexus/gui/widgets/` (package), `src/nexus/gui/dialogs/`
 - Run: `uv run python -m nexus.main`
 - Build: `nexusbuild` or `razorbuild Nexus`
 
@@ -27,12 +27,34 @@ Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 | `threading.AsyncTaskWorker` | Async worker base (`AsyncWorker` keeps `result_ready` for MainWindow) |
 | `appinfo` / `updates` | Startup banner, About, update check |
 
-Bookmark persistence and Safari automation remain Nexus-local.
+Bookmark persistence, saved groups, and Safari automation remain Nexus-local.
+
+## Bookmark groups (saved URL batches)
+
+Users paste Safari "Copy All Tabs" batches into the URL table, save them as named
+**groups** under a sidebar folder, and reopen or move groups later. Design spec:
+`docs/superpowers/specs/2026-07-16-bookmark-groups-design.md`.
+
+| Piece | Role |
+|-------|------|
+| `GroupStore` (`group_store.py`) | Sidecar persistence for `bookmark_groups.json` — atomic `.tmp` + `.bak`, same pattern as bookmarks |
+| `BookmarkGroup` / `GroupItem` (`models.py`) | Saved group schema (`id`, `name`, `created_at`, `items[]`) |
+| Group markers in bookmark tree | Raw dicts `{"type": "group", "id": "<uuid>"}` embedded under a folder via `BookmarkManager.save_bookmarks_raw` |
+| `SaveGroupDialog` | Modal: group name + target folder combo |
+| `NewFolderDialog` | Modal: folder name + accent swatch (`DEFAULT_PALETTE` matches design-spec tab colors) |
+| `GroupRowDelegate` (`widgets/group_row_delegate.py`) | Paints indented group rows beneath folder pills |
+
+Default sidebar folders ship from `DEFAULT_BOOKMARK_FOLDER_NAMES` in `bookmarks.py`
+(currently eight names: Fun, Misc, Tech, Work, Extra, Hidden, Special, Favorites).
+Folders and bookmarks may carry an optional `accent` hex field; custom folders pick
+colors via `NewFolderDialog`.
 
 ## Non-obvious rules
 
-- Bookmarks persist as `bookmarks_v2.json`, not Safari’s `Bookmarks.plist`.
-- `BookmarkManager.save_bookmarks` uses atomic `.tmp` + `.bak` — keep that path intact.
+- Bookmarks persist as `bookmarks_v2.json`; saved groups as `bookmark_groups.json` (see `Config` in `core/config.py`). Neither file is Safari’s `Bookmarks.plist`.
+- `BookmarkManager.save_bookmarks` uses atomic `.tmp` + `.bak` — keep that path intact. `GroupStore` mirrors the same protocol.
+- Group markers in the bookmark tree are raw dicts, not dataclasses — use `load_bookmarks_raw` / `save_bookmarks_raw` when mixing markers with folders.
+- `GroupStore` skips malformed entries on load and dedupes by `id` on upsert/delete.
 - Safari control goes through AppleScript / `osascript`; runtime checks need local Safari and Automation permission.
 - If a bundled app fails to launch or control Safari, inspect `Nexus.spec` (assets, AppleEvents usage text) before changing app logic.
 - Do not overwrite or delete bookmark sources without explicit approval; prefer export/backup first.
@@ -45,7 +67,7 @@ uv run ty check src --python-version 3.14
 uv run pytest tests/ -q
 ```
 
-Focused: `tests/test_bookmarks.py`, `tests/core/test_safari_controller.py`. GUI smoke: `uv run python -m nexus.main`.
+Focused: `tests/test_bookmarks.py`, `tests/core/test_group_store.py`, `tests/core/test_safari_controller.py`, `tests/gui/test_group_row_paint.py`, `tests/gui/test_save_group_dialog.py`. GUI smoke: `uv run python -m nexus.main`.
 
 If Safari/Automation blocks a check, say so — do not imply the path was exercised.
 
