@@ -9,13 +9,17 @@ from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
 from nexus.utils.url_processor import URLProcessor
 
 
-DEFAULT_BOOKMARK_FOLDER_NAMES = (
-    "Favorites",
-    "Tech",
+DEFAULT_BOOKMARK_FOLDER_NAMES: tuple[str, ...] = (
+    "Fun",
     "Misc",
+    "Tech",
     "Work",
-    "Later",
-    "News",
+    "Extra",
+    "Future",
+    "Hidden",
+    "Special",
+    "Favorites",
+    "Sort",
 )
 
 
