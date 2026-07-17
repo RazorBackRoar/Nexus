@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 
 def _now_iso() -> str:
@@ -30,16 +31,18 @@ class Bookmark:
 
 @dataclass
 class BookmarkFolder:
-    """Represents a folder that can contain bookmarks or other folders."""
+    """Represents a folder that can contain bookmarks, folders, or markers."""
 
     name: str
-    children: list[BookmarkFolder | Bookmark] = field(default_factory=list)
+    children: list[BookmarkNode] = field(default_factory=list)
     type: str = "folder"  # Used for serialization/deserialization
     accent: str | None = None  # hex color set via NewFolderDialog
 
 
-# Union type for items that can exist in the bookmark tree
-BookmarkNode = BookmarkFolder | Bookmark
+# Union type for items that can exist in the bookmark tree.  Group markers are
+# raw ``dict`` refs (``{"type": "group", "id": ...}``) so the tree can hold
+# them alongside the dataclass nodes.
+BookmarkNode = BookmarkFolder | Bookmark | dict[str, Any]
 
 
 @dataclass

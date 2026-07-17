@@ -1,6 +1,7 @@
 """Custom UI widgets for the Nexus application."""
 
 import re
+from typing import cast
 
 from PySide6.QtCore import (
     QEasingCurve,
@@ -92,7 +93,9 @@ class CosmicFrame(QWidget):
         (0.94, 0.88, 4),
     ]
 
-    def _draw_glint(self, painter: QPainter, rect, sx: float, sy: float, size: float) -> None:
+    def _draw_glint(
+        self, painter: QPainter, rect, sx: float, sy: float, size: float
+    ) -> None:
         cx = rect.left() + rect.width() * sx
         cy = rect.top() + rect.height() * sy
         half = size / 2
@@ -250,9 +253,11 @@ class MetallicLabel(QLabel):
         spec = self._VARIANTS.get(self._variant, self._VARIANTS["body"])
         font = self.font()
         font.setFamily("Helvetica Neue")
-        font.setPointSize(spec["size"])
-        font.setWeight(spec["weight"])
-        font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, spec["spacing"])
+        font.setPointSize(cast(int, spec["size"]))
+        font.setWeight(cast(QFont.Weight, spec["weight"]))
+        font.setLetterSpacing(
+            QFont.SpacingType.AbsoluteSpacing, cast(float, spec["spacing"])
+        )
         self.setFont(font)
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
@@ -476,12 +481,70 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
-        else:
+        elif data.get("type") == "group":
+            # Indented group row: small accent dot + name + optional count.
+            style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
+            accent = QColor(style.get("start", "#5B8DEF"))
             text_rect = rect.adjusted(22, 0, -10, 0)
             if hovered or selected:
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(QColor(255, 255, 255, 12 if hovered else 18))
                 painter.drawRoundedRect(rect.adjusted(2, 1, -2, -1), 8, 8)
+
+            # Accent dot
+            dot_rect = text_rect.adjusted(0, 0, 0, 0)
+            dot_rect.setWidth(8)
+            dot_rect.moveTop(text_rect.top() + (text_rect.height() - 8) // 2)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(accent)
+            painter.drawEllipse(dot_rect)
+            text_rect.adjust(14, 0, 0, 0)
+
+            font = option.font
+            font.setPointSize(13)
+            font.setWeight(QFont.Weight.Normal)
+            painter.setFont(font)
+            painter.setPen(QColor("#B8C4D8"))
+            painter.drawText(
+                text_rect,
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+                str(index.data(Qt.ItemDataRole.DisplayRole)),
+            )
+
+            # Child count badge
+            count = data.get("count")
+            if count:
+                badge_text = f"({count})"
+                painter.setPen(QColor("#8EA0BC"))
+                badge_rect = rect.adjusted(rect.width() - 44, 0, -4, 0)
+                painter.drawText(
+                    badge_rect,
+                    Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                    badge_text,
+                )
+        else:
+            # Per-bookmark accent (falls back to the parent folder's
+            # accent when the bookmark carries none).
+            bookmark_data = index.data(Qt.ItemDataRole.UserRole) or {}
+            accent_hex = bookmark_data.get("accent")
+            if not accent_hex and index.parent().isValid():
+                folder_style = index.parent().data(Qt.ItemDataRole.UserRole + 1) or {}
+                accent_hex = folder_style.get("start")
+
+            text_rect = rect.adjusted(22, 0, -10, 0)
+            if hovered or selected:
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QColor(255, 255, 255, 12 if hovered else 18))
+                painter.drawRoundedRect(rect.adjusted(2, 1, -2, -1), 8, 8)
+            # Accent dot
+            if accent_hex:
+                dot_rect = text_rect.adjusted(0, 0, 0, 0)
+                dot_rect.setWidth(8)
+                dot_rect.moveTop(text_rect.top() + (text_rect.height() - 8) // 2)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QColor(accent_hex))
+                painter.drawEllipse(dot_rect)
+                text_rect.adjust(14, 0, 0, 0)
             font = option.font
             font.setPointSize(13)
             font.setWeight(QFont.Weight.Normal)
@@ -497,10 +560,13 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):  # noqa: ANN001
         data = index.data(Qt.ItemDataRole.UserRole) or {}
-        return QSize(
-            option.rect.width(),
-            52 if data.get("type") == "folder" else 34,
-        )
+        if data.get("type") == "folder":
+            height = 52
+        elif data.get("type") == "group":
+            height = 34
+        else:
+            height = 34
+        return QSize(option.rect.width(), height)
 
     def _draw_folder_icon(self, painter: QPainter, rect, icon_color: QColor):
         painter.save()

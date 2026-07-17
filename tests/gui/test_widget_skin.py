@@ -185,15 +185,15 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
                 {"name": "Misc", "type": "folder", "children": []},
                 {"name": "Work", "type": "folder", "children": []},
                 {"name": "Later", "type": "folder", "children": []},
-                {"name": "Apple", "type": "folder", "children": []},
-                {"name": "Google", "type": "folder", "children": []},
-                {"name": "Github", "type": "folder", "children": []},
-                {"name": "Fun", "type": "folder", "children": []},
                 {
                     "name": "Reading",
                     "type": "folder",
                     "children": [
-                        {"name": "Example", "type": "bookmark", "url": "https://example.com"}
+                        {
+                            "name": "Example",
+                            "type": "bookmark",
+                            "url": "https://example.com",
+                        }
                     ],
                 },
             ]
@@ -208,17 +208,38 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             item = window.bookmark_tree.topLevelItem(index)
             assert item is not None
             names.append(item.text(0))
-        assert names == ["Favorites", "Tech", "Misc", "Work", "Later", "News"]
+        assert names == [
+            "Fun",
+            "Misc",
+            "Tech",
+            "Work",
+            "Extra",
+            "Future",
+            "Hidden",
+            "Special",
+            "Favorites",
+            "Sort",
+            "Reading",
+        ]
 
-        misc_item = window.bookmark_tree.topLevelItem(2)
+        misc_item = window.bookmark_tree.topLevelItem(1)
         assert misc_item is not None
         assert misc_item.text(0) == "Misc"
-        assert misc_item.childCount() == 1
-        child_item = misc_item.child(0)
-        assert child_item is not None
-        assert child_item.text(0) == "Example"
+        assert misc_item.childCount() == 0
+
+        reading_item = next(
+            (
+                window.bookmark_tree.topLevelItem(i)
+                for i in range(window.bookmark_tree.topLevelItemCount())
+                if window.bookmark_tree.topLevelItem(i).text(0) == "Reading"
+            ),
+            None,
+        )
+        assert reading_item is not None
+        assert reading_item.childCount() == 1
+        assert reading_item.child(0).text(0) == "Example"
 
         misc_style = misc_item.data(0, Qt.ItemDataRole.UserRole + 1)
-        assert misc_style["start"] == "#9B7AE8"
+        assert misc_style["start"] == "#D4A05A"
     finally:
         window.close()

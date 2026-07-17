@@ -8,7 +8,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QAbstractListModel, QModelIndex, QSize
+from PySide6.QtCore import QAbstractListModel, QSize
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QStyleOptionViewItem
 
@@ -23,7 +23,7 @@ def app():
 
 def _empty_model():
     class _Model(QAbstractListModel):
-        def rowCount(self, parent=QModelIndex()):
+        def rowCount(self, parent=None):
             return 0
 
     return _Model()

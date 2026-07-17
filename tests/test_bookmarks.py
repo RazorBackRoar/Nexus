@@ -190,12 +190,16 @@ def test_default_bookmark_folders_match_glossy_sidebar(tmp_path):
     defaults = manager._create_default_bookmarks()
 
     assert [node.name for node in defaults] == [
-        "Favorites",
-        "Tech",
+        "Fun",
         "Misc",
+        "Tech",
         "Work",
-        "Later",
-        "News",
+        "Extra",
+        "Future",
+        "Hidden",
+        "Special",
+        "Favorites",
+        "Sort",
     ]
 
 
@@ -340,12 +344,16 @@ def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
     bookmarks = manager.load_bookmarks()
 
     assert [node.name for node in bookmarks] == [
-        "Favorites",
-        "Tech",
+        "Fun",
         "Misc",
+        "Tech",
         "Work",
-        "Later",
-        "News",
+        "Extra",
+        "Future",
+        "Hidden",
+        "Special",
+        "Favorites",
+        "Sort",
     ]
 
 

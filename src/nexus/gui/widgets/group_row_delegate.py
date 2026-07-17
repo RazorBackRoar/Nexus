@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFont, QPainter
-from PySide6.QtWidgets import QStyle, QStyleOptionViewItem, QStyledItemDelegate
+from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 
 class GroupRowDelegate(QStyledItemDelegate):

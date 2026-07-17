@@ -2,7 +2,9 @@
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
+from secrets import token_hex
 from typing import Any
 from urllib.parse import urlparse
 
@@ -13,8 +15,9 @@ from PySide6.QtCore import (
     QStandardPaths,
     Qt,
 )
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QFileDialog,
     QFrame,
@@ -35,7 +38,13 @@ from PySide6.QtWidgets import (
 
 from nexus.core.bookmarks import DEFAULT_BOOKMARK_FOLDER_NAMES, BookmarkManager
 from nexus.core.config import Config, cleanup_logs, logger, privacy_fingerprint
-from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
+from nexus.core.models import (
+    Bookmark,
+    BookmarkFolder,
+    BookmarkGroup,
+    BookmarkNode,
+    GroupItem,
+)
 from nexus.core.safari import SafariController
 from nexus.gui.widgets import (
     AsyncWorker,
@@ -55,6 +64,21 @@ class MainWindow(QMainWindow):
     """The main application window with hierarchical bookmark support."""
 
     APP_NAME = Config.APP_NAME
+
+    # Hex colors keyed by default tab name.  Order matches
+    # ``DEFAULT_BOOKMARK_FOLDER_NAMES`` in ``core.bookmarks``.
+    DEFAULT_TAB_PALETTE: dict[str, str] = {
+        "Fun": "#E5738A",
+        "Misc": "#D4A05A",
+        "Tech": "#5B8DEF",
+        "Work": "#E85A5A",
+        "Extra": "#8A95A8",
+        "Future": "#A87A5A",
+        "Hidden": "#2A2A35",
+        "Special": "#F0F4FA",
+        "Favorites": "#5BA86A",
+        "Sort": "#6B6B7A",
+    }
 
     def __init__(self):
         """Initialize with default theme."""
@@ -77,6 +101,10 @@ class MainWindow(QMainWindow):
             )
         )
         self.bookmark_manager = BookmarkManager(app_data_dir / Config.BOOKMARKS_FILE)
+
+        from nexus.core.group_store import GroupStore
+
+        self.group_store = GroupStore(app_data_dir / Config.BOOKMARK_GROUPS_FILE)
 
         self._setup_window()
         self._load_window_state()  # Load window geometry/state
@@ -434,6 +462,16 @@ class MainWindow(QMainWindow):
         self.bookmark_tree.setIndentation(0)
         self.bookmark_tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.bookmark_tree.setMouseTracking(True)
+        self.bookmark_tree.setAcceptDrops(True)
+        self.bookmark_tree.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.bookmark_tree.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.bookmark_tree.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.bookmark_tree.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.bookmark_tree.model().rowsMoved.connect(self._on_top_level_reordered)
         self.bookmark_tree.setItemDelegate(BookmarkTreeDelegate(self.bookmark_tree))
         self.bookmark_tree.setStyleSheet("""
             QTreeWidget {
@@ -558,7 +596,9 @@ class MainWindow(QMainWindow):
         empty_layout.setSpacing(10)
         empty_layout.addStretch()
 
-        self.url_empty_title = MetallicLabel("Paste URLs to get started", variant="section")
+        self.url_empty_title = MetallicLabel(
+            "Paste URLs to get started", variant="section"
+        )
         self.url_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(self.url_empty_title)
 
@@ -792,37 +832,52 @@ class MainWindow(QMainWindow):
         )
 
     def _save_urls_to_bookmarks(self):
-        """Auto-categorizes URLs by domain and saves them to bookmarks."""
+        """Save the URLs in the table as a new bookmark group."""
         urls = self.url_table.get_all_urls()
         if not urls:
             self._show_message("No valid URLs found to save.", "warning")
             return
 
-        domain_groups = {}
-        for url in urls:
-            try:
-                domain = urlparse(url).netloc.replace("www.", "")
-                domain_groups.setdefault(domain, []).append(url)
-            except Exception:
-                domain_groups.setdefault("Other", []).append(url)
+        from nexus.gui.dialogs.save_group_dialog import SaveGroupDialog
 
-        for domain, domain_urls in domain_groups.items():
-            folder_name = domain.capitalize()
-            folder_item = self._find_or_create_folder(folder_name)
-            for url in domain_urls:
-                bookmark_data = {
-                    "name": self._generate_bookmark_name(url),
-                    "type": "bookmark",
-                    "url": url,
-                }
-                self._create_tree_item(bookmark_data, folder_item)
-            folder_item.setExpanded(True)
+        folders: list[str] = []
+        for i in range(self.bookmark_tree.topLevelItemCount()):
+            top_item = self.bookmark_tree.topLevelItem(i)
+            if top_item is not None:
+                folders.append(top_item.text(0))
+        preselect = self._currently_selected_folder_name() or folders[0]
+        dialog = SaveGroupDialog(folders=folders, preselect=preselect, parent=self)
+        if dialog.exec() != SaveGroupDialog.DialogCode.Accepted:
+            return
+        name = dialog.group_name
+        target = dialog.target_folder
+        if not name:
+            return
 
-        self.save_bookmarks()
-        # self.tabs.setCurrentIndex(1)  # Switch to Bookmarks tab
-        self._show_message(
-            f"Successfully saved {len(urls)} URLs organized by domain!", "info"
+        group = BookmarkGroup(
+            id="grp_" + token_hex(4),
+            name=name,
+            created_at=datetime.now().isoformat(timespec="seconds"),
+            items=[
+                GroupItem(title=self._generate_bookmark_name(u), url=u) for u in urls
+            ],
         )
+        self.group_store.upsert_group(group)
+
+        target_item = self._find_folder_by_name(target)
+        if target_item is not None:
+            marker = {
+                "type": "group",
+                "id": group.id,
+                "name": group.name,
+                "count": len(group.items),
+            }
+            self._create_tree_item(marker, target_item)
+            target_item.setExpanded(True)
+        self.save_bookmarks()
+
+        self.url_table.clear_table()
+        self._set_status(f"Saved {len(urls)} URLs to '{name}' in {target}")
 
     def _quick_save_urls(self):
         """Save URLs straight to the Quick Saves folder with auto-generated names."""
@@ -1004,100 +1059,21 @@ class MainWindow(QMainWindow):
         folder_data = {"name": folder_name, "type": "folder", "children": []}
         return self._create_tree_item(folder_data)
 
-    def _resolve_folder_style(self, folder_name: str) -> dict[str, str]:
-        """Return a stable accent color for a bookmark folder row."""
-        named_styles = {
-            "favorites": {
-                "start": "#E5738A",
-                "end": "#3D081E",
-                "border": "#E8A5C2",
-                "icon": "#FFE7F0",
-            },
-            "tech": {
-                "start": "#5B8DEF",
-                "end": "#082A56",
-                "border": "#94D5FF",
-                "icon": "#E6FCFF",
-            },
-            "misc": {
-                "start": "#9B7AE8",
-                "end": "#23074F",
-                "border": "#D6B1FF",
-                "icon": "#F6E9FF",
-            },
-            "work": {
-                "start": "#4DB6A0",
-                "end": "#072F2A",
-                "border": "#9DE9D8",
-                "icon": "#EDFFF9",
-            },
-            "later": {
-                "start": "#D4A05A",
-                "end": "#492403",
-                "border": "#F0C88F",
-                "icon": "#FFF4D0",
-            },
-            "news": {
-                "start": "#6B9AF5",
-                "end": "#10235D",
-                "border": "#AFC7FF",
-                "icon": "#EEF5FF",
-            },
-            "reading": {
-                "start": "#A8B0C0",
-                "end": "#717AA8",
-                "border": "#F3F5FF",
-                "icon": "#FFFFFF",
-            },
-            "apple": {
-                "start": "#7AB8E8",
-                "end": "#2767C7",
-                "border": "#C1E5FF",
-                "icon": "#EAF7FF",
-            },
-            "google": {
-                "start": "#5BC4B0",
-                "end": "#238B8A",
-                "border": "#C7FFF5",
-                "icon": "#EBFFFB",
-            },
-            "github": {
-                "start": "#8B7AE8",
-                "end": "#4720BE",
-                "border": "#D1C9FF",
-                "icon": "#EEEBFF",
-            },
-            "fun": {
-                "start": "#D48BC8",
-                "end": "#A11BB7",
-                "border": "#FFC7F2",
-                "icon": "#FFEAFB",
-            },
-            "personal": {
-                "start": "#6B9AF5",
-                "end": "#265CB2",
-                "border": "#BADEFF",
-                "icon": "#DFF0FF",
-            },
-            "youtube": {
-                "start": "#E57373",
-                "end": "#8A203A",
-                "border": "#FFB8C4",
-                "icon": "#FFE2E7",
-            },
-            "guides": {
-                "start": "#D4A05A",
-                "end": "#945F1E",
-                "border": "#FFE0A7",
-                "icon": "#FFF1D8",
-            },
-            "random": {
-                "start": "#5BC4A8",
-                "end": "#2F6B58",
-                "border": "#C2F4E4",
-                "icon": "#E3FFF6",
-            },
-        }
+    def _resolve_folder_style(
+        self, folder_name: str, accent: str | None = None
+    ) -> dict[str, str]:
+        """Return an accent color for a bookmark folder row.
+
+        Lookup order:
+        1. The folder's own ``accent`` argument (set via NewFolderDialog).
+        2. The fixed palette for the ten default tabs.
+        3. A stable fallback cycle for any other name.
+        """
+        if accent:
+            return self._style_from_accent(accent)
+        if folder_name in self.DEFAULT_TAB_PALETTE:
+            return self._style_from_accent(self.DEFAULT_TAB_PALETTE[folder_name])
+
         fallback_styles = [
             {
                 "start": "#5B8DEF",
@@ -1136,19 +1112,26 @@ class MainWindow(QMainWindow):
                 "icon": "#F1F3FF",
             },
         ]
-
-        normalized = folder_name.lower()
-        if normalized in named_styles:
-            return named_styles[normalized]
-
         if not hasattr(self, "_folder_style_cache"):
             self._folder_style_cache = {}
 
+        normalized = folder_name.lower()
         if normalized not in self._folder_style_cache:
             index = len(self._folder_style_cache) % len(fallback_styles)
             self._folder_style_cache[normalized] = fallback_styles[index]
 
         return self._folder_style_cache[normalized]
+
+    @staticmethod
+    def _style_from_accent(hex_color: str) -> dict[str, str]:
+        """Build a 4-color style dict from a single accent hex."""
+        c = QColor(hex_color)
+        return {
+            "start": c.name().upper(),
+            "end": c.darker(140).name().upper(),
+            "border": c.lighter(120).name().upper(),
+            "icon": c.lighter(150).name().upper(),
+        }
 
     def _generate_bookmark_name(self, url: str) -> str:
         """Generates a readable name from a URL."""
@@ -1209,45 +1192,106 @@ class MainWindow(QMainWindow):
         else:
             return current_item.parent()
 
+    def _currently_selected_folder_name(self) -> str | None:
+        """Return the name of the currently selected top-level folder, if any."""
+        item = self.bookmark_tree.currentItem()
+        if not item:
+            return None
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if data and data.get("type") == "folder":
+            return data.get("name")
+        parent = item.parent()
+        if parent:
+            parent_data = parent.data(0, Qt.ItemDataRole.UserRole) or {}
+            return parent_data.get("name")
+        return None
+
+    def _find_folder_by_name(self, name: str) -> QTreeWidgetItem | None:
+        """Find a top-level folder item by its displayed name."""
+        root = self.bookmark_tree.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            data = item.data(0, Qt.ItemDataRole.UserRole)
+            if data and data.get("type") == "folder" and data.get("name") == name:
+                return item
+        return None
+
+    def _set_status(self, message: str) -> None:
+        """Update the status bar label if it has been created."""
+        if hasattr(self, "status_bar"):
+            self.status_bar.setText(message)
+
+    def _on_top_level_reordered(self) -> None:
+        """Called after a drag-reorder of top-level tabs; persists the new order."""
+        self.save_bookmarks()
+
     def add_bookmark_section(self):
-        """Prompts for a new folder name and adds it to the tree."""
+        """Prompts for a new folder name + color and adds it to the tree."""
         parent_item = self._get_selected_parent_item()
-        name, ok = QInputDialog.getText(self, "New Folder", "Folder name:")
-        if ok and name.strip():
-            folder_data = {"name": name.strip(), "type": "folder", "children": []}
-            section_item = self._create_tree_item(folder_data, parent_item)
-            if parent_item:
-                parent_item.setExpanded(True)
-            else:
-                self.bookmark_tree.addTopLevelItem(section_item)
-            self.save_bookmarks()
+        from nexus.gui.dialogs.new_folder_dialog import NewFolderDialog
+
+        dialog = NewFolderDialog(self)
+        if dialog.exec() != NewFolderDialog.DialogCode.Accepted:
+            return
+        name = dialog.folder_name
+        accent = dialog.accent
+        if not name:
+            return
+        folder_data = {
+            "name": name,
+            "type": "folder",
+            "accent": accent,
+            "children": [],
+        }
+        section_item = self._create_tree_item(folder_data, parent_item)
+        if parent_item:
+            parent_item.setExpanded(True)
+        else:
+            self.bookmark_tree.addTopLevelItem(section_item)
+        self.save_bookmarks()
 
     def _create_tree_item(
         self, data: dict[str, Any], parent: QTreeWidgetItem | None = None
     ) -> QTreeWidgetItem:
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
-        item = QTreeWidgetItem([data["name"]])
+        is_group = data.get("type") == "group"
+        item = QTreeWidgetItem([data.get("name", "(missing group)")])
         item.setData(0, Qt.ItemDataRole.UserRole, data)
         if is_folder:
+            folder_style = self._resolve_folder_style(
+                data["name"],
+                accent=data.get("accent"),
+            )
+            item.setData(0, Qt.ItemDataRole.UserRole + 1, folder_style)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            if "children" in data:
+                for child_data in data["children"]:
+                    self._create_tree_item(child_data, item)
+        elif is_group:
             item.setData(
                 0,
                 Qt.ItemDataRole.UserRole + 1,
-                self._resolve_folder_style(data["name"]),
+                self._resolve_folder_style(
+                    data.get("name", ""),
+                    accent=data.get("accent"),
+                ),
             )
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            item.setFlags(
+                (item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                & ~Qt.ItemFlag.ItemIsSelectable
+            )
         else:
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+        if is_group and parent is None:
+            # Group markers are only meaningful as children of folders.
+            return item
 
         if parent:
             parent.addChild(item)
         else:
             self.bookmark_tree.addTopLevelItem(item)
-
-        # Recursively create children
-        if is_folder and "children" in data:
-            for child_data in data["children"]:
-                self._create_tree_item(child_data, item)
 
         return item
 
@@ -1287,55 +1331,43 @@ class MainWindow(QMainWindow):
     def _normalize_bookmark_nodes(
         self, bookmark_nodes: list[BookmarkNode]
     ) -> tuple[list[BookmarkNode], bool]:
-        """Align saved bookmark folders with the glossy sidebar set without dropping user data."""
+        """Align saved bookmark folders with the new ten-tab sidebar set.
+
+        Empty folders matching the old default set are removed; any folder
+        with user content is preserved. Missing default tabs are appended.
+        """
         changed = False
+        old_empty_defaults = {
+            "favorites",
+            "tech",
+            "misc",
+            "work",
+            "later",
+            "news",
+        }
 
-        def _folder_lookup() -> dict[str, BookmarkFolder]:
-            return {
-                node.name.lower(): node
-                for node in bookmark_nodes
-                if isinstance(node, BookmarkFolder)
-            }
-
-        folder_lookup = _folder_lookup()
-
-        ai_news_node = folder_lookup.get("ai news")
-        if ai_news_node is not None:
-            ai_news_node.name = "News"
-            changed = True
-            folder_lookup = _folder_lookup()
-
-        reading_node = folder_lookup.get("reading")
-        misc_node = folder_lookup.get("misc")
-        if reading_node is not None:
-            if misc_node is None:
-                reading_node.name = "Misc"
-            else:
-                misc_node.children.extend(reading_node.children)
-                bookmark_nodes.remove(reading_node)
-            changed = True
-            folder_lookup = _folder_lookup()
-
-        removable_empty_folders = {"news", "apple", "google", "github", "fun"}
         kept_nodes: list[BookmarkNode] = []
         for node in bookmark_nodes:
             if (
                 isinstance(node, BookmarkFolder)
-                and node.name.lower() in removable_empty_folders
-                and node.name.lower() not in {"news"}
+                and node.name.lower() in old_empty_defaults
                 and not node.children
             ):
                 changed = True
                 continue
             kept_nodes.append(node)
         bookmark_nodes = kept_nodes
-        folder_lookup = _folder_lookup()
 
+        existing_names = {
+            node.name.lower()
+            for node in bookmark_nodes
+            if isinstance(node, BookmarkFolder)
+        }
         for folder_name in DEFAULT_BOOKMARK_FOLDER_NAMES:
-            if folder_name.lower() not in folder_lookup:
+            if folder_name.lower() not in existing_names:
                 bookmark_nodes.append(BookmarkFolder(name=folder_name, children=[]))
+                existing_names.add(folder_name.lower())
                 changed = True
-                folder_lookup = _folder_lookup()
 
         return bookmark_nodes, changed
 
@@ -1344,13 +1376,16 @@ class MainWindow(QMainWindow):
             name.lower(): index
             for index, name in enumerate(DEFAULT_BOOKMARK_FOLDER_NAMES)
         }
-        folder_name = node.name.lower()
+        if isinstance(node, dict):
+            folder_name = str(node.get("name", "")).lower()
+        else:
+            folder_name = node.name.lower()
         group = 0 if folder_name in preferred_order else 1
         order = preferred_order.get(folder_name, 999)
         return group, order, folder_name
 
     def _show_bookmark_context_menu(self, position):
-        """Shows a context menu for bookmark items with relevant actions."""
+        """Shows a context menu for folder, bookmark, and group items."""
         item = self.bookmark_tree.itemAt(position)
         if not item:
             return
@@ -1380,24 +1415,169 @@ class MainWindow(QMainWindow):
         data = item.data(0, Qt.ItemDataRole.UserRole)
         item_type = data.get("type") if data else None
 
-        if item_type == "bookmark":
+        if item_type == "group":
+            open_action = menu.addAction("Open in Safari")
+            open_action.triggered.connect(lambda: self._open_group_in_safari(item))
+            menu.addSeparator()
+            rename_action = menu.addAction("Rename")
+            rename_action.triggered.connect(lambda: self._rename_group(item))
+            move_menu = menu.addMenu("Move to…")
+            parent = item.parent()
+            current_folder_name = parent.text(0) if parent else ""
+            for i in range(self.bookmark_tree.topLevelItemCount()):
+                folder_item = self.bookmark_tree.topLevelItem(i)
+                if folder_item is None:
+                    continue
+                folder_data = folder_item.data(0, Qt.ItemDataRole.UserRole)
+                if folder_data and folder_data.get("name") != current_folder_name:
+                    move_menu.addAction(folder_data["name"]).triggered.connect(
+                        lambda checked=False, fi=folder_item: self._move_group_to(
+                            item, fi
+                        )
+                    )
+            menu.addSeparator()
+            delete_action = menu.addAction("Delete")
+            delete_action.triggered.connect(lambda: self._delete_group(item))
+        elif item_type == "bookmark":
             open_action = menu.addAction("Open in Safari")
             open_action.triggered.connect(lambda: self._open_bookmark_link(item))
             menu.addSeparator()
 
-        edit_action = menu.addAction("Rename")
-        edit_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
+            rename_action = menu.addAction("Rename")
+            rename_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
 
-        if item_type == "folder":
+            color_menu = menu.addMenu("Color")
+            for hex_ in [
+                "#E5738A",
+                "#D4A05A",
+                "#5B8DEF",
+                "#E85A5A",
+                "#8A95A8",
+                "#A87A5A",
+                "#2A2A35",
+                "#F0F4FA",
+                "#5BA86A",
+                "#6B6B7A",
+            ]:
+                color_menu.addAction(hex_.upper()).triggered.connect(
+                    lambda checked=False, h=hex_: self._set_bookmark_accent(item, h)
+                )
+
+            copy_action = menu.addAction("Copy URL")
+            copy_action.triggered.connect(lambda: self._copy_bookmark_url(item))
+            menu.addSeparator()
+
+            delete_action = menu.addAction("Delete")
+            delete_action.triggered.connect(lambda: self._delete_bookmark_item(item))
+        else:
+            # Folder (or other top-level) menu
+            edit_action = menu.addAction("Rename")
+            edit_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
+
             add_bookmark_action = menu.addAction("Add Bookmark to Folder")
             add_bookmark_action.triggered.connect(lambda: self._add_bookmark_link(item))
             add_folder_action = menu.addAction("Add Subfolder")
             add_folder_action.triggered.connect(self.add_bookmark_section)
+            menu.addSeparator()
 
-        delete_action = menu.addAction("Delete")
-        delete_action.triggered.connect(lambda: self._delete_bookmark_item(item))
+            delete_action = menu.addAction("Delete")
+            delete_action.triggered.connect(lambda: self._delete_bookmark_item(item))
 
         menu.exec(self.bookmark_tree.viewport().mapToGlobal(position))
+
+    def _open_group_in_safari(self, item: QTreeWidgetItem) -> None:
+        """Open every URL in a saved group via the front Safari window."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "group":
+            return
+        group = self.group_store.get_group(data["id"])
+        if not group:
+            return
+        urls = [g.url for g in group.items]
+        if not urls:
+            return
+        self.worker = AsyncWorker(
+            self.safari_controller.open_urls_in_front_window,
+            urls,
+            self.private_mode_enabled,
+        )
+        self.worker.start()
+
+    def _rename_group(self, item: QTreeWidgetItem) -> None:
+        """Rename a group in the sidecar and update the tree marker."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "group":
+            return
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Rename Group",
+            "New name:",
+            text=data.get("name", ""),
+        )
+        if not ok or not new_name.strip():
+            return
+        group = self.group_store.get_group(data["id"])
+        if group is None:
+            return
+        group.name = new_name.strip()
+        self.group_store.upsert_group(group)
+        data["name"] = new_name.strip()
+        item.setText(0, new_name.strip())
+        self.save_bookmarks()
+
+    def _move_group_to(
+        self, item: QTreeWidgetItem, target_folder_item: QTreeWidgetItem
+    ) -> None:
+        """Move a group marker from its current folder to another folder."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "group":
+            return
+        old_parent = item.parent()
+        if old_parent is not None:
+            old_parent.removeChild(item)
+        target_folder_item.addChild(item)
+        target_folder_item.setExpanded(True)
+        self.save_bookmarks()
+
+    def _delete_group(self, item: QTreeWidgetItem) -> None:
+        """Delete a group after confirmation, removing the sidecar entry."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "group":
+            return
+        confirm = QMessageBox.question(
+            self,
+            "Delete Group",
+            f"Delete the group '{data.get('name', '')}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+        self.group_store.delete_group(data["id"])
+        parent = item.parent()
+        if parent is not None:
+            parent.removeChild(item)
+        self.save_bookmarks()
+
+    def _set_bookmark_accent(self, item: QTreeWidgetItem, accent: str) -> None:
+        """Update a bookmark row's accent and persist immediately."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "bookmark":
+            return
+        data["accent"] = accent
+        item.setData(0, Qt.ItemDataRole.UserRole, data)
+        self.save_bookmarks()
+
+    def _copy_bookmark_url(self, item: QTreeWidgetItem) -> None:
+        """Copy a bookmark's URL to the system clipboard."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if not data or data.get("type") != "bookmark":
+            return
+        url = data.get("url", "")
+        if not url:
+            return
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(url)
 
     def _open_bookmark_link(self, item: QTreeWidgetItem):
         """Opens a bookmark URL in existing Safari window with privacy settings."""

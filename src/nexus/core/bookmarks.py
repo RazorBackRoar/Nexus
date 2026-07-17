@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from nexus.core.config import logger
 from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
@@ -167,42 +167,58 @@ class BookmarkManager:
         return data
 
     def _serialize_node(self, node: BookmarkNode) -> dict[str, Any]:
-        """Converts dataclass objects to dictionaries for JSON saving."""
+        """Converts dataclass objects (or marker dicts) to JSON-friendly dicts."""
+        if isinstance(node, dict):
+            return cast(dict[str, Any], node)  # marker — pass through
         if isinstance(node, BookmarkFolder):
-            return {
+            out: dict[str, Any] = {
                 "name": node.name,
                 "type": "folder",
-                "accent": node.accent,
                 "children": [self._serialize_node(child) for child in node.children],
             }
-        else:  # It's a Bookmark
-            return {
-                "name": node.name,
-                "type": "bookmark",
-                "url": node.url,
-                "accent": node.accent,
-            }
+            if node.accent is not None:
+                out["accent"] = node.accent
+            return out
+        # It's a Bookmark
+        out = {"name": node.name, "type": "bookmark", "url": node.url}
+        if node.accent is not None:
+            out["accent"] = node.accent
+        return out
 
     def _deserialize_node(self, data: dict[str, Any]) -> BookmarkNode:
-        """Converts dictionaries from JSON back into dataclass objects."""
+        """Converts dictionaries from JSON back into dataclass objects.
+
+        Unknown entry types (e.g. ``{"type": "group", "id": ...}``) are
+        returned as the raw dict so callers can recognize them.
+        """
         if not isinstance(data, dict):
             raise TypeError(
                 f"Bookmark node must be an object, got {type(data).__name__}"
             )
-        accent = data.get("accent")
-        if data.get("type") == "folder":
+        node_type = data.get("type")
+        if node_type == "folder":
             children = []
             for child in data.get("children", []):
                 try:
                     children.append(self._deserialize_node(child))
                 except (ValueError, KeyError, TypeError, AttributeError) as e:
                     logger.warning("Skipping invalid bookmark child entry: %s", e)
-            return BookmarkFolder(name=data["name"], children=children, accent=accent)
-        else:  # It's a bookmark
+            return BookmarkFolder(
+                name=data["name"],
+                children=children,
+                accent=data.get("accent"),
+            )
+        if node_type == "bookmark":
             normalized_url = self.url_processor._normalize_url(str(data["url"]))
             if not normalized_url:
                 raise ValueError("Bookmark URL failed validation")
-            return Bookmark(name=data["name"], url=normalized_url, accent=accent)
+            return Bookmark(
+                name=data["name"],
+                url=normalized_url,
+                accent=data.get("accent"),
+            )
+        # Unknown type — treat as a marker dict.
+        return data
 
     def _create_default_bookmarks(self) -> list[BookmarkNode]:
         """Creates default bookmark folders for common categories."""
