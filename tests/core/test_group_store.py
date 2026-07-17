@@ -101,6 +101,58 @@ def test_get_group_missing_returns_none(tmp_path: Path):
     assert store.get_group("grp_missing") is None
 
 
+def test_load_recovers_from_bak_when_primary_empty(tmp_path: Path):
+    """Empty primary must not block recovery from a valid .bak file."""
+    primary = tmp_path / "groups.json"
+    backup = tmp_path / "groups.json.bak"
+    primary.write_text("[]", encoding="utf-8")
+    backup.write_text(
+        json.dumps(
+            [{"id": "grp_a", "name": "from bak", "created_at": "", "items": []}]
+        ),
+        encoding="utf-8",
+    )
+    store = GroupStore(primary)
+    groups = store.load_groups()
+    assert len(groups) == 1
+    assert groups[0].id == "grp_a"
+    assert primary.exists()
+    assert backup.exists()
+
+
+def test_save_empty_library_clears_backup_and_stays_empty_on_reload(tmp_path: Path):
+    """Intentionally clearing all groups must not resurrect from .bak."""
+    store = GroupStore(tmp_path / "groups.json")
+    store.upsert_group(_group())
+    backup = tmp_path / "groups.json.bak"
+
+    assert store.save_groups([]) is True
+    assert store.file_path.read_text(encoding="utf-8").strip() == "[]"
+    assert not backup.exists()
+    assert store.load_groups() == []
+
+
+def test_recovery_resave_does_not_overwrite_populated_backup_with_empty_primary(
+    tmp_path: Path,
+):
+    """Re-materializing primary from .bak must not clobber the backup with []."""
+    primary = tmp_path / "groups.json"
+    backup = tmp_path / "groups.json.bak"
+    primary.write_text("[]", encoding="utf-8")
+    backup.write_text(
+        json.dumps(
+            [{"id": "grp_a", "name": "from bak", "created_at": "", "items": []}]
+        ),
+        encoding="utf-8",
+    )
+    store = GroupStore(primary)
+
+    groups = store.load_groups()
+
+    assert len(groups) == 1
+    assert "from bak" in backup.read_text(encoding="utf-8")
+
+
 def test_corrupted_items_in_one_group_does_not_lose_others(tmp_path: Path):
     """A single group with malformed items must not crash the whole load."""
     primary = tmp_path / "groups.json"

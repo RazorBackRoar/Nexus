@@ -30,14 +30,21 @@ class GroupStore:
             if not candidate.exists():
                 continue
             groups = self._load_from(candidate)
-            if groups is not None:
-                if candidate != self.file_path:
-                    logger.warning(
-                        "Restored groups from backup %s after primary file was missing, unreadable, or empty",
-                        candidate,
-                    )
-                    self.save_groups(groups)
-                return groups
+            if groups is None:
+                continue
+            if not groups:
+                # An empty primary usually means a bad save. Keep looking for a
+                # populated backup before treating the library as empty.
+                if candidate == self.file_path and not self.backup_path.exists():
+                    return []
+                continue
+            if candidate != self.file_path:
+                logger.warning(
+                    "Restored groups from backup %s after primary file was missing, unreadable, or empty",
+                    candidate,
+                )
+                self.save_groups(groups)
+            return groups
         return []
 
     def _load_from(self, path: Path) -> list[BookmarkGroup] | None:
@@ -68,22 +75,40 @@ class GroupStore:
     # Write
     # ------------------------------------------------------------------
 
+    def _primary_has_groups(self) -> bool:
+        """True when the primary file contains at least one saved group."""
+        if not self.file_path.exists():
+            return False
+        try:
+            with open(self.file_path, encoding="utf-8") as f:
+                existing = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return True
+        return isinstance(existing, list) and len(existing) > 0
+
     def save_groups(self, groups: list[BookmarkGroup]) -> bool:
         """Atomically persist the full group list."""
         try:
+            data = [self._serialize(g) for g in groups]
             with open(self.temp_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    [self._serialize(g) for g in groups],
-                    f,
-                    indent=2,
-                    ensure_ascii=False,
-                )
-            if self.file_path.exists():
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            if self._primary_has_groups():
                 self.file_path.replace(self.backup_path)
             self.temp_path.replace(self.file_path)
+            if not data and self.backup_path.exists():
+                self.backup_path.unlink()
             return True
         except OSError as e:
             logger.error("Failed to save groups: %s", e)
+            if self.backup_path.exists() and not self.file_path.exists():
+                try:
+                    self.backup_path.replace(self.file_path)
+                    logger.info("Restored groups from backup.")
+                except OSError as restore_error:
+                    logger.error(
+                        "CRITICAL: Failed to restore group backup: %s",
+                        restore_error,
+                    )
             return False
 
     def upsert_group(self, group: BookmarkGroup) -> None:
