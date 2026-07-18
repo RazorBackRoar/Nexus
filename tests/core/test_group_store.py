@@ -128,3 +128,25 @@ def test_corrupted_items_in_one_group_does_not_lose_others(tmp_path: Path):
     # The good group survives; the bad group is dropped (its items
     # path raises AttributeError on the bare-string entry).
     assert [g.id for g in groups] == ["grp_good"]
+
+
+def test_upsert_group_returns_false_on_save_failure(tmp_path: Path, monkeypatch):
+    store = GroupStore(tmp_path / "groups.json")
+
+    def fail_save(_groups):
+        return False
+
+    monkeypatch.setattr(store, "save_groups", fail_save)
+    assert store.upsert_group(_group()) is False
+
+
+def test_delete_group_returns_false_on_save_failure(tmp_path: Path, monkeypatch):
+    store = GroupStore(tmp_path / "groups.json")
+    store.upsert_group(_group(id="grp_drop"))
+
+    def fail_save(_groups):
+        return False
+
+    monkeypatch.setattr(store, "save_groups", fail_save)
+    assert store.delete_group("grp_drop") is False
+    assert store.get_group("grp_drop") is not None

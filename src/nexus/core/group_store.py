@@ -86,7 +86,7 @@ class GroupStore:
             logger.error("Failed to save groups: %s", e)
             return False
 
-    def upsert_group(self, group: BookmarkGroup) -> None:
+    def upsert_group(self, group: BookmarkGroup) -> bool:
         """Insert or replace a group by id, then save."""
         groups = self.load_groups()
         for i, existing in enumerate(groups):
@@ -95,14 +95,15 @@ class GroupStore:
                 break
         else:
             groups.append(group)
-        self.save_groups(groups)
+        return self.save_groups(groups)
 
-    def delete_group(self, group_id: str) -> None:
+    def delete_group(self, group_id: str) -> bool:
         """Remove a group by id.  No-op if not present."""
         groups = self.load_groups()
         kept = [g for g in groups if g.id != group_id]
         if len(kept) < len(groups):
-            self.save_groups(kept)
+            return self.save_groups(kept)
+        return True
 
     # ------------------------------------------------------------------
     # (De)serialization

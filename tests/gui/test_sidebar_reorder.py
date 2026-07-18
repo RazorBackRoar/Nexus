@@ -122,6 +122,27 @@ def test_save_urls_creates_a_group_in_group_store(window, monkeypatch):
     )
 
 
+def test_save_urls_keeps_table_when_group_store_write_fails(window, monkeypatch):
+    """Failed sidecar writes must not clear the URL table."""
+    from nexus.gui.dialogs.save_group_dialog import SaveGroupDialog
+
+    window.url_table.add_urls(["https://a.com", "https://b.com"])
+
+    monkeypatch.setattr(
+        SaveGroupDialog, "exec", lambda self: SaveGroupDialog.DialogCode.Accepted
+    )
+    monkeypatch.setattr(
+        SaveGroupDialog, "group_name", property(lambda self: "My Group")
+    )
+    monkeypatch.setattr(SaveGroupDialog, "target_folder", property(lambda self: "Tech"))
+    monkeypatch.setattr(window.group_store, "upsert_group", lambda _group: False)
+    monkeypatch.setattr(window, "_show_message", lambda *_args, **_kwargs: None)
+
+    window._save_urls_to_bookmarks()
+
+    assert window.url_table.rowCount() == 2
+
+
 class _FakeSignal:
     """A signal placeholder that ignores connect calls."""
 

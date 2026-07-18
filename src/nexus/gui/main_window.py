@@ -860,7 +860,12 @@ class MainWindow(QMainWindow):
                 GroupItem(title=self._generate_bookmark_name(u), url=u) for u in urls
             ],
         )
-        self.group_store.upsert_group(group)
+        if not self.group_store.upsert_group(group):
+            self._show_message(
+                "Could not save the URL group to disk. Your URLs were not cleared.",
+                "error",
+            )
+            return
 
         target_item = self._find_folder_by_name(target)
         if target_item is not None:
@@ -1278,6 +1283,7 @@ class MainWindow(QMainWindow):
             item.setFlags(
                 (item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 & ~Qt.ItemFlag.ItemIsSelectable
+                & ~Qt.ItemFlag.ItemIsDragEnabled
             )
         else:
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -1550,11 +1556,12 @@ class MainWindow(QMainWindow):
         )
         if confirm != QMessageBox.StandardButton.Yes:
             return
-        self.group_store.delete_group(data["id"])
+        group_id = data["id"]
         parent = item.parent()
         if parent is not None:
             parent.removeChild(item)
         self.save_bookmarks()
+        self.group_store.delete_group(group_id)
 
     def _set_bookmark_accent(self, item: QTreeWidgetItem, accent: str) -> None:
         """Update a bookmark row's accent and persist immediately."""
