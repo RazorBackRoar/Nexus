@@ -25,6 +25,7 @@ dependencies = [
     "PySide6>=6.6.0,<7.0.0",
     "Pillow>=10.0.0",
     "razorcore>=1.211.0",
+    "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
 ]
 
 [tool.pytest.ini_options]

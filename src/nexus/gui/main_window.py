@@ -38,6 +38,7 @@ from PySide6.QtWidgets import (
 
 from nexus.core.bookmarks import DEFAULT_BOOKMARK_FOLDER_NAMES, BookmarkManager
 from nexus.core.config import Config, cleanup_logs, logger, privacy_fingerprint
+from nexus.core.link_converter import LinkConverter
 from nexus.core.models import (
     Bookmark,
     BookmarkFolder,
@@ -91,6 +92,7 @@ class MainWindow(QMainWindow):
         self._restoring_url_history = False
 
         self.url_processor = URLProcessor()
+        self.link_converter = LinkConverter()
         self.safari_controller = SafariController()
 
         app_data_dir = Path(
@@ -520,9 +522,40 @@ class MainWindow(QMainWindow):
         main_content_layout.setContentsMargins(4, 12, 0, 0)
         main_content_layout.setSpacing(12)
 
+        tagline_row = QHBoxLayout()
+        tagline_row.setContentsMargins(0, 0, 0, 0)
+        tagline_row.setSpacing(8)
+
         tagline = MetallicLabel("Paste URLs. Open in Safari.", variant="accent")
         tagline.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_content_layout.addWidget(tagline)
+        tagline_row.addWidget(tagline, 1)
+
+        self.load_file_btn = QPushButton("Load File")
+        self.load_file_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.load_file_btn.setFixedHeight(28)
+        self.load_file_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.load_file_btn.clicked.connect(self._load_file_into_table)
+        self.load_file_btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(46, 196, 160, 0.15);
+                border: 1px solid rgba(46, 196, 160, 0.45);
+                border-radius: 6px;
+                color: #7AF0D0;
+                font-family: "Helvetica Neue", sans-serif;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 4px 14px;
+            }
+            QPushButton:hover {
+                background: rgba(46, 196, 160, 0.28);
+                color: #AAFAE8;
+            }
+            QPushButton:pressed {
+                background: rgba(46, 196, 160, 0.10);
+            }
+        """)
+        tagline_row.addWidget(self.load_file_btn)
+        main_content_layout.addLayout(tagline_row)
 
         url_panel = QWidget()
         url_panel.setObjectName("urlWell")
@@ -543,6 +576,7 @@ class MainWindow(QMainWindow):
         self.url_table.model().rowsRemoved.connect(self._update_url_counter)
         self.url_table.url_activated.connect(self._open_single_url)
         self.url_table.urls_changed.connect(self._on_urls_changed)
+        self.url_table.file_dropped.connect(self.load_file_from_path)
         self.url_table.setToolTip("Double-click a URL row to open it in Safari")
         self.url_table.setStyleSheet("""
             QTableWidget {
@@ -644,6 +678,19 @@ class MainWindow(QMainWindow):
         self.quick_save_btn = GlassButton("Quick Save", "primary")
         self.quick_save_btn.clicked.connect(self._quick_save_urls)
 
+        self.rich_links_btn = GlassButton("Rich Links", "secondary")
+        self.rich_links_btn.clicked.connect(self._copy_rich_links)
+        self.rich_links_btn.setToolTip(
+            "Copy URLs as rich HTML links — paste into Apple Notes with ⌘V\n"
+            "Right-click for options"
+        )
+        self.rich_links_btn.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self.rich_links_btn.customContextMenuRequested.connect(
+            self._show_rich_links_options
+        )
+
         self.undo_btn = GlassButton("Undo", "tertiary")
         self.undo_btn.clicked.connect(self._undo_url_change)
         self.undo_btn.setEnabled(False)
@@ -654,6 +701,7 @@ class MainWindow(QMainWindow):
             self.run_btn,
             self.save_btn,
             self.quick_save_btn,
+            self.rich_links_btn,
             self.undo_btn,
             self.clear_btn,
         ):
@@ -663,6 +711,7 @@ class MainWindow(QMainWindow):
         button_row.addWidget(self.run_btn)
         button_row.addWidget(self.save_btn)
         button_row.addWidget(self.quick_save_btn)
+        button_row.addWidget(self.rich_links_btn)
         button_row.addWidget(self.undo_btn)
         button_row.addWidget(self.clear_btn)
         button_row.addStretch()
@@ -1729,6 +1778,149 @@ class MainWindow(QMainWindow):
         """Converts a hex color string to an RGB string for rgba() CSS functions."""
         hex_color = hex_color.lstrip("#")
         return f"{int(hex_color[0:2], 16)}, {int(hex_color[2:4], 16)}, {int(hex_color[4:6], 16)}"
+
+    def _load_file_into_table(self):
+        """Open a file dialog and load URLs from a .txt/.csv/.md file."""
+        last_dir = str(self.settings.value("richLinks/lastDir", ""))
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load URL File",
+            last_dir,
+            "Text Files (*.txt);;CSV Files (*.csv);;Markdown Files (*.md);;All Files (*)",
+        )
+        if not file_path:
+            return
+
+        self.settings.setValue("richLinks/lastDir", str(Path(file_path).parent))
+
+        try:
+            lines = self.link_converter.load(file_path)
+            parsed = self.link_converter.parse_lines(lines)
+            urls = [e["text"] for e in parsed if e["type"] == "url"]
+            non_url_count = sum(1 for e in parsed if e["type"] == "text")
+
+            if urls:
+                self.url_table.add_urls(urls)
+                msg = f"Loaded {len(urls)} URL{'s' if len(urls) != 1 else ''}"
+                if non_url_count:
+                    msg += f" ({non_url_count} non-URL line{'s' if non_url_count != 1 else ''} skipped)"
+                self._set_status(msg)
+            else:
+                self._show_message(
+                    "No valid URLs found in the selected file.", "warning"
+                )
+        except (FileNotFoundError, ValueError, OSError) as e:
+            self._show_message(f"Failed to load file: {e}", "warning")
+
+    def _copy_rich_links(self):
+        """Copy all URLs in the table as rich HTML links to the clipboard."""
+        urls = self.url_table.get_all_urls()
+        if not urls:
+            self._show_message(
+                "No URLs to copy. Paste or load URLs first.", "warning"
+            )
+            return
+
+        # Apply options from QSettings
+        skip_dupes = bool(self.settings.value("richLinks/skipDuplicates", True, type=bool))
+        sort_alpha = bool(self.settings.value("richLinks/sortAlpha", False, type=bool))
+        preserve_blanks = bool(
+            self.settings.value("richLinks/preserveBlanks", True, type=bool)
+        )
+
+        parsed = self.link_converter.parse_lines(urls)
+        if skip_dupes:
+            parsed = self.link_converter.remove_duplicates(parsed)
+        if sort_alpha:
+            parsed = self.link_converter.sort_lines(parsed)
+
+        url_count = sum(1 for e in parsed if e["type"] == "url")
+        html = self.link_converter.generate_html(
+            parsed, preserve_blanks=preserve_blanks
+        )
+        success = self.link_converter.copy_rich_html_to_clipboard(html)
+
+        if success:
+            self._set_status(
+                f"Copied {url_count} rich link{'s' if url_count != 1 else ''}"
+                f" to clipboard — paste into Apple Notes with ⌘V"
+            )
+        else:
+            self._set_status(
+                f"Failed to copy {url_count} link{'s' if url_count != 1 else ''}"
+                f" to clipboard"
+            )
+
+    def _show_rich_links_options(self, position):
+        """Show a context menu with toggleable options for Copy Rich Links."""
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #1C1F27;
+                color: #E8ECF4;
+                border: 1px solid rgba(255, 255, 255, 0.10);
+                border-radius: 8px;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 16px;
+                border-radius: 4px;
+            }
+            QMenu::item:selected {
+                background-color: rgba(46, 196, 160, 0.28);
+                color: #E8ECF4;
+            }
+        """)
+
+        skip_dupes = bool(self.settings.value("richLinks/skipDuplicates", True, type=bool))
+        sort_alpha = bool(self.settings.value("richLinks/sortAlpha", False, type=bool))
+        preserve_blanks = bool(
+            self.settings.value("richLinks/preserveBlanks", True, type=bool)
+        )
+
+        skip_action = menu.addAction("Skip Duplicate URLs")
+        skip_action.setCheckable(True)
+        skip_action.setChecked(skip_dupes)
+        skip_action.triggered.connect(
+            lambda checked: self.settings.setValue("richLinks/skipDuplicates", checked)
+        )
+
+        sort_action = menu.addAction("Sort Alphabetically")
+        sort_action.setCheckable(True)
+        sort_action.setChecked(sort_alpha)
+        sort_action.triggered.connect(
+            lambda checked: self.settings.setValue("richLinks/sortAlpha", checked)
+        )
+
+        blanks_action = menu.addAction("Preserve Blank Lines")
+        blanks_action.setCheckable(True)
+        blanks_action.setChecked(preserve_blanks)
+        blanks_action.triggered.connect(
+            lambda checked: self.settings.setValue("richLinks/preserveBlanks", checked)
+        )
+
+        menu.exec(self.rich_links_btn.mapToGlobal(position))
+
+    def load_file_from_path(self, file_path: str):
+        """Load URLs from a file path (used by drag-and-drop from URLTableWidget)."""
+        try:
+            lines = self.link_converter.load(file_path)
+            parsed = self.link_converter.parse_lines(lines)
+            urls = [e["text"] for e in parsed if e["type"] == "url"]
+            non_url_count = sum(1 for e in parsed if e["type"] == "text")
+
+            if urls:
+                self.url_table.add_urls(urls)
+                msg = f"Loaded {len(urls)} URL{'s' if len(urls) != 1 else ''}"
+                if non_url_count:
+                    msg += f" ({non_url_count} non-URL line{'s' if non_url_count != 1 else ''} skipped)"
+                self._set_status(msg)
+            else:
+                self._show_message(
+                    "No valid URLs found in the dropped file.", "warning"
+                )
+        except (FileNotFoundError, ValueError, OSError) as e:
+            self._show_message(f"Failed to load file: {e}", "warning")
 
     def _clear_all_data(self):
         """Clear all URLs and optionally cleanup logs for privacy."""

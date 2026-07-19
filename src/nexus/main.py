@@ -45,13 +45,17 @@ def main():
         # macOS: Set Dock icon when running from source
         if sys.platform == "darwin":
             try:
-                from AppKit import (  # ty: ignore[unresolved-import]
-                    NSApplication,
-                    NSImage,
-                )
+                import AppKit
 
-                ns_app = NSApplication.sharedApplication()
-                ns_image = NSImage.alloc().initWithContentsOfFile_(str(icon_path))
+                ns_application = getattr(AppKit, "NSApplication", None)
+                ns_image_cls = getattr(AppKit, "NSImage", None)
+                if ns_application is None or ns_image_cls is None:
+                    raise ImportError("AppKit dock APIs unavailable")
+
+                ns_app = ns_application.sharedApplication()
+                ns_image = ns_image_cls.alloc().initWithContentsOfFile_(
+                    str(icon_path)
+                )
                 if ns_image:
                     ns_app.setApplicationIconImage_(ns_image)
             except ImportError:

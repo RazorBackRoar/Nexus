@@ -681,6 +681,7 @@ class URLTableWidget(QTableWidget):
 
     url_activated = Signal(int, str)
     urls_changed = Signal(list)
+    file_dropped = Signal(str)
 
     STATUS_LABELS = {
         "ready": "Ready",
@@ -831,8 +832,10 @@ class URLTableWidget(QTableWidget):
         self._suspend_url_events = False
         self._emit_urls_changed()
 
+    _FILE_DROP_EXTENSIONS = {".txt", ".csv", ".md"}
+
     def dragEnterEvent(self, event):  # noqa: N802 - Qt override
-        """Accept drag events with URLs or text."""
+        """Accept drag events with URLs, text, or supported files."""
         if (
             event.mimeData().hasUrls()
             or event.mimeData().hasText()
@@ -840,9 +843,23 @@ class URLTableWidget(QTableWidget):
         ):
             event.acceptProposedAction()
 
+    def dragMoveEvent(self, event):  # noqa: N802 - Qt override
+        """Keep accepting the drag as it moves over the widget."""
+        event.acceptProposedAction()
+
     def dropEvent(self, event):  # noqa: N802 - Qt override
-        """Handle dropped content."""
+        """Handle dropped content, including .txt/.csv/.md files."""
         mime_data = event.mimeData()
+        # Check if a supported file was dropped
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                if url.isLocalFile():
+                    path = url.toLocalFile()
+                    suffix = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+                    if f".{suffix}" in self._FILE_DROP_EXTENSIONS:
+                        self.file_dropped.emit(path)
+                        event.acceptProposedAction()
+                        return
         self._process_mime_data(mime_data)
         event.acceptProposedAction()
 
