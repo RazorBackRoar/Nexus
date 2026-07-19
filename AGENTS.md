@@ -76,9 +76,12 @@ CI covers lint, types, and unit tests. It does **not** prove Safari permissions,
 - Past-URLs rows stay borderless; no boxed cells or divider lines in the URL table.
 - Hero "Nexus" title uses metallic silver gradient lettering with wider tracking, positioned slightly higher in the header.
 - Eject mounted `Nexus` DMG volumes when done (`hdiutil detach /Volumes/Nexus`).
+- When publishing Nexus, rebuild the DMG, install to `/Applications`, and replace the sole GitHub release asset (do not keep older DMG releases).
 
 ## Learned Workspace Facts
 
 - `assets/icons/Nexus.icns` is gitignored; shipping icon changes requires `git add -f assets/icons/Nexus.icns`.
 - Packaged smoke path: `razorbuild Nexus` → `dist/Nexus.dmg` → mount and launch `Nexus.app` from `/Volumes/Nexus`.
 - GitHub release surface is a single `v2.0.0` DMG; older releases were removed Jul 2026.
+- Quick Save is a top-level bookmark column with no subfolders; each save is a rectangular card (Date & Time | Bookmarks | Notes), newest first; right-click to copy or delete a block.
+- Drag-and-drop of `.txt` onto the URL table loads URLs; Rich Links copies Apple Notes–friendly rich links to the clipboard.
