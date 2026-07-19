@@ -14,6 +14,7 @@ from nexus.gui.widgets._base import (
     URLTableWidget,
     WindowTitleBar,
 )
+from nexus.gui.widgets.quick_save_panel import QuickSavePanel
 
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "NeonButton",
     "NeonURLItemDelegate",
     "OutlinedLabel",
+    "QuickSavePanel",
     "TrafficLightButton",
     "URLTableWidget",
     "WindowTitleBar",

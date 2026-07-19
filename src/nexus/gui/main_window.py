@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from secrets import token_hex
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from PySide6.QtCore import (
@@ -45,6 +45,7 @@ from nexus.core.models import (
     BookmarkGroup,
     BookmarkNode,
     GroupItem,
+    QuickSaveEntry,
 )
 from nexus.core.safari import SafariController
 from nexus.gui.widgets import (
@@ -53,12 +54,16 @@ from nexus.gui.widgets import (
     CosmicFrame,
     GlassButton,
     MetallicLabel,
+    QuickSavePanel,
     URLTableWidget,
     WindowTitleBar,
 )
 from nexus.utils.url_processor import URLProcessor
 from razorcore.appinfo import AboutDialog
 from razorcore.updates import check_for_updates
+
+
+QUICK_SAVE_FOLDER_NAME = "Quick Save"
 
 
 class MainWindow(QMainWindow):
@@ -69,6 +74,7 @@ class MainWindow(QMainWindow):
     # Hex colors keyed by default tab name.  Order matches
     # ``DEFAULT_BOOKMARK_FOLDER_NAMES`` in ``core.bookmarks``.
     DEFAULT_TAB_PALETTE: dict[str, str] = {
+        QUICK_SAVE_FOLDER_NAME: "#2EC4A0",
         "Fun": "#E5738A",
         "Misc": "#D4A05A",
         "Tech": "#5B8DEF",
@@ -457,6 +463,7 @@ class MainWindow(QMainWindow):
             self._show_bookmark_context_menu
         )
         self.bookmark_tree.itemDoubleClicked.connect(self._handle_item_double_click)
+        self.bookmark_tree.itemClicked.connect(self._handle_bookmark_item_clicked)
         self.bookmark_tree.setRootIsDecorated(False)
         self.bookmark_tree.setItemsExpandable(True)
         self.bookmark_tree.setIndentation(0)
@@ -648,6 +655,18 @@ class MainWindow(QMainWindow):
         self.url_stack.setContentsMargins(0, 0, 0, 0)
         self.url_stack.addWidget(self.url_empty_state)
         self.url_stack.addWidget(self.url_table)
+
+        self.quick_save_panel = QuickSavePanel()
+        self.quick_save_panel.delete_requested.connect(self._delete_quick_save_entry)
+        self.quick_save_panel.copy_urls_requested.connect(
+            self._copy_quick_save_entry_urls
+        )
+        self.quick_save_panel.load_urls_requested.connect(
+            self._load_quick_save_entry_to_table
+        )
+        self.quick_save_panel.notes_changed.connect(self._update_quick_save_notes)
+        self.url_stack.addWidget(self.quick_save_panel)
+
         url_panel_layout.addWidget(self.url_stack_host, 1)
         main_content_layout.addWidget(url_panel, 1)
 
@@ -750,7 +769,13 @@ class MainWindow(QMainWindow):
     def _update_url_empty_state(self):
         """Swap between the empty-state message and the real URL table."""
         has_urls = self.url_table.rowCount() > 0
-        if hasattr(self, "url_stack"):
+        if hasattr(self, "url_stack") and hasattr(self, "quick_save_panel"):
+            # Don't yank the user out of the Quick Save database view.
+            if self.url_stack.currentWidget() is not self.quick_save_panel:
+                self.url_stack.setCurrentWidget(
+                    self.url_table if has_urls else self.url_empty_state
+                )
+        elif hasattr(self, "url_stack"):
             self.url_stack.setCurrentWidget(
                 self.url_table if has_urls else self.url_empty_state
             )
@@ -927,7 +952,7 @@ class MainWindow(QMainWindow):
         self._set_status(f"Saved {len(urls)} URLs to '{name}' in {target}")
 
     def _quick_save_urls(self):
-        """Save URLs straight to the Quick Saves folder with auto-generated names."""
+        """Save the current URL list as a dated Quick Save block (newest first)."""
         urls = self.url_table.get_all_urls()
         if not urls:
             clipboard = QApplication.clipboard()
@@ -940,18 +965,35 @@ class MainWindow(QMainWindow):
             )
             return
 
-        folder_item = self._find_or_create_folder("Quick Saves")
-        for url in urls:
-            bookmark_data = {
-                "name": self._generate_bookmark_name(url),
-                "type": "bookmark",
-                "url": self.url_processor._normalize_url(url) or url,
-            }
-            self._create_tree_item(bookmark_data, folder_item)
-        folder_item.setExpanded(True)
+        normalized = [
+            self.url_processor._normalize_url(url) or url for url in urls
+        ]
+        entry = QuickSaveEntry(
+            id="qs_" + token_hex(4),
+            created_at=datetime.now().astimezone().isoformat(timespec="seconds"),
+            urls=normalized,
+            notes="",
+        )
+
+        folder_item = self._find_or_create_folder(QUICK_SAVE_FOLDER_NAME)
+        data = folder_item.data(0, Qt.ItemDataRole.UserRole) or {
+            "name": QUICK_SAVE_FOLDER_NAME,
+            "type": "folder",
+            "children": [],
+        }
+        children = list(data.get("children") or [])
+        children.insert(0, entry.to_dict())
+        data["children"] = children
+        folder_item.setData(0, Qt.ItemDataRole.UserRole, data)
+        # Quick Save has no expandable subfolders/rows in the sidebar.
+        folder_item.setExpanded(False)
 
         self.save_bookmarks()
-        self._show_message(f"Quick saved {len(urls)} URL(s) to Quick Saves!", "info")
+        self._show_quick_save_view(folder_item)
+        self._set_status(
+            f"Quick saved {len(normalized)} URL"
+            f"{'s' if len(normalized) != 1 else ''} to {QUICK_SAVE_FOLDER_NAME}"
+        )
 
     def _filter_bookmarks(self, text: str):
         """Filters the bookmark tree based on search text."""
@@ -1050,6 +1092,12 @@ class MainWindow(QMainWindow):
 
     def _update_url_counter(self):
         """Updates the URL counter label based on table contents."""
+        if (
+            hasattr(self, "url_stack")
+            and hasattr(self, "quick_save_panel")
+            and self.url_stack.currentWidget() is self.quick_save_panel
+        ):
+            return
         count = self.url_table.rowCount()
         if count == 0:
             self.url_counter_label.setText("Waiting for pasted URLs")
@@ -1200,7 +1248,146 @@ class MainWindow(QMainWindow):
         if data.get("type") == "bookmark":
             self._open_bookmark_link(item)
         elif data.get("type") == "folder":
+            if data.get("name") == QUICK_SAVE_FOLDER_NAME:
+                self._show_quick_save_view(item)
+                return
             item.setExpanded(not item.isExpanded())
+
+    def _handle_bookmark_item_clicked(self, item: QTreeWidgetItem, column: int):
+        """Single-click: open Quick Save database view, otherwise restore URL table."""
+        data = item.data(0, Qt.ItemDataRole.UserRole)
+        if data and data.get("type") == "folder" and data.get("name") == QUICK_SAVE_FOLDER_NAME:
+            self._show_quick_save_view(item)
+            return
+        self._show_url_table_view()
+
+    def _show_url_table_view(self) -> None:
+        """Show the URL empty state or URL table (whichever is appropriate)."""
+        if self.url_table.rowCount() == 0:
+            self.url_stack.setCurrentWidget(self.url_empty_state)
+        else:
+            self.url_stack.setCurrentWidget(self.url_table)
+
+    def _show_quick_save_view(self, folder_item: QTreeWidgetItem | None = None) -> None:
+        """Show the Quick Save panel filled from the Quick Save folder."""
+        if folder_item is None:
+            folder_item = self._find_folder_by_name(QUICK_SAVE_FOLDER_NAME)
+        if folder_item is None:
+            folder_item = self._find_or_create_folder(QUICK_SAVE_FOLDER_NAME)
+
+        self.bookmark_tree.setCurrentItem(folder_item)
+        data = folder_item.data(0, Qt.ItemDataRole.UserRole) or {}
+        entries = [
+            child
+            for child in (data.get("children") or [])
+            if isinstance(child, dict) and child.get("type") == "quick_save"
+        ]
+        entries.sort(
+            key=lambda e: str(e.get("created_at") or ""),
+            reverse=True,
+        )
+        self.quick_save_panel.set_entries(entries)
+        self.url_stack.setCurrentWidget(self.quick_save_panel)
+        self.url_counter_label.setText(
+            f"{len(entries)} Quick Save{'s' if len(entries) != 1 else ''}"
+        )
+
+    def _get_quick_save_folder_data(self) -> tuple[QTreeWidgetItem, dict[str, Any]]:
+        folder_item = self._find_or_create_folder(QUICK_SAVE_FOLDER_NAME)
+        data = folder_item.data(0, Qt.ItemDataRole.UserRole) or {
+            "name": QUICK_SAVE_FOLDER_NAME,
+            "type": "folder",
+            "children": [],
+        }
+        return folder_item, data
+
+    def _set_quick_save_children(
+        self, folder_item: QTreeWidgetItem, children: list[dict[str, Any]]
+    ) -> None:
+        data = folder_item.data(0, Qt.ItemDataRole.UserRole) or {
+            "name": QUICK_SAVE_FOLDER_NAME,
+            "type": "folder",
+            "children": [],
+        }
+        data["children"] = children
+        folder_item.setData(0, Qt.ItemDataRole.UserRole, data)
+
+    def _delete_quick_save_entry(self, entry_id: str) -> None:
+        folder_item, data = self._get_quick_save_folder_data()
+        children = [
+            child
+            for child in (data.get("children") or [])
+            if not (
+                isinstance(child, dict)
+                and child.get("type") == "quick_save"
+                and child.get("id") == entry_id
+            )
+        ]
+        self._set_quick_save_children(folder_item, children)
+        self.save_bookmarks()
+        self._show_quick_save_view(folder_item)
+        self._set_status("Deleted Quick Save block")
+
+    def _copy_quick_save_entry_urls(self, entry_id: str) -> None:
+        urls = self.quick_save_panel.copy_entry_urls_to_clipboard(entry_id)
+        if not urls:
+            folder_item, data = self._get_quick_save_folder_data()
+            for child in data.get("children") or []:
+                if (
+                    isinstance(child, dict)
+                    and child.get("type") == "quick_save"
+                    and child.get("id") == entry_id
+                ):
+                    urls = [str(u) for u in child.get("urls") or [] if str(u).strip()]
+                    clipboard = QApplication.clipboard()
+                    if clipboard is not None and urls:
+                        clipboard.setText("\n".join(urls))
+                    break
+            _ = folder_item
+        if urls:
+            self._set_status(
+                f"Copied {len(urls)} bookmark{'s' if len(urls) != 1 else ''}"
+            )
+        else:
+            self._set_status("No bookmarks to copy")
+
+    def _load_quick_save_entry_to_table(self, entry_id: str) -> None:
+        _folder_item, data = self._get_quick_save_folder_data()
+        urls: list[str] = []
+        for child in data.get("children") or []:
+            if (
+                isinstance(child, dict)
+                and child.get("type") == "quick_save"
+                and child.get("id") == entry_id
+            ):
+                urls = [str(u) for u in child.get("urls") or [] if str(u).strip()]
+                break
+        if not urls:
+            self._show_message("No bookmarks in this Quick Save block.", "warning")
+            return
+        self.url_table.add_urls(urls)
+        self._show_url_table_view()
+        self._set_status(
+            f"Loaded {len(urls)} bookmark{'s' if len(urls) != 1 else ''} into URL table"
+        )
+
+    def _update_quick_save_notes(self, entry_id: str, notes: str) -> None:
+        folder_item, data = self._get_quick_save_folder_data()
+        children = list(data.get("children") or [])
+        changed = False
+        for child in children:
+            if (
+                isinstance(child, dict)
+                and child.get("type") == "quick_save"
+                and child.get("id") == entry_id
+            ):
+                if child.get("notes") != notes:
+                    child["notes"] = notes
+                    changed = True
+                break
+        if changed:
+            self._set_quick_save_children(folder_item, children)
+            self.save_bookmarks()
 
     def _on_bookmarks_reordered(self):
         """Called when bookmarks are reordered via drag & drop. Saves the new order."""
@@ -1303,8 +1490,11 @@ class MainWindow(QMainWindow):
         """Recursive helper to build the visual tree from data."""
         is_folder = data.get("type") == "folder"
         is_group = data.get("type") == "group"
+        is_quick_save_folder = is_folder and data.get("name") == QUICK_SAVE_FOLDER_NAME
         item = QTreeWidgetItem([data.get("name", "(missing group)")])
-        item.setData(0, Qt.ItemDataRole.UserRole, data)
+        # Keep a deep-enough copy so Quick Save children live on the item,
+        # not as expandable sidebar rows.
+        item.setData(0, Qt.ItemDataRole.UserRole, dict(data))
         if is_folder:
             folder_style = self._resolve_folder_style(
                 data["name"],
@@ -1312,9 +1502,22 @@ class MainWindow(QMainWindow):
             )
             item.setData(0, Qt.ItemDataRole.UserRole + 1, folder_style)
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            if "children" in data:
+            if is_quick_save_folder:
+                # No subfolders / child rows — entries render in QuickSavePanel.
+                children = []
+                for child in data.get("children") or []:
+                    if isinstance(child, dict):
+                        children.append(dict(child))
+                payload = dict(data)
+                payload["children"] = children
+                item.setData(0, Qt.ItemDataRole.UserRole, payload)
+                item.setChildIndicatorPolicy(
+                    QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicator
+                )
+            elif "children" in data:
                 for child_data in data["children"]:
-                    self._create_tree_item(child_data, item)
+                    if isinstance(child_data, dict):
+                        self._create_tree_item(child_data, item)
         elif is_group:
             item.setData(
                 0,
@@ -1355,9 +1558,18 @@ class MainWindow(QMainWindow):
         """Recursively converts a tree item back into a dictionary for saving."""
         data = item.data(0, Qt.ItemDataRole.UserRole).copy()
         if data.get("type") == "folder":
-            data["children"] = [
-                self._serialize_item(item.child(i)) for i in range(item.childCount())
-            ]
+            if data.get("name") == QUICK_SAVE_FOLDER_NAME:
+                # Children are stored on UserRole, not as tree widgets.
+                data["children"] = [
+                    dict(child)
+                    for child in (data.get("children") or [])
+                    if isinstance(child, dict)
+                ]
+            else:
+                data["children"] = [
+                    self._serialize_item(item.child(i))
+                    for i in range(item.childCount())
+                ]
         return data
 
     def load_bookmarks(self):
@@ -1373,15 +1585,20 @@ class MainWindow(QMainWindow):
         for node in bookmark_nodes:
             node_data = self.bookmark_manager._serialize_node(node)
             item = self._create_tree_item(node_data)
-            item.setExpanded(True)
+            if node_data.get("name") == QUICK_SAVE_FOLDER_NAME:
+                item.setExpanded(False)
+            else:
+                item.setExpanded(True)
 
     def _normalize_bookmark_nodes(
         self, bookmark_nodes: list[BookmarkNode]
     ) -> tuple[list[BookmarkNode], bool]:
-        """Align saved bookmark folders with the new ten-tab sidebar set.
+        """Align saved bookmark folders with the sidebar set.
 
-        Empty folders matching the old default set are removed; any folder
-        with user content is preserved. Missing default tabs are appended.
+        - Removes empty legacy defaults and the retired ``hey`` / ``Sort`` tabs
+        - Renames ``Quick Saves`` → ``Quick Save`` and migrates old bookmarks
+          into ``quick_save`` blocks
+        - Ensures ``Quick Save`` and the standard default tabs exist
         """
         changed = False
         old_empty_defaults = {
@@ -1392,18 +1609,46 @@ class MainWindow(QMainWindow):
             "later",
             "news",
         }
+        retired_empty_tabs = {"hey", "sort"}
 
         kept_nodes: list[BookmarkNode] = []
+        quick_save_folder: BookmarkFolder | None = None
+
         for node in bookmark_nodes:
-            if (
-                isinstance(node, BookmarkFolder)
-                and node.name.lower() in old_empty_defaults
-                and not node.children
-            ):
-                changed = True
-                continue
+            if isinstance(node, BookmarkFolder):
+                name_lower = node.name.lower()
+                if name_lower in retired_empty_tabs:
+                    changed = True
+                    continue
+                if name_lower in old_empty_defaults and not node.children:
+                    changed = True
+                    continue
+                if name_lower in {"quick save", "quick saves"}:
+                    migrated = self._coerce_quick_save_folder(node)
+                    if quick_save_folder is None:
+                        quick_save_folder = migrated
+                    else:
+                        quick_save_folder.children.extend(migrated.children)
+                    if (
+                        migrated.name != node.name
+                        or migrated.children != node.children
+                    ):
+                        changed = True
+                    continue
             kept_nodes.append(node)
-        bookmark_nodes = kept_nodes
+
+        if quick_save_folder is None:
+            quick_save_folder = BookmarkFolder(
+                name=QUICK_SAVE_FOLDER_NAME,
+                children=[],
+                accent=self.DEFAULT_TAB_PALETTE.get(QUICK_SAVE_FOLDER_NAME),
+            )
+            changed = True
+        elif quick_save_folder.name != QUICK_SAVE_FOLDER_NAME:
+            quick_save_folder.name = QUICK_SAVE_FOLDER_NAME
+            changed = True
+
+        bookmark_nodes = [quick_save_folder, *kept_nodes]
 
         existing_names = {
             node.name.lower()
@@ -1418,10 +1663,58 @@ class MainWindow(QMainWindow):
 
         return bookmark_nodes, changed
 
+    def _coerce_quick_save_folder(self, folder: BookmarkFolder) -> BookmarkFolder:
+        """Normalize a Quick Save(s) folder into quick_save marker children."""
+        children: list[BookmarkNode] = []
+        for child in folder.children:
+            if isinstance(child, dict) and child.get("type") == "quick_save":
+                entry = QuickSaveEntry.from_dict(cast(dict[str, Any], child))
+                if not entry.id:
+                    entry.id = "qs_" + token_hex(4)
+                children.append(entry.to_dict())
+                continue
+            if isinstance(child, Bookmark):
+                children.append(
+                    QuickSaveEntry(
+                        id="qs_" + token_hex(4),
+                        created_at=datetime.now()
+                        .astimezone()
+                        .isoformat(timespec="seconds"),
+                        urls=[child.url],
+                        notes="",
+                    ).to_dict()
+                )
+                continue
+            if isinstance(child, dict) and child.get("type") == "bookmark":
+                url = str(child.get("url") or "").strip()
+                if url:
+                    children.append(
+                        QuickSaveEntry(
+                            id="qs_" + token_hex(4),
+                            created_at=datetime.now()
+                            .astimezone()
+                            .isoformat(timespec="seconds"),
+                            urls=[url],
+                            notes="",
+                        ).to_dict()
+                    )
+                continue
+            # Preserve unknown markers (e.g. groups) if somehow present.
+            children.append(child)
+
+        return BookmarkFolder(
+            name=QUICK_SAVE_FOLDER_NAME,
+            children=children,
+            accent=folder.accent
+            or self.DEFAULT_TAB_PALETTE.get(QUICK_SAVE_FOLDER_NAME),
+        )
+
     def _bookmark_sort_key(self, node: BookmarkNode) -> tuple[int, int, str]:
         preferred_order = {
             name.lower(): index
-            for index, name in enumerate(DEFAULT_BOOKMARK_FOLDER_NAMES)
+            for index, name in enumerate(
+                (QUICK_SAVE_FOLDER_NAME, *DEFAULT_BOOKMARK_FOLDER_NAMES)
+            )
         }
         if isinstance(node, dict):
             folder_name = str(node.get("name", "")).lower()
@@ -1518,6 +1811,15 @@ class MainWindow(QMainWindow):
             delete_action.triggered.connect(lambda: self._delete_bookmark_item(item))
         else:
             # Folder (or other top-level) menu
+            folder_name = (data or {}).get("name", "")
+            if folder_name == QUICK_SAVE_FOLDER_NAME:
+                open_action = menu.addAction("Open Quick Save")
+                open_action.triggered.connect(
+                    lambda: self._show_quick_save_view(item)
+                )
+                menu.exec(self.bookmark_tree.viewport().mapToGlobal(position))
+                return
+
             edit_action = menu.addAction("Rename")
             edit_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
 
@@ -1675,6 +1977,13 @@ class MainWindow(QMainWindow):
 
     def _delete_bookmark_item(self, item: QTreeWidgetItem):
         """Deletes a selected bookmark or folder item."""
+        data = item.data(0, Qt.ItemDataRole.UserRole) or {}
+        if data.get("type") == "folder" and data.get("name") == QUICK_SAVE_FOLDER_NAME:
+            self._show_message(
+                "Quick Save is a built-in column and cannot be deleted.",
+                "warning",
+            )
+            return
         parent = item.parent()
         if parent:
             parent.removeChild(item)  # Use removeChild for QTreeWidgetItems

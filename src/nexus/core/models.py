@@ -61,3 +61,36 @@ class BookmarkGroup:
     name: str
     created_at: str = field(default_factory=_now_iso)  # ISO 8601 timestamp
     items: list[GroupItem] = field(default_factory=list)
+
+
+@dataclass
+class QuickSaveEntry:
+    """One Quick Save batch shown as a dated block under the Quick Save tab.
+
+    Stored as a raw marker dict in ``bookmarks_v2.json`` so it round-trips
+    through the existing folder tree without a separate sidecar file.
+    """
+
+    id: str
+    created_at: str = field(default_factory=_now_iso)  # ISO 8601 timestamp
+    urls: list[str] = field(default_factory=list)
+    notes: str = ""
+    type: str = "quick_save"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "type": "quick_save",
+            "id": self.id,
+            "created_at": self.created_at,
+            "urls": list(self.urls),
+            "notes": self.notes,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> QuickSaveEntry:
+        return cls(
+            id=str(data.get("id") or ""),
+            created_at=str(data.get("created_at") or _now_iso()),
+            urls=[str(u) for u in data.get("urls") or [] if str(u).strip()],
+            notes=str(data.get("notes") or ""),
+        )
