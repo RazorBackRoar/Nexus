@@ -1624,8 +1624,21 @@ class MainWindow(QMainWindow):
                 parent.setExpanded(True)
             self.save_bookmarks()
 
+    def _collect_group_ids_from_subtree(self, item: QTreeWidgetItem) -> list[str]:
+        """Return group ids for every group marker under *item* (recursive)."""
+        ids: list[str] = []
+        for i in range(item.childCount()):
+            child = item.child(i)
+            data = child.data(0, Qt.ItemDataRole.UserRole)
+            if data and data.get("type") == "group" and data.get("id"):
+                ids.append(data["id"])
+            ids.extend(self._collect_group_ids_from_subtree(child))
+        return ids
+
     def _delete_bookmark_item(self, item: QTreeWidgetItem):
         """Deletes a selected bookmark or folder item."""
+        for group_id in self._collect_group_ids_from_subtree(item):
+            self.group_store.delete_group(group_id)
         parent = item.parent()
         if parent:
             parent.removeChild(item)  # Use removeChild for QTreeWidgetItems

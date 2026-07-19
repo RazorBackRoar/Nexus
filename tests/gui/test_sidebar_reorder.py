@@ -156,6 +156,42 @@ class _FakeMenu:
         return None
 
 
+def test_folder_delete_removes_group_sidecar_entries(window):
+    """Deleting a folder cascades group cleanup into bookmark_groups.json."""
+    from nexus.core.models import BookmarkGroup, GroupItem
+
+    group = BookmarkGroup(
+        id="grp_folder_delete",
+        name="Orphan test",
+        created_at="2026-07-19T00:00:00",
+        items=[GroupItem(title="Example", url="https://example.com")],
+    )
+    window.group_store.upsert_group(group)
+    window.bookmark_manager.save_bookmarks_raw(
+        [
+            {
+                "name": "Tech",
+                "type": "folder",
+                "accent": "#5B8DEF",
+                "children": [{"type": "group", "id": "grp_folder_delete"}],
+            }
+        ]
+    )
+    window.load_bookmarks()
+
+    root = window.bookmark_tree.invisibleRootItem()
+    tech = next(
+        root.child(i)
+        for i in range(root.childCount())
+        if root.child(i).text(0) == "Tech"
+    )
+    window._delete_bookmark_item(tech)
+
+    assert window.group_store.get_group("grp_folder_delete") is None
+    reloaded = window.bookmark_manager.load_bookmarks_raw()
+    assert not any(entry.get("name") == "Tech" for entry in reloaded)
+
+
 def test_group_context_menu_has_rename_and_delete(window, monkeypatch):
     """Right-clicking a group row offers the expected actions without crashing."""
     window.bookmark_manager.save_bookmarks_raw(
