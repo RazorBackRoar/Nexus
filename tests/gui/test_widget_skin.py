@@ -118,9 +118,11 @@ def test_main_window_starts_with_empty_url_state(tmp_path, monkeypatch):
     try:
         assert window.url_table.rowCount() == 0
         assert window.url_stack.currentWidget() is window.url_empty_state
-        assert not window.run_btn.isEnabled()
-        assert not window.save_btn.isEnabled()
-        assert not window.clear_btn.isEnabled()
+        # Action buttons stay colored/enabled; handlers no-op when empty.
+        assert window.run_btn.isEnabled()
+        assert window.save_btn.isEnabled()
+        assert window.clear_btn.isEnabled()
+        assert not window.undo_btn.isEnabled()
     finally:
         window.close()
 

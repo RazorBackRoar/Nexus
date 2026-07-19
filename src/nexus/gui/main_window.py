@@ -688,16 +688,16 @@ class MainWindow(QMainWindow):
         button_row.setContentsMargins(8, 6, 8, 2)
         button_row.setSpacing(14)
 
-        self.run_btn = GlassButton("Open All", "primary")
+        self.run_btn = GlassButton("Open All", "open")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
-        self.save_btn = GlassButton("Save", "secondary")
+        self.save_btn = GlassButton("Save", "save")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
-        self.quick_save_btn = GlassButton("Quick Save", "primary")
+        self.quick_save_btn = GlassButton("Quick Save", "quick")
         self.quick_save_btn.clicked.connect(self._quick_save_urls)
 
-        self.rich_links_btn = GlassButton("Rich Links", "secondary")
+        self.rich_links_btn = GlassButton("Rich Links", "rich")
         self.rich_links_btn.clicked.connect(self._copy_rich_links)
         self.rich_links_btn.setToolTip(
             "Copy URLs as rich HTML links — paste into Apple Notes with ⌘V\n"
@@ -710,11 +710,11 @@ class MainWindow(QMainWindow):
             self._show_rich_links_options
         )
 
-        self.undo_btn = GlassButton("Undo", "tertiary")
+        self.undo_btn = GlassButton("Undo", "undo")
         self.undo_btn.clicked.connect(self._undo_url_change)
         self.undo_btn.setEnabled(False)
 
-        self.clear_btn = GlassButton("Clear", "quaternary")
+        self.clear_btn = GlassButton("Clear", "clear")
         self.clear_btn.clicked.connect(self._clear_all_data)
         for button in (
             self.run_btn,
@@ -779,12 +779,7 @@ class MainWindow(QMainWindow):
             self.url_stack.setCurrentWidget(
                 self.url_table if has_urls else self.url_empty_state
             )
-        if hasattr(self, "run_btn"):
-            self.run_btn.setEnabled(has_urls)
-        if hasattr(self, "save_btn"):
-            self.save_btn.setEnabled(has_urls)
-        if hasattr(self, "clear_btn"):
-            self.clear_btn.setEnabled(has_urls)
+        # Keep action buttons colored and clickable; handlers no-op when empty.
         self._update_undo_button_state()
 
     def _populate_safari_tab(
@@ -1595,7 +1590,8 @@ class MainWindow(QMainWindow):
     ) -> tuple[list[BookmarkNode], bool]:
         """Align saved bookmark folders with the sidebar set.
 
-        - Removes empty legacy defaults and the retired ``hey`` / ``Sort`` tabs
+        - Removes empty legacy defaults and the retired ``hey`` / ``Sort`` /
+          ``Future`` tabs
         - Renames ``Quick Saves`` → ``Quick Save`` and migrates old bookmarks
           into ``quick_save`` blocks
         - Ensures ``Quick Save`` and the standard default tabs exist
@@ -1609,7 +1605,7 @@ class MainWindow(QMainWindow):
             "later",
             "news",
         }
-        retired_empty_tabs = {"hey", "sort"}
+        retired_empty_tabs = {"hey", "sort", "future"}
 
         kept_nodes: list[BookmarkNode] = []
         quick_save_folder: BookmarkFolder | None = None

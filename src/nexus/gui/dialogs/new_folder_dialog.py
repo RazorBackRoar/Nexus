@@ -28,7 +28,7 @@ DEFAULT_PALETTE: tuple[str, ...] = (
     "#5B8DEF",  # Tech    (blue)
     "#E85A5A",  # Work    (red)
     "#8A95A8",  # Extra   (grey)
-    "#A87A5A",  # Future  (brown)
+    "#A87A5A",  # Warm brown
     "#2A2A35",  # Hidden  (black)
     "#F0F4FA",  # Special (white)
     "#5BA86A",  # Favorites (green)

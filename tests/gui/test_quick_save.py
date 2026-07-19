@@ -48,7 +48,7 @@ def test_quick_save_folder_is_first_and_has_no_tree_children(window):
     assert folder.childCount() == 0
 
 
-def test_retired_hey_and_sort_tabs_are_removed(tmp_path, monkeypatch, app):
+def test_retired_hey_sort_and_future_tabs_are_removed(tmp_path, monkeypatch, app):
     from PySide6.QtCore import QStandardPaths
 
     monkeypatch.setattr(QStandardPaths, "writableLocation", lambda *_: str(tmp_path))
@@ -58,6 +58,7 @@ def test_retired_hey_and_sort_tabs_are_removed(tmp_path, monkeypatch, app):
             [
                 {"name": "hey", "type": "folder", "children": []},
                 {"name": "Sort", "type": "folder", "children": []},
+                {"name": "Future", "type": "folder", "children": [{"url": "https://x.test", "title": "x"}]},
                 {"name": "Fun", "type": "folder", "children": []},
             ]
         ),
@@ -69,6 +70,7 @@ def test_retired_hey_and_sort_tabs_are_removed(tmp_path, monkeypatch, app):
         names = _folder_names(window)
         assert "hey" not in names
         assert "Sort" not in names
+        assert "Future" not in names
         assert names[0] == QUICK_SAVE_FOLDER_NAME
         assert "Fun" in names
     finally:
