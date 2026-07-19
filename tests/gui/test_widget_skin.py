@@ -123,6 +123,8 @@ def test_main_window_starts_with_empty_url_state(tmp_path, monkeypatch):
         assert not window.clear_btn.isEnabled()
     finally:
         window.close()
+        window.deleteLater()
+        _app().processEvents()
 
 
 def test_main_window_uses_custom_titlebar_shell_on_macos(tmp_path, monkeypatch):
@@ -156,6 +158,8 @@ def test_main_window_uses_custom_titlebar_shell_on_macos(tmp_path, monkeypatch):
             assert window.window_titlebar.minimize_button.width() == 14
     finally:
         window.close()
+        window.deleteLater()
+        _app().processEvents()
 
 
 def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeypatch):
@@ -209,6 +213,7 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             assert item is not None
             names.append(item.text(0))
         assert names == [
+            "Quick Save",
             "Fun",
             "Misc",
             "Tech",
@@ -220,7 +225,7 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             "Reading",
         ]
 
-        misc_item = window.bookmark_tree.topLevelItem(1)
+        misc_item = window.bookmark_tree.topLevelItem(2)
         assert misc_item is not None
         assert misc_item.text(0) == "Misc"
         assert misc_item.childCount() == 0
@@ -241,3 +246,5 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
         assert misc_style["start"] == "#D4A05A"
     finally:
         window.close()
+        window.deleteLater()
+        _app().processEvents()
