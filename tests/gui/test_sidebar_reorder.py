@@ -37,11 +37,12 @@ def window(tmp_path, monkeypatch, app):
 
 
 def test_default_tabs_load_in_spec_order(window):
-    """The sidebar ships with the eight default tabs in the design order."""
+    """Sidebar ships Quick Save first, then the eight default tabs."""
     tree = window.bookmark_tree
-    assert tree.topLevelItemCount() == 8
+    assert tree.topLevelItemCount() == 9
     names = [tree.topLevelItem(i).text(0) for i in range(tree.topLevelItemCount())]
     assert names == [
+        "Quick Save",
         "Fun",
         "Misc",
         "Tech",

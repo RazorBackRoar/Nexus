@@ -209,6 +209,7 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             assert item is not None
             names.append(item.text(0))
         assert names == [
+            "Quick Save",
             "Fun",
             "Misc",
             "Tech",
@@ -220,7 +221,7 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
             "Reading",
         ]
 
-        misc_item = window.bookmark_tree.topLevelItem(1)
+        misc_item = window.bookmark_tree.topLevelItem(2)
         assert misc_item is not None
         assert misc_item.text(0) == "Misc"
         assert misc_item.childCount() == 0
