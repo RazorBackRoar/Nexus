@@ -158,7 +158,13 @@ def test_generate_html_from_urls_skips_blank_lines(converter: LinkConverter) -> 
 
 def test_copy_rich_html_to_clipboard_uses_qt_fallback(
     converter: LinkConverter,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    import nexus.core.link_converter as link_converter_module
+
+    monkeypatch.setattr(link_converter_module, "_NSPasteboard", None)
+    monkeypatch.setattr(link_converter_module, "_NSPasteboardTypeHTML", None)
+
     _app()
     html = '<a href="https://example.com">https://example.com</a><br>'
 
