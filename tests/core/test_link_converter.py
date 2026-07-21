@@ -184,4 +184,4 @@ def test_copy_rich_html_to_clipboard_uses_qt_fallback(
     assert len(stored_mime) == 1
     mime = stored_mime[0]
     assert mime.hasHtml()
-    assert "https://example.com" in mime.html()
+    assert mime.html() == html
