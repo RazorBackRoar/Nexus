@@ -81,7 +81,7 @@ CI covers lint, types, and unit tests. It does **not** prove Safari permissions,
 ## Learned Workspace Facts
 
 - `assets/icons/Nexus.icns` is gitignored; shipping icon changes requires `git add -f assets/icons/Nexus.icns`.
-- Packaged smoke path: `razorbuild Nexus` → `dist/Nexus.dmg` → mount and launch `Nexus.app` from `/Volumes/Nexus`.
+- Packaged try path: `razorbuild Nexus` → `dist/Nexus.dmg` → copy to `~/Desktop/Nexus.dmg` and stop (user opens/installs/ejects). See `../AGENTS.md` Post-Build.
 - GitHub release surface is a single `v2.0.0` DMG; older releases were removed Jul 2026.
 - Quick Save is a top-level bookmark column with no subfolders; each save is a rectangular card (Date & Time | Bookmarks | Notes), newest first; right-click to copy or delete a block.
 - Drag-and-drop of `.txt` onto the URL table loads URLs; Rich Links copies Apple Notes–friendly rich links to the clipboard.
