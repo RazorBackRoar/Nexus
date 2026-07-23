@@ -39,43 +39,60 @@ def format_quick_save_date(created_at: str) -> tuple[str, str]:
     return (local.strftime("%b %d %y"), local.strftime("%I:%M %p").lstrip("0"))
 
 
+class ClickableURLLabel(QLabel):
+    """Clickable URL label for Quick Save blocks that opens the link on click."""
+
+    url_clicked = Signal(str)
+
+    def __init__(self, url: str, parent: QWidget | None = None) -> None:
+        super().__init__(url, parent)
+        self.url_text = url
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setWordWrap(True)
+        self.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        self.setStyleSheet("""
+            QLabel {
+                color: #78B4FF;
+                font-size: 13px;
+                font-family: Menlo, monospace;
+            }
+            QLabel:hover {
+                color: #A0C8FF;
+                text-decoration: underline;
+            }
+        """)
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.url_clicked.emit(self.url_text)
+        super().mousePressEvent(event)
+
+
 class QuickSaveBlock(QFrame):
-    """One rectangular Quick Save row: Date & Time | Bookmarks | Notes."""
+    """One rectangular Quick Save row: Date & Time | Bookmarks | Notes & URLs."""
 
     delete_requested = Signal(str)
     copy_urls_requested = Signal(str)
     load_urls_requested = Signal(str)
     notes_changed = Signal(str, str)
+    single_url_activated = Signal(str)
+    block_selected = Signal(str)
 
     def __init__(self, entry: dict[str, Any], parent: QWidget | None = None):
         super().__init__(parent)
         self.entry_id = str(entry.get("id") or "")
-        self._urls = [str(u) for u in entry.get("urls") or [] if str(u).strip()]
+        raw_urls = [str(u) for u in entry.get("urls") or [] if str(u).strip()]
+        self._urls = sorted(raw_urls, key=lambda s: s.lower())
+        self._is_selected = False
         self.setObjectName("quickSaveBlock")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
 
-        self.setStyleSheet("""
-            QFrame#quickSaveBlock {
-                background: rgba(18, 22, 32, 0.72);
-                border: 1px solid rgba(255, 255, 255, 0.10);
-                border-radius: 10px;
-            }
-            QFrame#quickSaveBlock:hover {
-                border: 1px solid rgba(255, 255, 255, 0.18);
-            }
-            QLabel {
-                background: transparent;
-                color: #E8ECF4;
-            }
-            QTextEdit {
-                background: transparent;
-                border: none;
-                color: #A8B4C8;
-                font-size: 13px;
-                padding: 2px;
-            }
-        """)
+        self._apply_style()
 
         root = QHBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -107,14 +124,8 @@ class QuickSaveBlock(QFrame):
         bookmarks_layout.setSpacing(4)
         if self._urls:
             for url in self._urls:
-                url_label = QLabel(url)
-                url_label.setTextInteractionFlags(
-                    Qt.TextInteractionFlag.TextSelectableByMouse
-                )
-                url_label.setWordWrap(True)
-                url_label.setStyleSheet(
-                    "color: #C8D2E4; font-size: 13px; font-family: Menlo, monospace;"
-                )
+                url_label = ClickableURLLabel(url)
+                url_label.url_clicked.connect(self.single_url_activated.emit)
                 bookmarks_layout.addWidget(url_label)
         else:
             empty = QLabel("(no bookmarks)")
@@ -135,16 +146,78 @@ class QuickSaveBlock(QFrame):
         self.notes_edit.setPlaceholderText("Add a note…")
         self.notes_edit.setPlainText(str(entry.get("notes") or ""))
         self.notes_edit.setAcceptRichText(False)
-        self.notes_edit.setFixedHeight(64)
+        self.notes_edit.setFixedHeight(54)
         self.notes_edit.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.notes_edit.textChanged.connect(self._on_notes_changed)
         notes_layout.addWidget(self.notes_edit)
+
+        url_count = len(self._urls)
+        count_str = f"{url_count} URL{'s' if url_count != 1 else ''}"
+        self.url_count_badge = QLabel(count_str)
+        self.url_count_badge.setStyleSheet(
+            "color: #4AE89A; font-size: 12px; font-weight: 600; padding-top: 4px;"
+        )
+        notes_layout.addWidget(self.url_count_badge)
         notes_layout.addStretch()
         root.addWidget(notes_col)
 
         self.setMinimumHeight(78)
+
+    def set_selected(self, selected: bool) -> None:
+        if self._is_selected == selected:
+            return
+        self._is_selected = selected
+        self._apply_style()
+
+    def _apply_style(self) -> None:
+        if self._is_selected:
+            self.setStyleSheet("""
+                QFrame#quickSaveBlock {
+                    background: rgba(46, 196, 160, 0.14);
+                    border: 2px solid #2EC4A0;
+                    border-radius: 10px;
+                }
+                QLabel {
+                    background: transparent;
+                    color: #E8ECF4;
+                }
+                QTextEdit {
+                    background: transparent;
+                    border: none;
+                    color: #A8B4C8;
+                    font-size: 13px;
+                    padding: 2px;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QFrame#quickSaveBlock {
+                    background: rgba(18, 22, 32, 0.72);
+                    border: 1px solid rgba(255, 255, 255, 0.10);
+                    border-radius: 10px;
+                }
+                QFrame#quickSaveBlock:hover {
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                }
+                QLabel {
+                    background: transparent;
+                    color: #E8ECF4;
+                }
+                QTextEdit {
+                    background: transparent;
+                    border: none;
+                    color: #A8B4C8;
+                    font-size: 13px;
+                    padding: 2px;
+                }
+            """)
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.block_selected.emit(self.entry_id)
+        super().mousePressEvent(event)
 
     @staticmethod
     def _vertical_divider() -> QFrame:
@@ -197,9 +270,12 @@ class QuickSavePanel(QWidget):
     copy_urls_requested = Signal(str)
     load_urls_requested = Signal(str)
     notes_changed = Signal(str, str)
+    single_url_activated = Signal(str)
+    selection_changed = Signal(str)
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
+        self.selected_block_id: str | None = None
         self.setStyleSheet("background: transparent;")
 
         layout = QVBoxLayout(self)
@@ -240,7 +316,7 @@ class QuickSavePanel(QWidget):
 
         header_layout.addWidget(self._header_divider())
 
-        notes_h = QLabel("Notes")
+        notes_h = QLabel("Notes • URLs")
         notes_h.setMinimumWidth(140)
         notes_h.setMaximumWidth(220)
         notes_h.setContentsMargins(14, 10, 12, 10)
@@ -300,8 +376,21 @@ class QuickSavePanel(QWidget):
         line.setStyleSheet("background: rgba(255, 255, 255, 0.10); border: none;")
         return line
 
+    def select_block(self, entry_id: str) -> None:
+        """Select a block by entry_id, deselecting all others."""
+        self.selected_block_id = entry_id
+        for eid, block in self._blocks.items():
+            block.set_selected(eid == entry_id)
+        self.selection_changed.emit(entry_id)
+
+    def get_selected_urls(self) -> list[str]:
+        """Return the URLs of the currently selected block, or empty list if no block selected."""
+        if self.selected_block_id and self.selected_block_id in self._blocks:
+            return list(self._blocks[self.selected_block_id]._urls)
+        return []
+
     def set_entries(self, entries: list[dict[str, Any]]) -> None:
-        """Replace all blocks. Entries should already be newest-first."""
+        """Replace all blocks without selecting any block by default."""
         while self.list_layout.count() > 1:
             item = self.list_layout.takeAt(0)
             if item is None:
@@ -310,6 +399,7 @@ class QuickSavePanel(QWidget):
             if widget is not None and widget is not self._empty_label:
                 widget.deleteLater()
         self._blocks.clear()
+        self.selected_block_id = None
 
         if not entries:
             self._empty_label.show()
@@ -321,12 +411,13 @@ class QuickSavePanel(QWidget):
             if not entry_id:
                 continue
             block = QuickSaveBlock(entry)
+            block.block_selected.connect(self.select_block)
             block.delete_requested.connect(self.delete_requested.emit)
             block.copy_urls_requested.connect(self.copy_urls_requested.emit)
             block.load_urls_requested.connect(self.load_urls_requested.emit)
             block.notes_changed.connect(self.notes_changed.emit)
+            block.single_url_activated.connect(self.single_url_activated.emit)
             self._blocks[entry_id] = block
-            # Insert above the trailing stretch (and empty label if present)
             self.list_layout.insertWidget(self.list_layout.count() - 1, block)
 
     def copy_entry_urls_to_clipboard(self, entry_id: str) -> list[str]:

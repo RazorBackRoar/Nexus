@@ -134,11 +134,14 @@ class URLProcessor:
         try:
             # Use enhanced extraction if enabled
             if Config.ENABLE_ENHANCED_URL_EXTRACTION:
-                return self._extract_urls_enhanced(text)
-            return self._extract_urls_fallback(text)
+                extracted = self._extract_urls_enhanced(text)
+            else:
+                extracted = self._extract_urls_fallback(text)
         except (ValueError, TypeError, re.error) as e:
             logger.error("URL extraction failed, falling back to basic method: %s", e)
-            return self._extract_urls_fallback(text)
+            extracted = self._extract_urls_fallback(text)
+
+        return sorted(extracted, key=lambda s: s.lower())
 
     def _extract_urls_enhanced(self, text: str) -> list[str]:
         """Enhanced URL extraction using multiple specialized patterns."""

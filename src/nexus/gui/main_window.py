@@ -24,7 +24,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
     QLabel,
-    QLineEdit,
     QMainWindow,
     QMenu,
     QMessageBox,
@@ -50,11 +49,13 @@ from nexus.core.models import (
 from nexus.core.safari import SafariController
 from nexus.gui.widgets import (
     AsyncWorker,
+    BookmarkSearchBar,
     BookmarkTreeDelegate,
     CosmicFrame,
     GlassButton,
     MetallicLabel,
     QuickSavePanel,
+    URLEmptyStateWidget,
     URLTableWidget,
     WindowTitleBar,
 )
@@ -333,7 +334,9 @@ class MainWindow(QMainWindow):
         self.title_label = MetallicLabel("Nexus", variant="hero")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setFixedHeight(58)
-        self.title_label.setToolTip("Double-click for About · Right-click for updates")
+        self.title_label.setToolTip(
+            "Click to go Home · Double-click for About · Right-click for updates"
+        )
         self.title_label.setCursor(Qt.CursorShape.PointingHandCursor)
         self.title_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.title_label.customContextMenuRequested.connect(
@@ -431,9 +434,10 @@ class MainWindow(QMainWindow):
         )
         sidebar_layout.addWidget(sidebar_header)
 
-        self.search_bar = QLineEdit()
+        self.search_bar = BookmarkSearchBar()
         self.search_bar.setPlaceholderText("Filter bookmarks")
         self.search_bar.textChanged.connect(self._filter_bookmarks)
+        self.search_bar.urls_pasted.connect(self._handle_pasted_urls)
         self.search_bar.setStyleSheet("""
             QLineEdit {
                 background: rgba(2, 6, 14, 0.95);
@@ -628,27 +632,11 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.url_empty_state = QWidget()
-        self.url_empty_state.setStyleSheet("background: transparent;")
-        empty_layout = QVBoxLayout(self.url_empty_state)
-        empty_layout.setContentsMargins(28, 28, 28, 28)
-        empty_layout.setSpacing(10)
-        empty_layout.addStretch()
-
-        self.url_empty_title = MetallicLabel(
-            "Paste URLs to get started", variant="section"
-        )
-        self.url_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_layout.addWidget(self.url_empty_title)
-
-        self.url_empty_note = MetallicLabel(
-            "Copied links appear here automatically. Each row shows Ready, Opening, or Failed.",
-            variant="dim",
-        )
-        self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.url_empty_note.setWordWrap(True)
-        empty_layout.addWidget(self.url_empty_note)
-        empty_layout.addStretch()
+        self.url_empty_state = URLEmptyStateWidget()
+        self.url_empty_state.urls_pasted.connect(self._handle_pasted_urls)
+        self.url_empty_state.file_dropped.connect(self.load_file_from_path)
+        self.url_empty_title = self.url_empty_state.url_empty_title
+        self.url_empty_note = self.url_empty_state.url_empty_note
 
         self.url_stack_host = QWidget()
         self.url_stack = QStackedLayout(self.url_stack_host)
@@ -665,6 +653,7 @@ class MainWindow(QMainWindow):
             self._load_quick_save_entry_to_table
         )
         self.quick_save_panel.notes_changed.connect(self._update_quick_save_notes)
+        self.quick_save_panel.single_url_activated.connect(self._open_single_url_direct)
         self.url_stack.addWidget(self.quick_save_panel)
 
         url_panel_layout.addWidget(self.url_stack_host, 1)
@@ -688,50 +677,39 @@ class MainWindow(QMainWindow):
         button_row.setContentsMargins(8, 6, 8, 2)
         button_row.setSpacing(14)
 
+        self.home_btn = GlassButton("Home", "home")
+        self.home_btn.clicked.connect(self._go_home)
+
         self.run_btn = GlassButton("Open All", "open")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
         self.save_btn = GlassButton("Save", "save")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
-        self.quick_save_btn = GlassButton("Quick Save", "quick")
-        self.quick_save_btn.clicked.connect(self._quick_save_urls)
+        self.import_btn = GlassButton("Import", "import")
+        self.import_btn.clicked.connect(self._load_file_into_table)
 
-        self.rich_links_btn = GlassButton("Rich Links", "rich")
-        self.rich_links_btn.clicked.connect(self._copy_rich_links)
-        self.rich_links_btn.setToolTip(
-            "Copy URLs as rich HTML links — paste into Apple Notes with ⌘V\n"
-            "Right-click for options"
-        )
-        self.rich_links_btn.setContextMenuPolicy(
-            Qt.ContextMenuPolicy.CustomContextMenu
-        )
-        self.rich_links_btn.customContextMenuRequested.connect(
-            self._show_rich_links_options
-        )
-
-        self.undo_btn = GlassButton("Undo", "undo")
-        self.undo_btn.clicked.connect(self._undo_url_change)
-        self.undo_btn.setEnabled(False)
+        self.export_btn = GlassButton("Export", "export")
+        self.export_btn.clicked.connect(self._export_urls)
 
         self.clear_btn = GlassButton("Clear", "clear")
         self.clear_btn.clicked.connect(self._clear_all_data)
         for button in (
+            self.home_btn,
             self.run_btn,
             self.save_btn,
-            self.quick_save_btn,
-            self.rich_links_btn,
-            self.undo_btn,
+            self.import_btn,
+            self.export_btn,
             self.clear_btn,
         ):
-            button.setFixedSize(120, 46)
+            button.setFixedSize(116, 46)
 
         button_row.addStretch()
+        button_row.addWidget(self.home_btn)
         button_row.addWidget(self.run_btn)
         button_row.addWidget(self.save_btn)
-        button_row.addWidget(self.quick_save_btn)
-        button_row.addWidget(self.rich_links_btn)
-        button_row.addWidget(self.undo_btn)
+        button_row.addWidget(self.import_btn)
+        button_row.addWidget(self.export_btn)
         button_row.addWidget(self.clear_btn)
         button_row.addStretch()
         main_content_layout.addLayout(button_row)
@@ -755,16 +733,42 @@ class MainWindow(QMainWindow):
         self.settings_panel = None
         self.safari_title = self.title_label
         self.bookmarks_title = sidebar_title
-        self.organize_btn = None
-        self.add_link_btn = None
-        self.export_btn = None
+        self.paste_shortcut = QShortcut(
+            QKeySequence(QKeySequence.StandardKey.Paste), self
+        )
+        self.paste_shortcut.activated.connect(self._handle_global_paste)
+        self.search_bar.clearFocus()
+
         self._current_url_snapshot = self.url_table.get_all_urls()
         self._update_url_empty_state()
         self._update_url_counter()
 
+    def _handle_pasted_urls(self, urls: list[str]) -> None:
+        """Add pasted URLs to the URL table, switch view, and focus the table."""
+        if not urls:
+            return
+        self.url_table.add_urls(urls)
+        self._show_url_table_view()
+        self.url_table.setFocus()
+        self._set_status(
+            f"Pasted {len(urls)} URL{'s' if len(urls) != 1 else ''} from clipboard"
+        )
+
+    def _handle_global_paste(self) -> None:
+        """Global ⌘V / Ctrl+V handler to extract and load URLs from clipboard."""
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+        text = clipboard.text()
+        if not text:
+            return
+        urls = self.url_processor.extract_urls(text)
+        if urls or "\n" in text:
+            if urls:
+                self._handle_pasted_urls(urls)
+
     def _update_undo_button_state(self):
-        if hasattr(self, "undo_btn"):
-            self.undo_btn.setEnabled(bool(self._url_history))
+        pass
 
     def _update_url_empty_state(self):
         """Swap between the empty-state message and the real URL table."""
@@ -807,7 +811,28 @@ class MainWindow(QMainWindow):
         pass
 
     def _run_urls_in_safari(self):
-        """Runs URLs from the table in Safari with status tracking and privacy settings."""
+        """Runs URLs from the selected Quick Save block or URL table in Safari."""
+        if self.url_stack.currentWidget() == self.quick_save_panel:
+            urls = self.quick_save_panel.get_selected_urls()
+            if urls:
+                self.worker = AsyncWorker(
+                    self.safari_controller.open_urls,
+                    urls,
+                    self.private_mode_enabled,
+                )
+                self.worker.result_ready.connect(
+                    lambda success: self._set_status(
+                        f"Opened {len(urls)} URLs in Safari"
+                        if success
+                        else "Failed to open URLs"
+                    )
+                )
+                self.worker.start()
+                return
+            else:
+                self._show_message("No selected block found in Quick Save.", "warning")
+                return
+
         urls = self.url_table.get_all_urls()
         if urls:
             for row in range(self.url_table.rowCount()):
@@ -828,6 +853,51 @@ class MainWindow(QMainWindow):
         else:
             self._show_message("No URLs found to launch.", "warning")
 
+    def _export_urls(self) -> None:
+        """Export URLs from the selected Quick Save block or URL table to a text file."""
+        urls: list[str] = []
+        source_name = "URLs"
+
+        if self.url_stack.currentWidget() == self.quick_save_panel:
+            urls = self.quick_save_panel.get_selected_urls()
+            source_name = "selected Quick Save block"
+        else:
+            urls = self.url_table.get_all_urls()
+            source_name = "URL table"
+
+        if not urls:
+            self._show_message("No URLs available to export.", "warning")
+            return
+
+        from PySide6.QtWidgets import QFileDialog
+
+        default_filename = (
+            f"nexus_urls_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
+        desktop_path = Path.home() / "Desktop" / default_filename
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export URLs",
+            str(desktop_path),
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not file_path:
+            return
+
+        try:
+            content = "\n".join(urls) + "\n"
+            Path(file_path).write_text(content, encoding="utf-8")
+            target_name = Path(file_path).name
+            self._set_status(
+                f"Exported {len(urls)} URLs from {source_name} to {target_name}"
+            )
+            self._show_message(
+                f"Exported {len(urls)} URLs successfully to {target_name}.", "info"
+            )
+        except OSError as e:
+            self._show_message(f"Failed to export URLs: {e}", "error")
+
     def _open_single_url(self, row: int, url: str):
         """Open one URL from the list when a row is activated."""
         if not url:
@@ -841,6 +911,22 @@ class MainWindow(QMainWindow):
         )
         self.worker.result_ready.connect(self._on_single_url_operation_complete)
         self.worker.error.connect(lambda err: self._handle_single_url_error(row, err))
+        self.worker.start()
+
+    def _open_single_url_direct(self, url: str) -> None:
+        """Open a single URL directly in Safari (e.g. from Quick Save click)."""
+        if not url:
+            return
+        self.worker = AsyncWorker(
+            self.safari_controller.open_urls,
+            [url],
+            self.private_mode_enabled,
+        )
+        self.worker.result_ready.connect(
+            lambda success: self._set_status(
+                f"Opened {url} in Safari" if success else f"Failed to open {url}"
+            )
+        )
         self.worker.start()
 
     async def _open_single_url_with_tracking(
@@ -931,20 +1017,47 @@ class MainWindow(QMainWindow):
         )
         self.group_store.upsert_group(group)
 
-        target_item = self._find_folder_by_name(target)
+        is_quick_save_target = (
+            target == QUICK_SAVE_FOLDER_NAME
+            or target.lower() in ("quick save", "quick saves")
+        )
+        target_item = self._find_folder_by_name(target) or self._find_or_create_folder(
+            QUICK_SAVE_FOLDER_NAME if is_quick_save_target else target
+        )
         if target_item is not None:
-            marker = {
-                "type": "group",
-                "id": group.id,
-                "name": group.name,
-                "count": len(group.items),
-            }
-            self._create_tree_item(marker, target_item)
-            target_item.setExpanded(True)
+            if is_quick_save_target:
+                entry = QuickSaveEntry(
+                    id=group.id,
+                    created_at=group.created_at,
+                    urls=urls,
+                    notes=name,
+                )
+                folder_data = target_item.data(0, Qt.ItemDataRole.UserRole) or {
+                    "name": QUICK_SAVE_FOLDER_NAME,
+                    "type": "folder",
+                    "children": [],
+                }
+                children = list(folder_data.get("children") or [])
+                children.insert(0, entry.to_dict())
+                folder_data["children"] = children
+                target_item.setData(0, Qt.ItemDataRole.UserRole, folder_data)
+            else:
+                marker = {
+                    "type": "group",
+                    "id": group.id,
+                    "name": group.name,
+                    "count": len(group.items),
+                }
+                self._create_tree_item(marker, target_item)
+                target_item.setExpanded(True)
+
         self.save_bookmarks()
 
         self.url_table.clear_table()
         self._set_status(f"Saved {len(urls)} URLs to '{name}' in {target}")
+
+        if is_quick_save_target and target_item is not None:
+            self._show_quick_save_view(target_item)
 
     def _quick_save_urls(self):
         """Save the current URL list as a dated Quick Save block (newest first)."""
@@ -1235,24 +1348,34 @@ class MainWindow(QMainWindow):
         except Exception:
             return "Bookmark"
 
+    def _is_quick_save_item(self, item: QTreeWidgetItem | None) -> bool:
+        curr = item
+        while curr is not None:
+            data = curr.data(0, Qt.ItemDataRole.UserRole)
+            if data and data.get("type") == "folder" and data.get("name") == QUICK_SAVE_FOLDER_NAME:
+                return True
+            curr = curr.parent()
+        return False
+
     def _handle_item_double_click(self, item: QTreeWidgetItem, column: int):
         """Handles double-clicking on a bookmark or folder item."""
         data = item.data(0, Qt.ItemDataRole.UserRole)
         if not data:
             return
+        if self._is_quick_save_item(item):
+            folder_item = self._find_folder_by_name(QUICK_SAVE_FOLDER_NAME) or item
+            self._show_quick_save_view(folder_item)
+            return
         if data.get("type") == "bookmark":
             self._open_bookmark_link(item)
         elif data.get("type") == "folder":
-            if data.get("name") == QUICK_SAVE_FOLDER_NAME:
-                self._show_quick_save_view(item)
-                return
             item.setExpanded(not item.isExpanded())
 
     def _handle_bookmark_item_clicked(self, item: QTreeWidgetItem, column: int):
-        """Single-click: open Quick Save database view, otherwise restore URL table."""
-        data = item.data(0, Qt.ItemDataRole.UserRole)
-        if data and data.get("type") == "folder" and data.get("name") == QUICK_SAVE_FOLDER_NAME:
-            self._show_quick_save_view(item)
+        """Single-click: open Quick Save database view if under Quick Save, otherwise restore URL table."""
+        if self._is_quick_save_item(item):
+            folder_item = self._find_folder_by_name(QUICK_SAVE_FOLDER_NAME) or item
+            self._show_quick_save_view(folder_item)
             return
         self._show_url_table_view()
 
@@ -1263,6 +1386,73 @@ class MainWindow(QMainWindow):
         else:
             self.url_stack.setCurrentWidget(self.url_table)
 
+    def _parse_child_to_quick_save_entry(
+        self, child: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Convert any bookmark item/group/folder in Quick Save into a Quick Save entry dict."""
+        if not isinstance(child, dict):
+            return None
+
+        c_type = child.get("type")
+        if c_type == "quick_save" or "urls" in child:
+            urls = [str(u) for u in child.get("urls") or [] if str(u).strip()]
+            return {
+                "id": str(child.get("id") or ("qs_" + token_hex(4))),
+                "created_at": str(
+                    child.get("created_at")
+                    or datetime.now().astimezone().isoformat(timespec="seconds")
+                ),
+                "urls": urls,
+                "notes": str(child.get("notes") or child.get("name") or ""),
+                "type": "quick_save",
+            }
+
+        if c_type == "group":
+            group_id = child.get("id")
+            group = self.group_store.get_group(group_id) if group_id else None
+            urls = [item.url for item in group.items if item.url] if group else []
+            name = group.name if group else str(child.get("name") or "")
+            created_at = (
+                group.created_at if group else None
+            ) or datetime.now().astimezone().isoformat(timespec="seconds")
+            return {
+                "id": str(child.get("id") or ("qs_" + token_hex(4))),
+                "created_at": created_at,
+                "urls": urls,
+                "notes": name,
+                "type": "quick_save",
+            }
+
+        if c_type == "bookmark" or "url" in child:
+            url = str(child.get("url") or "").strip()
+            if url:
+                return {
+                    "id": str(child.get("id") or ("qs_" + token_hex(4))),
+                    "created_at": datetime.now()
+                    .astimezone()
+                    .isoformat(timespec="seconds"),
+                    "urls": [url],
+                    "notes": str(child.get("name") or ""),
+                    "type": "quick_save",
+                }
+
+        if c_type == "folder":
+            urls = []
+            for sub in child.get("children") or []:
+                if isinstance(sub, dict) and sub.get("url"):
+                    urls.append(str(sub["url"]))
+            if urls:
+                return {
+                    "id": str(child.get("id") or ("qs_" + token_hex(4))),
+                    "created_at": datetime.now()
+                    .astimezone()
+                    .isoformat(timespec="seconds"),
+                    "urls": urls,
+                    "notes": str(child.get("name") or ""),
+                    "type": "quick_save",
+                }
+        return None
+
     def _show_quick_save_view(self, folder_item: QTreeWidgetItem | None = None) -> None:
         """Show the Quick Save panel filled from the Quick Save folder."""
         if folder_item is None:
@@ -1271,12 +1461,34 @@ class MainWindow(QMainWindow):
             folder_item = self._find_or_create_folder(QUICK_SAVE_FOLDER_NAME)
 
         self.bookmark_tree.setCurrentItem(folder_item)
+        entries: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
+
         data = folder_item.data(0, Qt.ItemDataRole.UserRole) or {}
-        entries = [
-            child
-            for child in (data.get("children") or [])
-            if isinstance(child, dict) and child.get("type") == "quick_save"
-        ]
+        raw_children = list(data.get("children") or [])
+
+        for child in raw_children:
+            parsed = self._parse_child_to_quick_save_entry(child)
+            if parsed is not None:
+                entry_id = str(parsed.get("id") or "")
+                if entry_id and entry_id in seen_ids:
+                    continue
+                if entry_id:
+                    seen_ids.add(entry_id)
+                entries.append(parsed)
+
+        for i in range(folder_item.childCount()):
+            c_item = folder_item.child(i)
+            c_data = c_item.data(0, Qt.ItemDataRole.UserRole) or {}
+            parsed = self._parse_child_to_quick_save_entry(c_data)
+            if parsed is not None:
+                entry_id = str(parsed.get("id") or "")
+                if entry_id and entry_id in seen_ids:
+                    continue
+                if entry_id:
+                    seen_ids.add(entry_id)
+                entries.append(parsed)
+
         entries.sort(
             key=lambda e: str(e.get("created_at") or ""),
             reverse=True,
@@ -1436,12 +1648,20 @@ class MainWindow(QMainWindow):
         return None
 
     def _find_folder_by_name(self, name: str) -> QTreeWidgetItem | None:
-        """Find a top-level folder item by its displayed name."""
+        """Find a top-level folder item by name or displayed text."""
         root = self.bookmark_tree.invisibleRootItem()
+        target_norm = name.strip().lower()
         for i in range(root.childCount()):
             item = root.child(i)
-            data = item.data(0, Qt.ItemDataRole.UserRole)
-            if data and data.get("type") == "folder" and data.get("name") == name:
+            item_text = item.text(0).strip().lower()
+            data = item.data(0, Qt.ItemDataRole.UserRole) or {}
+            data_name = str(data.get("name") or "").strip().lower()
+            if item_text == target_norm or data_name == target_norm:
+                return item
+            if target_norm in ("quick save", "quick saves") and (
+                item_text in ("quick save", "quick saves")
+                or data_name in ("quick save", "quick saves")
+            ):
                 return item
         return None
 
@@ -1498,14 +1718,6 @@ class MainWindow(QMainWindow):
             item.setData(0, Qt.ItemDataRole.UserRole + 1, folder_style)
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             if is_quick_save_folder:
-                # No subfolders / child rows — entries render in QuickSavePanel.
-                children = []
-                for child in data.get("children") or []:
-                    if isinstance(child, dict):
-                        children.append(dict(child))
-                payload = dict(data)
-                payload["children"] = children
-                item.setData(0, Qt.ItemDataRole.UserRole, payload)
                 item.setChildIndicatorPolicy(
                     QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicator
                 )
@@ -1551,10 +1763,9 @@ class MainWindow(QMainWindow):
 
     def _serialize_item(self, item: QTreeWidgetItem) -> dict[str, Any]:
         """Recursively converts a tree item back into a dictionary for saving."""
-        data = item.data(0, Qt.ItemDataRole.UserRole).copy()
+        data = (item.data(0, Qt.ItemDataRole.UserRole) or {}).copy()
         if data.get("type") == "folder":
             if data.get("name") == QUICK_SAVE_FOLDER_NAME:
-                # Children are stored on UserRole, not as tree widgets.
                 data["children"] = [
                     dict(child)
                     for child in (data.get("children") or [])
@@ -1818,11 +2029,6 @@ class MainWindow(QMainWindow):
 
             edit_action = menu.addAction("Rename")
             edit_action.triggered.connect(lambda: self.bookmark_tree.editItem(item))
-
-            add_bookmark_action = menu.addAction("Add Bookmark to Folder")
-            add_bookmark_action.triggered.connect(lambda: self._add_bookmark_link(item))
-            add_folder_action = menu.addAction("Add Subfolder")
-            add_folder_action.triggered.connect(self.add_bookmark_section)
             menu.addSeparator()
 
             delete_action = menu.addAction("Delete")
@@ -1989,14 +2195,24 @@ class MainWindow(QMainWindow):
             )
         self.save_bookmarks()
 
+    def _go_home(self) -> None:
+        """Return to initial home view (URL table / empty state) to add more bookmarks."""
+        self.bookmark_tree.clearSelection()
+        self._show_url_table_view()
+        self._set_status("Home — ready for URLs")
+
     def eventFilter(self, obj, event):  # noqa: N802 - Qt override
-        """Open About when the NEXUS title is double-clicked."""
-        if (
-            obj is getattr(self, "title_label", None)
-            and event.type() == QEvent.Type.MouseButtonDblClick
-        ):
-            self._show_about()
-            return True
+        """Clicking NEXUS title returns home; double-clicking opens About."""
+        if obj is getattr(self, "title_label", None):
+            if (
+                event.type() == QEvent.Type.MouseButtonRelease
+                and event.button() == Qt.MouseButton.LeftButton
+            ):
+                self._go_home()
+                return True
+            if event.type() == QEvent.Type.MouseButtonDblClick:
+                self._show_about()
+                return True
         return super().eventFilter(obj, event)
 
     def _show_about(self) -> None:
@@ -2204,7 +2420,7 @@ class MainWindow(QMainWindow):
             lambda checked: self.settings.setValue("richLinks/preserveBlanks", checked)
         )
 
-        menu.exec(self.rich_links_btn.mapToGlobal(position))
+        menu.exec(self.mapToGlobal(position))
 
     def load_file_from_path(self, file_path: str):
         """Load URLs from a file path (used by drag-and-drop from URLTableWidget)."""

@@ -67,8 +67,8 @@ def test_url_table_emits_url_activation_and_replacement_state():
     assert changed[-1] == ["https://example.com"]
 
     table.replace_urls(["https://openai.com", "https://github.com"])
-    assert table.get_all_urls() == ["https://openai.com", "https://github.com"]
-    assert changed[-1] == ["https://openai.com", "https://github.com"]
+    assert table.get_all_urls() == ["https://github.com", "https://openai.com"]
+    assert changed[-1] == ["https://github.com", "https://openai.com"]
 
 
 def test_bookmark_delegate_gives_folders_more_height():
@@ -122,7 +122,7 @@ def test_main_window_starts_with_empty_url_state(tmp_path, monkeypatch):
         assert window.run_btn.isEnabled()
         assert window.save_btn.isEnabled()
         assert window.clear_btn.isEnabled()
-        assert not window.undo_btn.isEnabled()
+        assert window.import_btn.isEnabled()
     finally:
         window.close()
 

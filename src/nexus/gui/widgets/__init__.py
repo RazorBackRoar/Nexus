@@ -2,6 +2,7 @@
 
 from nexus.gui.widgets._base import (
     AsyncWorker,
+    BookmarkSearchBar,
     BookmarkTreeDelegate,
     CosmicFrame,
     GlassButton,
@@ -11,6 +12,7 @@ from nexus.gui.widgets._base import (
     NeonURLItemDelegate,
     OutlinedLabel,
     TrafficLightButton,
+    URLEmptyStateWidget,
     URLTableWidget,
     WindowTitleBar,
 )
@@ -19,6 +21,7 @@ from nexus.gui.widgets.quick_save_panel import QuickSavePanel
 
 __all__ = [
     "AsyncWorker",
+    "BookmarkSearchBar",
     "BookmarkTreeDelegate",
     "CosmicFrame",
     "GlassButton",
@@ -29,6 +32,7 @@ __all__ = [
     "OutlinedLabel",
     "QuickSavePanel",
     "TrafficLightButton",
+    "URLEmptyStateWidget",
     "URLTableWidget",
     "WindowTitleBar",
 ]

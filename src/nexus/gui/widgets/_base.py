@@ -31,11 +31,13 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QLineEdit,
     QPushButton,
     QStyle,
     QStyledItemDelegate,
     QTableWidget,
     QTableWidgetItem,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -737,39 +739,12 @@ class URLTableWidget(QTableWidget):
         self.itemDoubleClicked.connect(self._activate_item_url)
 
     def add_urls(self, urls: list[str]):
-        """Add URLs to the table with automatic numbering."""
+        """Add URLs to the table with automatic numbering, keeping them in alphabetical order."""
         if not urls:
             return
-        self._suspend_url_events = True
-        for url in urls:
-            self.url_counter += 1
-            row = self.rowCount()
-            self.insertRow(row)
-            self.setRowHeight(row, 44)
-
-            # Number column
-            number_item = QTableWidgetItem(str(self.url_counter))
-            number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            number_item.setFlags(Qt.ItemFlag.ItemIsEnabled)  # Read-only
-            self.setItem(row, 0, number_item)
-
-            # URL column - make editable to show cursor
-            url_item = QTableWidgetItem(url)
-            url_item.setFlags(
-                Qt.ItemFlag.ItemIsEnabled
-                | Qt.ItemFlag.ItemIsSelectable
-                | Qt.ItemFlag.ItemIsEditable
-            )
-            self.setItem(row, 1, url_item)
-
-            # Status column
-            status_item = QTableWidgetItem()
-            status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            status_item.setFlags(Qt.ItemFlag.ItemIsEnabled)  # Read-only
-            self.setItem(row, 2, status_item)
-            self.set_status_state(row, "ready")
-        self._suspend_url_events = False
-        self._emit_urls_changed()
+        existing = self.get_all_urls()
+        combined = sorted(existing + [u.strip() for u in urls if u.strip()], key=lambda s: s.lower())
+        self.replace_urls(combined)
 
     def update_status(self, row: int, success: bool):
         """Update the status of a URL row."""
@@ -801,11 +776,12 @@ class URLTableWidget(QTableWidget):
         self._emit_urls_changed()
 
     def replace_urls(self, urls: list[str]):
-        """Replace the table contents with a fresh URL list."""
+        """Replace the table contents with a fresh URL list sorted alphabetically."""
         self._suspend_url_events = True
         self.setRowCount(0)
         self.url_counter = 0
-        for url in urls:
+        sorted_urls = sorted([u.strip() for u in urls if u.strip()], key=lambda s: s.lower())
+        for url in sorted_urls:
             self.url_counter += 1
             row = self.rowCount()
             self.insertRow(row)
@@ -1057,9 +1033,12 @@ class GlassButton(QPushButton):
         """Get the glow color based on variant."""
         colors = {
             "primary": "#4A90E8",
+            "home": "#4A90E8",
             "open": "#4A90E8",
             "secondary": "#2EC4A0",
             "save": "#2EC4A0",
+            "import": "#5B8DEF",
+            "export": "#A78BFA",
             "quick": "#00D4FF",
             "rich": "#A78BFA",
             "tertiary": "#F0B429",
@@ -1348,3 +1327,121 @@ class GlassPanel(QWidget):
             }}
         """
         )
+
+
+class BookmarkSearchBar(QLineEdit):
+    """Search bar for filtering bookmarks that routes URL paste events to the URL window."""
+
+    urls_pasted = Signal(list)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.url_processor = URLProcessor()
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Intercept ⌘V / Ctrl+V paste; route URLs to URL table instead of filter text."""
+        paste_modifiers = (
+            Qt.KeyboardModifier.ControlModifier,
+            Qt.KeyboardModifier.MetaModifier,
+        )
+        if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
+            clipboard = QApplication.clipboard()
+            text = clipboard.text() if clipboard is not None else ""
+            urls = self.url_processor.extract_urls(text) if text else []
+            if urls or (text and "\n" in text):
+                if urls:
+                    self.urls_pasted.emit(urls)
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+
+class URLEmptyStateWidget(QWidget):
+    """Interactive empty state panel that accepts drag-and-drop, key focus, and paste events."""
+
+    urls_pasted = Signal(list)
+    file_dropped = Signal(str)
+
+    _FILE_DROP_EXTENSIONS = {".txt", ".csv", ".md"}
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.url_processor = URLProcessor()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setAcceptDrops(True)
+        self.setStyleSheet("background: transparent;")
+
+        empty_layout = QVBoxLayout(self)
+        empty_layout.setContentsMargins(28, 28, 28, 28)
+        empty_layout.setSpacing(10)
+        empty_layout.addStretch()
+
+        self.url_empty_title = MetallicLabel(
+            "Paste URLs to get started", variant="section"
+        )
+        self.url_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addWidget(self.url_empty_title)
+
+        self.url_empty_note = MetallicLabel(
+            "Copied links appear here automatically. Each row shows Ready, Opening, or Failed.",
+            variant="dim",
+        )
+        self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.url_empty_note.setWordWrap(True)
+        empty_layout.addWidget(self.url_empty_note)
+        empty_layout.addStretch()
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Focus the widget on click so keyboard paste works immediately."""
+        self.setFocus()
+        super().mousePressEvent(event)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Handle ⌘V / Ctrl+V paste on empty state."""
+        paste_modifiers = (
+            Qt.KeyboardModifier.ControlModifier,
+            Qt.KeyboardModifier.MetaModifier,
+        )
+        if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                text = clipboard.text()
+                urls = self.url_processor.extract_urls(text) if text else []
+                if urls:
+                    self.urls_pasted.emit(urls)
+                    event.accept()
+                    return
+        super().keyPressEvent(event)
+
+    def dragEnterEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Accept drop operations containing text, HTML, or URLs."""
+        mime_data = event.mimeData()
+        if (
+            mime_data.hasUrls()
+            or mime_data.hasText()
+            or mime_data.hasHtml()
+        ):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Keep accepting drag move events."""
+        event.acceptProposedAction()
+
+    def dropEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Handle dropped files or raw URL strings onto empty state."""
+        mime_data = event.mimeData()
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                if url.isLocalFile():
+                    path = url.toLocalFile()
+                    suffix = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+                    if f".{suffix}" in self._FILE_DROP_EXTENSIONS:
+                        self.file_dropped.emit(path)
+                        event.acceptProposedAction()
+                        return
+        text = mime_data.text() if mime_data.hasText() else ""
+        urls = self.url_processor.extract_urls(text) if text else []
+        if urls:
+            self.urls_pasted.emit(urls)
+        event.acceptProposedAction()
+
