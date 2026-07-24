@@ -58,7 +58,17 @@ def test_retired_hey_sort_and_future_tabs_are_removed(tmp_path, monkeypatch, app
             [
                 {"name": "hey", "type": "folder", "children": []},
                 {"name": "Sort", "type": "folder", "children": []},
-                {"name": "Future", "type": "folder", "children": [{"url": "https://x.test", "title": "x"}]},
+                {
+                    "name": "Future",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "Example",
+                            "type": "bookmark",
+                            "url": "https://x.test",
+                        }
+                    ],
+                },
                 {"name": "Fun", "type": "folder", "children": []},
             ]
         ),
@@ -73,6 +83,14 @@ def test_retired_hey_sort_and_future_tabs_are_removed(tmp_path, monkeypatch, app
         assert "Future" not in names
         assert names[0] == QUICK_SAVE_FOLDER_NAME
         assert "Fun" in names
+        fun_folder = window._find_folder_by_name("Fun")
+        assert fun_folder is not None
+        fun_data = fun_folder.data(0, Qt.ItemDataRole.UserRole)
+        fun_children = fun_data.get("children") or []
+        assert any(
+            child.get("type") == "bookmark" and child.get("url") == "https://x.test"
+            for child in fun_children
+        )
     finally:
         window.close()
 

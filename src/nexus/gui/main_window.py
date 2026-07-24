@@ -1606,6 +1606,7 @@ class MainWindow(QMainWindow):
             "news",
         }
         retired_empty_tabs = {"hey", "sort", "future"}
+        retired_tab_migrations: list[BookmarkNode] = []
 
         kept_nodes: list[BookmarkNode] = []
         quick_save_folder: BookmarkFolder | None = None
@@ -1615,6 +1616,8 @@ class MainWindow(QMainWindow):
                 name_lower = node.name.lower()
                 if name_lower in retired_empty_tabs:
                     changed = True
+                    if node.children:
+                        retired_tab_migrations.extend(node.children)
                     continue
                 if name_lower in old_empty_defaults and not node.children:
                     changed = True
@@ -1645,6 +1648,18 @@ class MainWindow(QMainWindow):
             changed = True
 
         bookmark_nodes = [quick_save_folder, *kept_nodes]
+
+        if retired_tab_migrations:
+            migration_target = DEFAULT_BOOKMARK_FOLDER_NAMES[0]
+            target_folder: BookmarkFolder | None = None
+            for node in bookmark_nodes:
+                if isinstance(node, BookmarkFolder) and node.name == migration_target:
+                    target_folder = node
+                    break
+            if target_folder is None:
+                target_folder = BookmarkFolder(name=migration_target, children=[])
+                bookmark_nodes.append(target_folder)
+            target_folder.children.extend(retired_tab_migrations)
 
         existing_names = {
             node.name.lower()
