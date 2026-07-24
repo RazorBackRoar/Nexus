@@ -6,8 +6,10 @@ import os
 from typing import cast
 
 import pytest
+from PySide6.QtCore import QMimeData
 from PySide6.QtWidgets import QApplication
 
+import nexus.core.link_converter as link_converter_module
 from nexus.core.link_converter import LinkConverter
 
 
@@ -158,15 +160,27 @@ def test_generate_html_from_urls_skips_blank_lines(converter: LinkConverter) -> 
 
 def test_copy_rich_html_to_clipboard_uses_qt_fallback(
     converter: LinkConverter,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(link_converter_module, "_NSPasteboard", None)
+    monkeypatch.setattr(link_converter_module, "_NSPasteboardTypeHTML", None)
+
+    stored_mime: list[QMimeData] = []
+
+    class _FakeClipboard:
+        def setMimeData(self, mime: QMimeData) -> None:
+            stored_mime.append(mime)
+
+        def mimeData(self) -> QMimeData | None:
+            return stored_mime[-1] if stored_mime else None
+
     _app()
+    monkeypatch.setattr(QApplication, "clipboard", staticmethod(lambda: _FakeClipboard()))
     html = '<a href="https://example.com">https://example.com</a><br>'
 
     assert converter.copy_rich_html_to_clipboard(html) is True
 
-    clipboard = QApplication.clipboard()
-    assert clipboard is not None
-    mime = clipboard.mimeData()
-    assert mime is not None
+    assert len(stored_mime) == 1
+    mime = stored_mime[0]
     assert mime.hasHtml()
-    assert "https://example.com" in mime.html()
+    assert mime.html() == html
