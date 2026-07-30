@@ -18,7 +18,7 @@ Security fixes ship on `main` and in the next published release when applicable.
 Preferred reporting channels (in order):
 
 1. **GitHub Private Vulnerability Reporting** — use [Report a vulnerability](https://github.com/RazorBackRoar/Nexus/security/advisories/new) on this repository when enabled.
-2. **Maintainer contact** — message [@RazorBackRoar](https://github.com/RazorBackRoar) on GitHub with a clear subject such as `SECURITY: Nexus`.
+2. **Maintainer contact** — email the maintainer using the address on their [GitHub profile](https://github.com/RazorBackRoar) with a clear subject such as `SECURITY: Nexus`.
 
 Include as much of the following as you can:
 
