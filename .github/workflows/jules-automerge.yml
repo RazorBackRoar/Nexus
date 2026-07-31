@@ -17,11 +17,11 @@ jobs:
   automerge:
     name: Squash-merge low-risk Jules PRs
     if: >
-      github.event.repository.visibility == "public" &&
-      github.event.workflow_run.conclusion == "success" &&
-      github.event.workflow_run.event == "pull_request" &&
+      github.event.repository.visibility == 'public' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
-      startsWith(github.event.workflow_run.head_branch, "routine-")
+      startsWith(github.event.workflow_run.head_branch, 'routine-')
     runs-on: ubuntu-latest
     steps:
       - name: Squash-merge eligible routine PR
