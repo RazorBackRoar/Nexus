@@ -1,0 +1,7 @@
+{
+  "auto_approve_plans": true,
+  "suggestions": {
+    "auto_execute": true,
+    "max_concurrent_tasks": 3
+  }
+}
