@@ -85,3 +85,10 @@ CI covers lint, types, and unit tests. It does **not** prove Safari permissions,
 - GitHub release surface is a single `v2.0.0` DMG; older releases were removed Jul 2026.
 - Quick Save is a top-level bookmark column with no subfolders; each save is a rectangular card (Date & Time | Bookmarks | Notes), newest first; right-click to copy or delete a block.
 - Drag-and-drop of `.txt` onto the URL table loads URLs; Rich Links copies Apple Notes–friendly rich links to the clipboard.
+
+
+## Automated Agent & Jules Integration Guidelines
+- **Jules PR Auto-Merge**: Automated PRs created on branches starting with `sentinel-`, `bolt-`, or `palette-` are handled by GitHub Actions (`.github/workflows/jules-automerge.yml`).
+- **No Duplicate Issue/PR Reopening**: Jules subagents must verify existing closed and open PRs before proposing repetitive fixes or contact info updates.
+- **Branch Cleanup**: Head branches are deleted automatically upon squash-merge.
+
