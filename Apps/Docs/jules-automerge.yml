@@ -2,8 +2,10 @@ name: Jules Auto-Merge
 
 on:
   workflow_run:
-    workflows: ["CI"]   # Exact name of quality workflow
+    workflows: ["CI"]
     types: [completed]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -12,28 +14,34 @@ permissions:
 jobs:
   automerge:
     name: Squash-merge Jules PRs
-    if: >
-      github.event.workflow_run.conclusion == "success" &&
-      github.event.workflow_run.event == "pull_request" &&
-      (
-        startsWith(github.event.workflow_run.head_branch, "sentinel-") ||
-        startsWith(github.event.workflow_run.head_branch, "bolt-") ||
-        startsWith(github.event.workflow_run.head_branch, "palette-")
-      )
     runs-on: ubuntu-latest
     steps:
-      - name: Squash-merge Jules PR after CI
+      - name: Auto-merge Jules PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          pr_number=$(gh pr list --repo "$REPOSITORY" --head "$HEAD_BRANCH" --state open --json number -q ".[0].number")
-          if [ -n "$pr_number" ] && [ "$pr_number" != "null" ]; then
-            echo "Merging PR #$pr_number on $HEAD_BRANCH..."
-            gh pr merge "$pr_number" --repo "$REPOSITORY" --squash --delete-branch
+          
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+              echo "CI did not succeed. Skipping."
+              exit 0
+            fi
+            HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
           else
-            echo "No open PR found for branch $HEAD_BRANCH"
+            HEAD_BRANCH="${{ github.head_ref }}"
+          fi
+
+          if [ -z "$HEAD_BRANCH" ] || [ "$HEAD_BRANCH" = "main" ] || [ "$HEAD_BRANCH" = "master" ]; then
+            exit 0
+          fi
+
+          pr_number=$(gh pr list --repo "$REPOSITORY" --head "$HEAD_BRANCH" --state open --json number -q ".[0].number")
+          
+          if [ -n "$pr_number" ] && [ "$pr_number" != "null" ]; then
+            echo "Enabling auto-merge for PR #$pr_number on branch $HEAD_BRANCH..."
+            gh pr merge "$pr_number" --repo "$REPOSITORY" --squash --delete-branch --auto || \
+            gh pr merge "$pr_number" --repo "$REPOSITORY" --squash --delete-branch || true
           fi
 
