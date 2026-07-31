@@ -1,5 +1,15 @@
 name: Jules Auto-Merge
 
+# Auto-merge Jules tool PRs after CI is green, then delete the head branch.
+# Prefixes: sentinel- (security), bolt- (performance), palette- (design),
+# plus legacy routine- (docs/tests-only, path-restricted).
+#
+# Requires (Settings → General → Pull Requests):
+#   - Allow auto-merge
+#   - Automatically delete head branches
+#
+# Canonical copy: Apps/Docs/jules/workflows/jules-automerge.yml
+
 on:
   workflow_run:
     workflows: ["CI"]
@@ -15,16 +25,20 @@ concurrency:
 
 jobs:
   automerge:
-    name: Squash-merge low-risk Jules PRs
+    name: Squash-merge Jules PRs
     if: >
-      github.event.repository.visibility == 'public' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
-      startsWith(github.event.workflow_run.head_branch, 'routine-')
+      (
+        startsWith(github.event.workflow_run.head_branch, 'sentinel-') ||
+        startsWith(github.event.workflow_run.head_branch, 'bolt-') ||
+        startsWith(github.event.workflow_run.head_branch, 'palette-') ||
+        startsWith(github.event.workflow_run.head_branch, 'routine-')
+      )
     runs-on: ubuntu-latest
     steps:
-      - name: Squash-merge eligible routine PR
+      - name: Squash-merge eligible Jules PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
@@ -33,7 +47,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Find open PR matching the branch
           pr_number=$(gh pr list --repo "$REPOSITORY" --head "$HEAD_BRANCH" --state open --json number,baseRefName,headRepositoryOwner,author,isDraft -q '
             .[]
             | select(
@@ -45,7 +58,7 @@ jobs:
             | .number' | head -n 1)
 
           if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
-            echo "No eligible routine PR found for branch $HEAD_BRANCH."
+            echo "No eligible Jules PR for branch $HEAD_BRANCH."
             exit 0
           fi
 
@@ -55,28 +68,32 @@ jobs:
             exit 0
           fi
 
-          deletions=$(gh pr view "$pr_number" --repo "$REPOSITORY" --json deletions -q '.deletions')
-          if [ "$deletions" -ne 0 ]; then
-            echo "PR #$pr_number deletes files or lines; manual review required."
-            exit 0
+          # Legacy routine- PRs: docs/tests only, no deletions.
+          if [[ "$HEAD_BRANCH" == routine-* ]]; then
+            deletions=$(gh pr view "$pr_number" --repo "$REPOSITORY" --json deletions -q '.deletions')
+            if [ "$deletions" -ne 0 ]; then
+              echo "PR #$pr_number deletes lines; manual review required."
+              exit 0
+            fi
+            changed_files=$(gh pr view "$pr_number" --repo "$REPOSITORY" --json files -q '.files[].path')
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+              case "$path" in
+                README.md|CHANGELOG.md|SECURITY.md|CODE_OF_CONDUCT.md|docs/*|tests/*|Tests/*|test/*|.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
+                  ;;
+                *)
+                  echo "PR #$pr_number changes non-routine path: $path"
+                  exit 0
+                  ;;
+              esac
+            done <<< "$changed_files"
           fi
 
-          changed_files=$(gh pr view "$pr_number" --repo "$REPOSITORY" --json files -q '.files[].path')
-          while IFS= read -r path; do
-            case "$path" in
-              README.md|CHANGELOG.md|docs/*|tests/*|Tests/*|test/*|.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
-                ;;
-              *)
-                echo "PR #$pr_number changes non-routine path: $path"
-                exit 0
-                ;;
-            esac
-          done <<< "$changed_files"
-
-          echo "Enabling auto-merge for low-risk PR #$pr_number on branch $HEAD_BRANCH..."
+          echo "Merging Jules PR #$pr_number on $HEAD_BRANCH..."
+          # CI already succeeded (workflow_run). Merge now; --auto is optional
+          # (private repos may disallow allow_auto_merge).
           gh pr merge "$pr_number" \
             --repo "$REPOSITORY" \
             --squash \
             --delete-branch \
-            --auto \
             --match-head-commit "$HEAD_SHA"
