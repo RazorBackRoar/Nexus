@@ -94,8 +94,9 @@ Jules reads this repository-root `AGENTS.md` when it clones the repository. Pare
 - Jules runs tasks in an Ubuntu VM; macOS runtime behavior, GUI behavior, Safari automation, AppleScript, and packaged-app behavior are not proven there.
 - The repository's GitHub macOS `quality` workflow is authoritative for merge readiness.
 - Daily audits must inspect existing open and recently closed PRs before proposing work, avoid duplicates, and open at most one focused PR per task.
-- `sentinel-*` security, `bolt-*` performance, and `palette-*` design branches always require human review.
-- `routine-*` is reserved for the narrow low-risk test/documentation/template allowlist enforced by CI.
+- `sentinel-*` security, `bolt-*` performance, and `palette-*` design branches always require human review — they are **not** auto-merged.
+- Auto-merge requires the manual label `jules-automerge-approved` and is Tier 1 only (docs/tests/templates, no deletions). Prefixes alone never authorize a merge.
+- Until Phase 2 `risk-gate` exists, treat docs-only review language as guidance — the workflow + branch protection enforce merges.
 - PR descriptions must list changed files, risk, verification commands and results, benchmark evidence when relevant, and unverified paths.
 - Never auto-merge runtime, dependency, lockfile, workflow, packaging, release, privacy, file-operation, or user-data changes.
 
