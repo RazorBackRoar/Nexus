@@ -22,8 +22,11 @@ Organize bookmarks, batch open URLs, and manage your browsing workflow with a da
 ## Features
 
 - **Safari Integration** — batch open URLs in Safari via AppleScript
-- **Hierarchical Bookmarks** — drag-and-drop folder organization
-- **Smart URL Extraction** — find valid links in any pasted text
+- **Quick Save** — dated URL blocks with notes (`Ctrl+Shift+S`); copy or delete via right-click
+- **Bookmark Groups** — save named groups under any tab; draggable group rows
+- **Copy Rich Links** — Apple Notes–friendly HTML links to the clipboard
+- **Smart URL Extraction** — paste text or drop `.txt`/`.csv`/`.md` onto the URL table
+- **Hierarchical Bookmarks** — drag-and-drop folder organization across nine columns
 - **Private Browsing** — one-click stealth/private mode support
 - **Export / Import** — back up your collections as JSON
 - **Apple Silicon Native** — arm64 build optimized for M-series Macs
@@ -41,10 +44,14 @@ Organize bookmarks, batch open URLs, and manage your browsing workflow with a da
 
 ## Usage
 
-1. **Add Bookmarks** — click `+` or paste URLs directly
-2. **Organize** — create folders and drag to rearrange
-3. **Batch Open** — select multiple bookmarks → **Open in Safari**
-4. **Extract URLs** — paste any block of text and Nexus finds all valid links automatically
+1. **Add Bookmarks** — click `+`, paste URLs, or drop a text file onto the URL table
+2. **Quick Save** — press `Ctrl+Shift+S` to capture the current URL block with a timestamp
+3. **Organize** — create folders, save groups, and drag to rearrange
+4. **Batch Open** — select bookmarks → **Open in Safari**
+5. **Rich Links** — copy formatted links for Apple Notes
+
+Data files live under `~/Library/Application Support/Nexus/`:
+`bookmarks_v2.json` and `bookmark_groups.json`.
 
 ---
 
@@ -85,6 +92,7 @@ uv run pytest tests/ -q
 
 ## Community & docs
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — persistence model, modules, testing
 - [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) — prerequisites, build, packaging, release, versioning
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
 - [SECURITY.md](SECURITY.md) — vulnerability reporting
