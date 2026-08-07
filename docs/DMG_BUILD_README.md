@@ -1,30 +1,40 @@
 # Building a DMG for Nexus
 
-Use the shared Apps workspace guide:
-- [Docs/dmg_build_guide.md](/Users/home/Workspace/Apps/Docs/dmg_build_guide.md)
+Nexus ships as `dist/Nexus.dmg` via the shared RazorBackRoar `razorbuild`
+pipeline (PyInstaller + DMG packaging).
 
-For Nexus specifically, run from `/Users/home/Workspace/Apps`:
+## Quick build
 
-```bash
-uv run --project .razorcore razorbuild Nexus
-```
-
-If `razorbuild` is already on your `PATH`:
+From the Nexus repository root:
 
 ```bash
 razorbuild Nexus
+# Output: dist/Nexus.dmg
 ```
 
-Repo-specific build inputs:
-- [Nexus.spec](/Users/home/Workspace/Apps/Nexus/Nexus.spec)
-- app assets under `assets/`
+In the Apps workspace layout, run from `Apps/` when sibling `.razorcore` is
+available. Dev preview without a full DMG: `./run_preview.sh`.
 
-Current notes:
-- the primary DMG path is the shared `razorbuild` flow, not a repo-local `build-dmg.sh`
-- layout is controlled by the shared build script
-- if `create-dmg` is unavailable, the build can still fall back to a plain `hdiutil` DMG without the locked Finder layout
+## Repo-specific inputs
 
-Quick troubleshooting:
-- if packaging is wrong, inspect [Nexus.spec](/Users/home/Workspace/Apps/Nexus/Nexus.spec) first
-- if DMG layout is wrong, inspect [Docs/dmg_build_guide.md](/Users/home/Workspace/Apps/Docs/dmg_build_guide.md) and [.razorcore/universal-build.sh](/Users/home/Workspace/Apps/.razorcore/universal-build.sh)
-- if assets are missing, verify the repo-local `assets/` inputs bundled by `Nexus.spec`
+| File / directory | Purpose |
+|------------------|---------|
+| `Nexus.spec` | PyInstaller analysis, hidden imports, bundled `assets/` |
+| `assets/icons/Nexus.icns` | Dock / Finder icon (may be gitignored until force-added) |
+| `src/nexus/config/entitlements.plist` | AppleEvents for Safari automation |
+
+If the packaged app fails to launch or cannot control Safari, inspect
+`Nexus.spec` and entitlements before changing runtime Python code.
+
+## Troubleshooting
+
+| Symptom | What to try |
+|---------|-------------|
+| Missing PySide6 modules | `Nexus.spec` `hiddenimports` |
+| Safari automation blocked | System Settings → Privacy & Security → Automation |
+| `razorcore` not found locally | Sibling `../.razorcore` for dev; `ci/vendor/` wheel for CI |
+
+## Related docs
+
+- [BUILD_AND_RELEASE.md](../BUILD_AND_RELEASE.md)
+- [docs/ARCHITECTURE.md](ARCHITECTURE.md)
