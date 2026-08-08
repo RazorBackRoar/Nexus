@@ -1,4 +1,4 @@
-#!/Users/home/.local/bin/python3.14
+#!/usr/bin/env python3
 """Enrich Dependabot pull requests with registry metadata and clearer titles."""
 
 from __future__ import annotations
@@ -45,12 +45,20 @@ class RegistryInfo:
 def _fetch_json(url: str) -> dict | None:
     request = urllib.request.Request(
         url,
-        headers={"Accept": "application/json", "User-Agent": "razor-dependabot-enrich/1.0"},
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "razor-dependabot-enrich/1.0",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
             return json.load(response)
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+    except (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        TimeoutError,
+        json.JSONDecodeError,
+    ):
         return None
 
 
@@ -69,7 +77,11 @@ def _parse_bump(title: str, body: str) -> Bump | None:
     for source in (title, body):
         match = BUMP_TITLE_RE.search(source)
         if match:
-            return Bump(name=match.group(1), old_version=match.group(2), new_version=match.group(3))
+            return Bump(
+                name=match.group(1),
+                old_version=match.group(2),
+                new_version=match.group(3),
+            )
     body_match = BUMP_BODY_RE.search(body)
     if body_match:
         return Bump(
@@ -91,9 +103,12 @@ def _pypi_info(package: str, version: str) -> RegistryInfo | None:
         homepage=info.get("home_page") or _first_url(project_urls, "Homepage", "Home"),
         repository=_first_url(project_urls, "Repository", "Source", "Code", "GitHub"),
         changelog=_first_url(project_urls, "Changelog", "Release notes", "Changes"),
-        documentation=info.get("docs_url") or _first_url(project_urls, "Documentation", "Docs"),
+        documentation=info.get("docs_url")
+        or _first_url(project_urls, "Documentation", "Docs"),
         license=(info.get("license") or "").strip() or None,
-        published=(payload.get("urls") or [{}])[0].get("upload_time") if payload.get("urls") else None,
+        published=(payload.get("urls") or [{}])[0].get("upload_time")
+        if payload.get("urls")
+        else None,
     )
 
 
@@ -153,7 +168,11 @@ def _build_title(
     summary: str,
 ) -> str:
     short_summary = summary.split(".", 1)[0].strip() if summary else ""
-    context = short_summary[:72] + ("…" if len(short_summary) > 72 else "") if short_summary else ecosystem
+    context = (
+        short_summary[:72] + ("…" if len(short_summary) > 72 else "")
+        if short_summary
+        else ecosystem
+    )
     dep_tag = "dev" if dependency_type == "development" else "prod"
     update_tag = _update_type_label(update_type)
     return (
@@ -195,9 +214,13 @@ def _build_body(
         lines.extend(["## About", "", info.summary, ""])
     links: list[tuple[str, str]] = []
     if ecosystem == "uv":
-        links.append(("PyPI", f"https://pypi.org/project/{bump.name}/{bump.new_version}/"))
+        links.append(
+            ("PyPI", f"https://pypi.org/project/{bump.name}/{bump.new_version}/")
+        )
     elif ecosystem == "cargo":
-        links.append(("crates.io", f"https://crates.io/crates/{bump.name}/{bump.new_version}"))
+        links.append(
+            ("crates.io", f"https://crates.io/crates/{bump.name}/{bump.new_version}")
+        )
     if info:
         if info.homepage:
             links.append(("Homepage", info.homepage))
@@ -218,7 +241,18 @@ def _build_body(
         meta_lines.append(f"- Published: {info.published}")
     if meta_lines:
         lines.extend(["## Release metadata", "", *meta_lines, ""])
-    lines.extend(["---", "", "<details>", "<summary>Original Dependabot description</summary>", "", original, "", "</details>"])
+    lines.extend(
+        [
+            "---",
+            "",
+            "<details>",
+            "<summary>Original Dependabot description</summary>",
+            "",
+            original,
+            "",
+            "</details>",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -226,9 +260,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--title", required=True)
     parser.add_argument("--body", default="")
-    parser.add_argument("--ecosystem", default=os.environ.get("DEPENDABOT_ECOSYSTEM", ""))
-    parser.add_argument("--dependency-type", default=os.environ.get("DEPENDABOT_DEPENDENCY_TYPE", ""))
-    parser.add_argument("--update-type", default=os.environ.get("DEPENDABOT_UPDATE_TYPE", ""))
+    parser.add_argument(
+        "--ecosystem", default=os.environ.get("DEPENDABOT_ECOSYSTEM", "")
+    )
+    parser.add_argument(
+        "--dependency-type", default=os.environ.get("DEPENDABOT_DEPENDENCY_TYPE", "")
+    )
+    parser.add_argument(
+        "--update-type", default=os.environ.get("DEPENDABOT_UPDATE_TYPE", "")
+    )
     parser.add_argument("--title-out", default="")
     parser.add_argument("--body-out", default="")
     args = parser.parse_args()
