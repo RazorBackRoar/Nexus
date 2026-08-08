@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Users/home/.local/bin/python3.14
 """Nexus.
 
 A fully themeable, production-ready PySide6 app with a muted dark aesthetic,

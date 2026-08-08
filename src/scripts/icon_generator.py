@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Users/home/.local/bin/python3.14
 """macOS Icon Generator for py2app.
 
 Converts existing .icns file to proper format with all required sizes.

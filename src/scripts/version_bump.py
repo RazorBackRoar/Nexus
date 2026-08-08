@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Users/home/.local/bin/python3.14
 """Comprehensive version synchronization script for Nexus.
 
 Updates version in README.md, setup.py, src/Main.py, and build.sh automatically.
