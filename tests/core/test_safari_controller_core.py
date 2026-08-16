@@ -129,7 +129,9 @@ def test_open_urls_in_front_window_returns_false_on_applescript_error(
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
 
     result = asyncio.run(
-        SafariController.open_urls_in_front_window(["https://example.com"])
+        SafariController.open_urls_in_front_window(
+            ["https://example.com"], private_mode=False
+        )
     )
 
     assert result is False
@@ -150,3 +152,27 @@ def test_run_batch_handles_empty_script_and_nonzero_return(monkeypatch) -> None:
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
 
     assert asyncio.run(SafariController._run_batch(["https://example.com"])) is False
+
+
+def test_run_batch_fails_closed_when_private_mode_requested(monkeypatch) -> None:
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        raise AssertionError("AppleScript must not run when private_mode=True")
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(
+            SafariController._run_batch(["https://example.com"], private_mode=True)
+        )
+        is False
+    )
+
+
+def test_run_batch_rejects_non_http_schemes(monkeypatch) -> None:
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        raise AssertionError("non-http URLs must not reach AppleScript")
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(SafariController._run_batch(["javascript:alert(1)", "file:///tmp"]))
+        is False
+    )

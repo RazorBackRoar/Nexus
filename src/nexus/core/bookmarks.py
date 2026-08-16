@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
+from nexus.core.atomic_io import atomic_replace_json
 from nexus.core.config import logger
 from nexus.core.models import Bookmark, BookmarkFolder, BookmarkNode
 from nexus.utils.url_processor import URLProcessor
@@ -99,14 +100,11 @@ class BookmarkManager:
     def save_bookmarks(self, bookmarks: list[BookmarkNode]) -> bool:
         """Saves bookmarks using an atomic write process to prevent data loss."""
         backup_path = self.file_path.with_suffix(".bak")
-        temp_path = self.file_path.with_suffix(".tmp")
         try:
             data = [self._serialize_node(node) for node in bookmarks]
-            with open(temp_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
             if self.file_path.exists():
                 self.file_path.replace(backup_path)
-            temp_path.replace(self.file_path)
+            atomic_replace_json(self.file_path, data)
             logger.info("Saved bookmarks successfully.")
             return True
         except OSError as e:
@@ -129,13 +127,10 @@ class BookmarkManager:
         dataclass nodes go through this method.
         """
         backup_path = self.file_path.with_suffix(".bak")
-        temp_path = self.file_path.with_suffix(".tmp")
         try:
-            with open(temp_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
             if self.file_path.exists():
                 self.file_path.replace(backup_path)
-            temp_path.replace(self.file_path)
+            atomic_replace_json(self.file_path, data)
             return True
         except OSError as e:
             logger.error("Failed to save bookmarks (raw): %s", e)

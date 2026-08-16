@@ -4,6 +4,24 @@ Every function returns an AppleScript source string ready for ``osascript -e``.
 This module has **no** macOS-permission imports and is fully testable on any platform.
 """
 
+from urllib.parse import urlparse
+
+
+ALLOWED_SAFARI_SCHEMES = frozenset({"http", "https"})
+
+
+def is_allowed_safari_url(url: str) -> bool:
+    """Reject file, javascript, data, and other non-browser schemes."""
+    try:
+        parsed = urlparse((url or "").strip())
+    except ValueError:
+        return False
+    return parsed.scheme.lower() in ALLOWED_SAFARI_SCHEMES and bool(parsed.netloc)
+
+
+def allowed_safari_urls(urls: list[str]) -> list[str]:
+    return [url for url in urls if is_allowed_safari_url(url)]
+
 
 def escape_string(value: str) -> str:
     r"""Escape a user-provided string for safe embedding in AppleScript.
@@ -48,6 +66,8 @@ LAUNCH_SCRIPT: str = 'tell application "Safari" to activate'
 
 def build_new_window_script(url: str) -> str:
     """Script that opens *url* in a **new** Safari window."""
+    if not is_allowed_safari_url(url):
+        return ""
     safe = escape_string(url)
     return (
         f'tell application "Safari"\n'
@@ -59,6 +79,8 @@ def build_new_window_script(url: str) -> str:
 
 def build_new_tab_script(url: str) -> str:
     """Script that opens *url* as a new tab in the **front** window."""
+    if not is_allowed_safari_url(url):
+        return ""
     safe = escape_string(url)
     return (
         f'tell application "Safari"\n'
@@ -71,6 +93,7 @@ def build_new_tab_script(url: str) -> str:
 
 def build_open_in_front_window_script(urls: list[str]) -> str:
     """Open URLs in the front Safari window, creating one when needed."""
+    urls = allowed_safari_urls(urls)
     if not urls:
         return ""
 
@@ -110,6 +133,7 @@ def build_batch_script(urls: list[str], *, create_window: bool = False) -> str:
         become tabs.  If ``False`` every URL becomes a tab in the current
         front window.
     """
+    urls = allowed_safari_urls(urls)
     if not urls:
         return ""
 

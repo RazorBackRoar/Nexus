@@ -128,3 +128,14 @@ def test_corrupted_items_in_one_group_does_not_lose_others(tmp_path: Path):
     # The good group survives; the bad group is dropped (its items
     # path raises AttributeError on the bare-string entry).
     assert [g.id for g in groups] == ["grp_good"]
+
+
+def test_save_does_not_write_through_tmp_symlink(tmp_path: Path):
+    store = GroupStore(tmp_path / "groups.json")
+    secret = tmp_path / "secret.txt"
+    secret.write_text("keep-me", encoding="utf-8")
+    store.temp_path.symlink_to(secret)
+
+    assert store.save_groups([_group()]) is True
+    assert secret.read_text(encoding="utf-8") == "keep-me"
+    assert store.file_path.is_file()

@@ -717,7 +717,7 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(main_content, 1)
         main_layout.addWidget(content_widget, 1)
 
-        self.status_bar = QLabel("Ready")
+        self.status_bar = QLabel("URLs open in a standard Safari window, not Private Browsing.")
         self.status_bar.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.status_bar.setStyleSheet("""
             QLabel {
@@ -930,7 +930,7 @@ class MainWindow(QMainWindow):
         self.worker.start()
 
     async def _open_single_url_with_tracking(
-        self, row: int, url: str, private_mode: bool = True
+        self, row: int, url: str, private_mode: bool = False
     ) -> tuple[int, bool]:
         """Open a single URL and keep row-level status intact."""
         try:
@@ -956,7 +956,7 @@ class MainWindow(QMainWindow):
         self._show_message(f"Error launching URL: {err}", "warning")
 
     async def _open_urls_with_tracking(
-        self, urls: list[str], private_mode: bool = True
+        self, urls: list[str], private_mode: bool = False
     ) -> bool:
         """Opens URLs in Safari and tracks success/failure with privacy settings."""
         try:
@@ -2144,7 +2144,7 @@ class MainWindow(QMainWindow):
                 self.worker.start()
 
     async def _open_bookmark_in_existing_window(
-        self, urls: list[str], private_mode: bool = True
+        self, urls: list[str], private_mode: bool = False
     ) -> bool:
         """Open bookmark URLs via the escaped AppleScript builder path."""
         return await self.safari_controller.open_urls_in_front_window(

@@ -108,3 +108,14 @@ def test_build_open_in_front_window_script_escapes_user_urls():
 
     assert 'set URL of front document to "https://example.com/path?\\"x\\"=1\\\\2\\nnext\\rline"' in script
     assert 'make new tab with properties {URL:"https://b.com"}' in script
+
+
+def test_builder_drops_non_http_schemes():
+    assert builder.build_new_window_script("javascript:alert(1)") == ""
+    assert builder.build_new_tab_script("file:///tmp/x") == ""
+    assert builder.build_batch_script(["javascript:alert(1)", "data:text/html,x"]) == ""
+    script = builder.build_batch_script(
+        ["javascript:alert(1)", "https://ok.example"], create_window=True
+    )
+    assert "javascript" not in script
+    assert "https://ok.example" in script
