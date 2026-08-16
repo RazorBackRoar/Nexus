@@ -45,6 +45,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr edit "${PR_NUMBER}" \
-            --title "$(cat enriched-title.txt)" \
-            --body-file enriched-body.md
+          python - <<'PY'
+          import os
+          import subprocess
+          from pathlib import Path
+
+          title = Path("enriched-title.txt").read_text(encoding="utf-8").rstrip("\n")
+          subprocess.run(
+              [
+                  "gh",
+                  "pr",
+                  "edit",
+                  os.environ["PR_NUMBER"],
+                  "--title",
+                  title,
+                  "--body-file",
+                  "enriched-body.md",
+              ],
+              check=True,
+          )
+          PY
