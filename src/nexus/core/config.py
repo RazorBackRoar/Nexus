@@ -46,7 +46,7 @@ class Config:
     SAME_DOMAIN_EXTRA_DELAY = (
         2.0  # Additional delay for same domain to prevent rate limiting
     )
-    DEFAULT_PRIVATE_MODE = False  # AppleScript cannot open Safari private windows
+    DEFAULT_PRIVATE_MODE = True  # Open Safari Private Windows (⇧⌘N via System Events)
     AUTO_LOG_CLEANUP = True  # Automatically cleanup logs after use
 
     # Enhanced URL extraction settings

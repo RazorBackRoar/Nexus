@@ -154,17 +154,47 @@ def test_run_batch_handles_empty_script_and_nonzero_return(monkeypatch) -> None:
     assert asyncio.run(SafariController._run_batch(["https://example.com"])) is False
 
 
-def test_run_batch_fails_closed_when_private_mode_requested(monkeypatch) -> None:
+def test_run_batch_opens_a_private_window_when_requested(monkeypatch) -> None:
+    seen: list[str] = []
+
     async def fake_run_applescript(script: str) -> tuple[str, str, int]:
-        raise AssertionError("AppleScript must not run when private_mode=True")
+        seen.append(script)
+        return "", "", 0
 
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
     assert (
         asyncio.run(
-            SafariController._run_batch(["https://example.com"], private_mode=True)
+            SafariController._run_batch(
+                ["https://example.com"], create_window=True, private_mode=True
+            )
+        )
+        is True
+    )
+    assert seen
+    assert 'keystroke "n" using {shift down, command down}' in seen[0]
+    assert "make new document" not in seen[0]
+
+
+def test_run_batch_does_not_fall_back_to_standard_window_on_private_failure(
+    monkeypatch,
+) -> None:
+    seen: list[str] = []
+
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        seen.append(script)
+        return "", "not allowed", 1
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(
+            SafariController._run_batch(
+                ["https://example.com"], create_window=True, private_mode=True
+            )
         )
         is False
     )
+    assert len(seen) == 1
+    assert "make new document" not in seen[0]
 
 
 def test_run_batch_rejects_non_http_schemes(monkeypatch) -> None:

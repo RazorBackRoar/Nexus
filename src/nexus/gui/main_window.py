@@ -717,7 +717,7 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(main_content, 1)
         main_layout.addWidget(content_widget, 1)
 
-        self.status_bar = QLabel("URLs open in a standard Safari window, not Private Browsing.")
+        self.status_bar = QLabel("URLs open in a Safari Private Window.")
         self.status_bar.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.status_bar.setStyleSheet("""
             QLabel {
@@ -818,7 +818,7 @@ class MainWindow(QMainWindow):
                 self.worker = AsyncWorker(
                     self.safari_controller.open_urls,
                     urls,
-                    self.private_mode_enabled,
+                    private_mode=self.private_mode_enabled,
                 )
                 self.worker.result_ready.connect(
                     lambda success: self._set_status(
@@ -920,7 +920,7 @@ class MainWindow(QMainWindow):
         self.worker = AsyncWorker(
             self.safari_controller.open_urls,
             [url],
-            self.private_mode_enabled,
+            private_mode=self.private_mode_enabled,
         )
         self.worker.result_ready.connect(
             lambda success: self._set_status(

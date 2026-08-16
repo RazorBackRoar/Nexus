@@ -18,9 +18,10 @@ from nexus.applescript.poller import check_safari_status, run_applescript
 from nexus.core.config import Config, logger, privacy_fingerprint
 
 
-PRIVATE_BROWSING_UNAVAILABLE = (
-    "Private browsing was requested, but Safari private windows cannot be opened "
-    "via AppleScript. Refusing to open URLs in a standard window."
+PRIVATE_BROWSING_FAILED = (
+    "Could not open a Safari Private Window. Enable Accessibility for Nexus "
+    "in System Settings → Privacy & Security, then try again. "
+    "URLs were not opened in a standard window."
 )
 
 
@@ -85,21 +86,20 @@ class SafariController:
             logger.error("Failed to ensure Safari is ready")
             return False
 
-        if private_mode:
-            logger.error(PRIVATE_BROWSING_UNAVAILABLE)
-            return False
-
-        script = build_open_in_front_window_script(urls)
+        script = build_open_in_front_window_script(urls, private_mode=private_mode)
         if not script:
             return False
 
         try:
             _stdout, _stderr, rc = await run_applescript(script)
             if rc != 0:
-                logger.error(
-                    "AppleScript returned non-zero exit status for %d bookmark URL(s)",
-                    len(urls),
-                )
+                if private_mode:
+                    logger.error(PRIVATE_BROWSING_FAILED)
+                else:
+                    logger.error(
+                        "AppleScript returned non-zero exit status for %d bookmark URL(s)",
+                        len(urls),
+                    )
                 return False
             return True
         except Exception as e:
@@ -237,21 +237,22 @@ class SafariController:
             logger.warning("No http(s) URLs left to open")
             return False
 
-        if private_mode:
-            logger.error(PRIVATE_BROWSING_UNAVAILABLE)
-            return False
-
-        script = build_batch_script(urls, create_window=create_window)
+        script = build_batch_script(
+            urls, create_window=create_window, private_mode=private_mode
+        )
         if not script:
             return True
 
         try:
             _stdout, _stderr, rc = await run_applescript(script)
             if rc != 0:
-                logger.error(
-                    "AppleScript returned non-zero exit status for %d URL(s)",
-                    len(urls),
-                )
+                if private_mode:
+                    logger.error(PRIVATE_BROWSING_FAILED)
+                else:
+                    logger.error(
+                        "AppleScript returned non-zero exit status for %d URL(s)",
+                        len(urls),
+                    )
                 return False
             return True
         except Exception as e:

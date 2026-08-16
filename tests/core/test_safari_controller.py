@@ -119,3 +119,31 @@ def test_builder_drops_non_http_schemes():
     )
     assert "javascript" not in script
     assert "https://ok.example" in script
+
+
+def test_build_new_private_window_script_uses_shortcut_not_standard_document():
+    script = builder.build_new_private_window_script("https://ok.example")
+    assert 'keystroke "n" using {shift down, command down}' in script
+    assert "make new document" not in script
+    assert "https://ok.example" in script
+    assert builder.build_new_private_window_script("javascript:alert(1)") == ""
+
+
+def test_build_batch_script_private_mode_opens_private_window_then_tabs():
+    script = builder.build_batch_script(
+        ["https://a.example", "https://b.example"],
+        create_window=True,
+        private_mode=True,
+    )
+    assert 'keystroke "n" using {shift down, command down}' in script
+    assert "make new document" not in script
+    assert "make new tab" in script
+    assert "https://b.example" in script
+
+
+def test_build_open_in_front_window_script_private_mode_does_not_reuse_standard_window():
+    script = builder.build_open_in_front_window_script(
+        ["https://a.example"], private_mode=True
+    )
+    assert 'keystroke "n" using {shift down, command down}' in script
+    assert "make new document" not in script
