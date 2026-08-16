@@ -258,8 +258,8 @@ def _build_body(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--title", required=True)
-    parser.add_argument("--body", default="")
+    parser.add_argument("--title", default=os.environ.get("PR_TITLE", ""))
+    parser.add_argument("--body", default=os.environ.get("PR_BODY", ""))
     parser.add_argument(
         "--ecosystem", default=os.environ.get("DEPENDABOT_ECOSYSTEM", "")
     )
@@ -272,6 +272,9 @@ def main() -> int:
     parser.add_argument("--title-out", default="")
     parser.add_argument("--body-out", default="")
     args = parser.parse_args()
+    if not str(args.title).strip():
+        print("PR title is required (pass --title or set PR_TITLE).", file=sys.stderr)
+        return 1
 
     if MARKER in args.body:
         if args.title_out:
