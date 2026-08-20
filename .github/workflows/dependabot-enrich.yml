@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v3
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14"
 
@@ -33,22 +33,35 @@ jobs:
           DEPENDABOT_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
           DEPENDABOT_DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
           DEPENDABOT_UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEPENDABOT_DEPENDENCY_GROUP: ${{ steps.metadata.outputs.dependency-group }}
+          DEPENDABOT_UPDATED_DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          python .github/scripts/enrich-dependabot-pr.py \
-            --title "${{ github.event.pull_request.title }}" \
-            --body "${PR_BODY}" \
-            --ecosystem "${{ steps.metadata.outputs.package-ecosystem }}" \
-            --dependency-type "${{ steps.metadata.outputs.dependency-type }}" \
-            --update-type "${{ steps.metadata.outputs.update-type }}" \
-            --title-out enriched-title.txt \
-            --body-out enriched-body.md
+        run: python .github/scripts/enrich-dependabot-pr.py --title-out enriched-title.txt --body-out enriched-body.md
 
       - name: Update pull request
         if: steps.enrich.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr edit "${{ github.event.pull_request.number }}" \
-            --title "$(cat enriched-title.txt)" \
-            --body-file enriched-body.md
+          python - <<'PY'
+          import os
+          import subprocess
+          from pathlib import Path
+
+          title = Path("enriched-title.txt").read_text(encoding="utf-8").rstrip("\n")
+          subprocess.run(
+              [
+                  "gh",
+                  "pr",
+                  "edit",
+                  os.environ["PR_NUMBER"],
+                  "--title",
+                  title,
+                  "--body-file",
+                  "enriched-body.md",
+              ],
+              check=True,
+          )
+          PY

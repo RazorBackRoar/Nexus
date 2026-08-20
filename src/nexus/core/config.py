@@ -46,7 +46,7 @@ class Config:
     SAME_DOMAIN_EXTRA_DELAY = (
         2.0  # Additional delay for same domain to prevent rate limiting
     )
-    DEFAULT_PRIVATE_MODE = True  # Default to private browsing
+    DEFAULT_PRIVATE_MODE = True  # Open Safari Private Windows (⇧⌘N via System Events)
     AUTO_LOG_CLEANUP = True  # Automatically cleanup logs after use
 
     # Enhanced URL extraction settings
@@ -55,7 +55,7 @@ class Config:
         10000  # Maximum text length for URL extraction processing
     )
     URL_EXTRACTION_TIMEOUT = 5.0  # Timeout for complex regex operations
-    SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "ftps"]  # Supported URL protocols
+    SUPPORTED_PROTOCOLS = ["http", "https"]  # Schemes allowed at ingest and launch
 
 
 _LOGGER_INITIALIZED = False

@@ -129,7 +129,9 @@ def test_open_urls_in_front_window_returns_false_on_applescript_error(
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
 
     result = asyncio.run(
-        SafariController.open_urls_in_front_window(["https://example.com"])
+        SafariController.open_urls_in_front_window(
+            ["https://example.com"], private_mode=False
+        )
     )
 
     assert result is False
@@ -150,3 +152,57 @@ def test_run_batch_handles_empty_script_and_nonzero_return(monkeypatch) -> None:
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
 
     assert asyncio.run(SafariController._run_batch(["https://example.com"])) is False
+
+
+def test_run_batch_opens_a_private_window_when_requested(monkeypatch) -> None:
+    seen: list[str] = []
+
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        seen.append(script)
+        return "", "", 0
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(
+            SafariController._run_batch(
+                ["https://example.com"], create_window=True, private_mode=True
+            )
+        )
+        is True
+    )
+    assert seen
+    assert 'keystroke "n" using {shift down, command down}' in seen[0]
+    assert "make new document" not in seen[0]
+
+
+def test_run_batch_does_not_fall_back_to_standard_window_on_private_failure(
+    monkeypatch,
+) -> None:
+    seen: list[str] = []
+
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        seen.append(script)
+        return "", "not allowed", 1
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(
+            SafariController._run_batch(
+                ["https://example.com"], create_window=True, private_mode=True
+            )
+        )
+        is False
+    )
+    assert len(seen) == 1
+    assert "make new document" not in seen[0]
+
+
+def test_run_batch_rejects_non_http_schemes(monkeypatch) -> None:
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        raise AssertionError("non-http URLs must not reach AppleScript")
+
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    assert (
+        asyncio.run(SafariController._run_batch(["javascript:alert(1)", "file:///tmp"]))
+        is False
+    )

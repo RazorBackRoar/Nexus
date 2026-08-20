@@ -10,11 +10,19 @@ import random
 from urllib.parse import urlparse
 
 from nexus.applescript.builder import (
+    allowed_safari_urls,
     build_batch_script,
     build_open_in_front_window_script,
 )
 from nexus.applescript.poller import check_safari_status, run_applescript
 from nexus.core.config import Config, logger, privacy_fingerprint
+
+
+PRIVATE_BROWSING_FAILED = (
+    "Could not open a Safari Private Window. Enable Accessibility for Nexus "
+    "in System Settings → Privacy & Security, then try again. "
+    "URLs were not opened in a standard window."
+)
 
 
 class SafariController:
@@ -25,9 +33,10 @@ class SafariController:
         urls: list[str],
         max_batch_size: int = 20,
         use_stealth: bool = True,
-        private_mode: bool = True,
+        private_mode: bool = False,
     ) -> bool:
         """Open URLs in Safari with anti-detection measures and privacy settings."""
+        urls = allowed_safari_urls(urls)
         if not urls:
             return False
         try:
@@ -65,9 +74,10 @@ class SafariController:
 
     @staticmethod
     async def open_urls_in_front_window(
-        urls: list[str], private_mode: bool = True
+        urls: list[str], private_mode: bool = False
     ) -> bool:
         """Open URLs in the front Safari window, creating one if needed."""
+        urls = allowed_safari_urls(urls)
         if not urls:
             return False
 
@@ -76,24 +86,20 @@ class SafariController:
             logger.error("Failed to ensure Safari is ready")
             return False
 
-        if private_mode:
-            logger.warning(
-                "private_mode=True requested but Safari private windows cannot be "
-                "opened via AppleScript without Accessibility permissions. "
-                "Opening in a standard window instead."
-            )
-
-        script = build_open_in_front_window_script(urls)
+        script = build_open_in_front_window_script(urls, private_mode=private_mode)
         if not script:
             return False
 
         try:
             _stdout, _stderr, rc = await run_applescript(script)
             if rc != 0:
-                logger.error(
-                    "AppleScript returned non-zero exit status for %d bookmark URL(s)",
-                    len(urls),
-                )
+                if private_mode:
+                    logger.error(PRIVATE_BROWSING_FAILED)
+                else:
+                    logger.error(
+                        "AppleScript returned non-zero exit status for %d bookmark URL(s)",
+                        len(urls),
+                    )
                 return False
             return True
         except Exception as e:
@@ -118,7 +124,7 @@ class SafariController:
 
     @staticmethod
     async def _open_urls_with_stealth(
-        domain_groups: dict[str, list[str]], private_mode: bool = True
+        domain_groups: dict[str, list[str]], private_mode: bool = False
     ) -> bool:
         """Open URLs with domain-specific anti-detection strategies in single window."""
         overall_success = True
@@ -166,7 +172,7 @@ class SafariController:
         urls: list[str],
         domain: str,
         is_first_domain: bool = False,
-        private_mode: bool = True,
+        private_mode: bool = False,
     ) -> bool:
         """Open multiple URLs from same domain with staggered timing."""
         try:
@@ -221,30 +227,32 @@ class SafariController:
         urls: list[str],
         *,
         create_window: bool = False,
-        private_mode: bool = True,
+        private_mode: bool = False,
     ) -> bool:
         """Build and execute an AppleScript batch via the builder module."""
         if not urls:
             return True
+        urls = allowed_safari_urls(urls)
+        if not urls:
+            logger.warning("No http(s) URLs left to open")
+            return False
 
-        if create_window and private_mode:
-            logger.warning(
-                "private_mode=True requested but Safari private windows cannot be "
-                "opened via AppleScript without Accessibility permissions. "
-                "Opening in a standard window instead."
-            )
-
-        script = build_batch_script(urls, create_window=create_window)
+        script = build_batch_script(
+            urls, create_window=create_window, private_mode=private_mode
+        )
         if not script:
             return True
 
         try:
             _stdout, _stderr, rc = await run_applescript(script)
             if rc != 0:
-                logger.error(
-                    "AppleScript returned non-zero exit status for %d URL(s)",
-                    len(urls),
-                )
+                if private_mode:
+                    logger.error(PRIVATE_BROWSING_FAILED)
+                else:
+                    logger.error(
+                        "AppleScript returned non-zero exit status for %d URL(s)",
+                        len(urls),
+                    )
                 return False
             return True
         except Exception as e:

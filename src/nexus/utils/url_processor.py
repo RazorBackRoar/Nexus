@@ -20,7 +20,7 @@ class URLProcessor:
         self.url_patterns = {
             # Standard URLs with protocols
             "protocol": re.compile(
-                r'(?:https?|ftp|ftps)://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE
+                r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE
             ),
             # www URLs without protocol
             "www": re.compile(r'www\.[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE),
@@ -348,7 +348,7 @@ class URLProcessor:
         try:
             parsed = urlparse(
                 url
-                if url.startswith(("http://", "https://", "ftp://", "ftps://"))
+                if url.startswith(("http://", "https://"))
                 else "https://" + url
             )
             if not parsed.netloc:
@@ -414,3 +414,29 @@ class URLProcessor:
             )
 
         return None
+
+    def is_allowed_open_url(self, url: str) -> bool:
+        """True when `url` is an http(s) URL safe to ingest, persist, or launch."""
+        try:
+            parsed = urlparse((url or "").strip())
+        except ValueError:
+            return False
+        return parsed.scheme.lower() in Config.SUPPORTED_PROTOCOLS and bool(parsed.netloc)
+
+    def filter_openable_urls(self, urls: list[str]) -> list[str]:
+        """Normalize and keep only http(s) URLs."""
+        kept: list[str] = []
+        seen: set[str] = set()
+        for raw in urls:
+            candidate = (raw or "").strip()
+            if not candidate:
+                continue
+            normalized = self._normalize_url(candidate)
+            if not normalized or not self.is_allowed_open_url(normalized):
+                continue
+            key = normalized.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            kept.append(normalized)
+        return kept
