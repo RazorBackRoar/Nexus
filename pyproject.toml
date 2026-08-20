@@ -59,3 +59,7 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.56",
 ]
+
+[tool.uv]
+# Public CI and Dependabot resolve razorcore from the committed vendor wheel.
+find-links = ["ci/vendor"]
