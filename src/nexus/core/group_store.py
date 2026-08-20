@@ -7,6 +7,7 @@ Mirrors :class:`nexus.core.bookmarks.BookmarkManager` — atomic write with
 import json
 from pathlib import Path
 
+from nexus.core.atomic_io import atomic_replace_json
 from nexus.core.config import logger
 from nexus.core.models import BookmarkGroup, GroupItem
 
@@ -71,16 +72,10 @@ class GroupStore:
     def save_groups(self, groups: list[BookmarkGroup]) -> bool:
         """Atomically persist the full group list."""
         try:
-            with open(self.temp_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    [self._serialize(g) for g in groups],
-                    f,
-                    indent=2,
-                    ensure_ascii=False,
-                )
+            data = [self._serialize(g) for g in groups]
             if self.file_path.exists():
                 self.file_path.replace(self.backup_path)
-            self.temp_path.replace(self.file_path)
+            atomic_replace_json(self.file_path, data)
             return True
         except OSError as e:
             logger.error("Failed to save groups: %s", e)

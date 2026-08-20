@@ -1,6 +1,0 @@
-# RETIRED — do not copy into .github/workflows/
-# This file previously held an unsafe pull_request_target auto-merge workflow.
-# Canonical live workflow:
-#   Apps/Docs/jules/workflows/jules-automerge.yml
-#   (copied to .github/workflows/jules-automerge.yml per app)
-

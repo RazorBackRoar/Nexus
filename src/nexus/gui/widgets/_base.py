@@ -740,10 +740,11 @@ class URLTableWidget(QTableWidget):
 
     def add_urls(self, urls: list[str]):
         """Add URLs to the table with automatic numbering, keeping them in alphabetical order."""
-        if not urls:
+        cleaned = self.url_processor.filter_openable_urls(urls)
+        if not cleaned:
             return
         existing = self.get_all_urls()
-        combined = sorted(existing + [u.strip() for u in urls if u.strip()], key=lambda s: s.lower())
+        combined = sorted(existing + cleaned, key=lambda s: s.lower())
         self.replace_urls(combined)
 
     def update_status(self, row: int, success: bool):
@@ -780,7 +781,9 @@ class URLTableWidget(QTableWidget):
         self._suspend_url_events = True
         self.setRowCount(0)
         self.url_counter = 0
-        sorted_urls = sorted([u.strip() for u in urls if u.strip()], key=lambda s: s.lower())
+        sorted_urls = sorted(
+            self.url_processor.filter_openable_urls(urls), key=lambda s: s.lower()
+        )
         for url in sorted_urls:
             self.url_counter += 1
             row = self.rowCount()
@@ -920,8 +923,14 @@ class URLTableWidget(QTableWidget):
             self.url_activated.emit(item.row(), url_item.text().strip())
 
     def _normalize_url_text(self, text: str) -> str:
-        normalized = self.url_processor._normalize_url(text.strip())
-        return normalized or text.strip()
+        stripped = text.strip()
+        normalized = self.url_processor._normalize_url(stripped)
+        if normalized and self.url_processor.is_allowed_open_url(normalized):
+            return normalized
+        parsed_scheme = stripped.split("://", 1)[0].lower() if "://" in stripped else ""
+        if parsed_scheme and parsed_scheme not in {"http", "https"}:
+            return ""
+        return stripped
 
     def _on_item_changed(self, item: QTableWidgetItem):
         if self._suspend_url_events or item.column() != 1:
