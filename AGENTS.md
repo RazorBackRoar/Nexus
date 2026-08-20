@@ -11,8 +11,8 @@ Use with `../AGENTS.md`. Keep this file Nexus-specific.
 Native macOS Safari bookmark manager and batch URL opener (PySide6).
 
 - Main: `src/nexus/main.py`
-- Core: `src/nexus/core/bookmarks.py`, `src/nexus/core/safari.py`
-- UI: `src/nexus/gui/main_window.py`, `src/nexus/gui/widgets.py`
+- Core: `src/nexus/core/bookmarks.py`, `src/nexus/core/group_store.py`, `src/nexus/core/link_converter.py`, `src/nexus/core/safari.py`
+- UI: `src/nexus/gui/main_window.py`, `src/nexus/gui/widgets/` (`_base.py`, `quick_save_panel.py`, `group_row_delegate.py`), `src/nexus/gui/dialogs/`
 - Run: `uv run python -m nexus.main`
 - Build: `nexusbuild` or `razorbuild Nexus`
 
