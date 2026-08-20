@@ -74,8 +74,25 @@ class TestURLProcessor(unittest.TestCase):
         processor = URLProcessor()
 
         self.assertFalse(processor._is_valid_url("gopher://example.com"))
+        self.assertFalse(processor._is_valid_url("ftp://example.com"))
+        self.assertFalse(processor._is_valid_url("file:///tmp/x"))
+        self.assertFalse(processor._is_valid_url("javascript:alert(1)"))
         self.assertFalse(processor._is_valid_url("https://localhost"))
         self.assertIsNone(processor._normalize_url("localhost"))
+        self.assertTrue(processor.is_allowed_open_url("https://example.com"))
+        self.assertFalse(processor.is_allowed_open_url("javascript:alert(1)"))
+        self.assertFalse(processor.is_allowed_open_url("file:///etc/passwd"))
+        self.assertEqual(
+            processor.filter_openable_urls(
+                [
+                    "https://ok.example",
+                    "javascript:alert(1)",
+                    "file:///etc/passwd",
+                    "ftp://files.example",
+                ]
+            ),
+            ["https://ok.example"],
+        )
         self.assertEqual(
             processor._normalize_url("example.com/path?x=1#top"),
             "https://example.com/path?x=1#top",

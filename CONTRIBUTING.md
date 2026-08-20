@@ -33,6 +33,19 @@ workspace, `razor-autosync` may commit locally; publishing uses
 See [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) for prerequisites, build,
 packaging, and release steps for this repository.
 
+Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Testing
+
+```bash
+uv run ruff check .
+uv run ty check src --python-version 3.14
+uv run pytest tests/ -q
+```
+
+GUI tests use `QT_QPA_PLATFORM=offscreen`. Safari/Automation tests may skip
+without local permissions.
+
 ## Pull Requests
 
 - Describe **why** the change is needed.
