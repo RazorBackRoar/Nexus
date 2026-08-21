@@ -76,12 +76,12 @@ CI covers lint, types, and unit tests. It does **not** prove Safari permissions,
 - Past-URLs rows stay borderless; no boxed cells or divider lines in the URL table.
 - Hero "Nexus" title uses metallic silver gradient lettering with wider tracking, positioned slightly higher in the header.
 - Eject mounted `Nexus` DMG volumes when done (`hdiutil detach /Volumes/Nexus`).
-- When publishing Nexus, rebuild the DMG, run a short human UAT pass on the packaged DMG (visual interaction, notification, launch-at-login, sleep/wake), then replace the sole GitHub release asset. The user installs to `/Applications` after UAT; agents do not install the app. Do not keep older DMG releases.
+- When publishing Nexus, rebuild the DMG, run a short human UAT pass on the packaged DMG (visual interaction, notification, launch-at-login, sleep/wake), then replace the sole GitHub release asset. Local smoke-launch does not replace that UAT. Do not keep older DMG releases.
 
 ## Learned Workspace Facts
 
 - `assets/icons/Nexus.icns` is gitignored; shipping icon changes requires `git add -f assets/icons/Nexus.icns`.
-- Packaged try path: `razorbuild Nexus` → `dist/Nexus.dmg` → copy/replace `~/Desktop/Nexus.dmg`, mount it on the Desktop (`hdiutil attach`), and back up the current `/Applications/Nexus.app` to `~/Desktop/Nexus backup.zip`. Do not launch or drag the `.app` into any folder; the user drags it from the mounted volume into `/Applications` and runs the short UAT pass (visual interaction, notification, launch-at-login, sleep/wake). See `../AGENTS.md` Post-Build Install & UAT Policy.
+- Packaged try path: `razorbuild Nexus` → `package-dmg.sh` zips `/Applications/Nexus.app` (if present) to `~/Desktop/Nexus backup.zip`, replaces `~/Desktop/Nexus.dmg`, installs into `/Applications`, and smoke-launches. In-repo output is `dist/Nexus.dmg` only. Human UAT (notification, launch-at-login, sleep/wake) still happens before a GitHub Release. See `../AGENTS.md` Post-Build Install & UAT Policy.
 - GitHub release surface is a single `v2.0.0` DMG; older releases were removed Jul 2026.
 - Quick Save is a top-level bookmark column with no subfolders; each save is a rectangular card (Date & Time | Bookmarks | Notes), newest first; right-click to copy or delete a block.
 - Drag-and-drop of `.txt` onto the URL table loads URLs; Rich Links copies Apple Notes–friendly rich links to the clipboard.
