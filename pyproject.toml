@@ -63,3 +63,30 @@ dev = [
 [tool.uv]
 # Public CI and Dependabot resolve razorcore from the committed vendor wheel.
 find-links = ["ci/vendor"]
+
+# Pinned so GitHub CI matches local workspace ruff (ruff 0.16+ defaults
+# otherwise enable isort I001 and extra rule families).
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "C4", "UP", "N", "W", "D"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "S101", "B905"]
+"__init__.py" = ["F401"]
+"**/gui/**/*.py" = ["N802"]
+"**/widgets.py" = ["N802"]
+"**/main.py" = ["E402"]
+"**/__main__.py" = ["E402"]
+"**/.github/scripts/*.py" = ["E402", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["razorcore", "nexus"]
+lines-after-imports = 2
