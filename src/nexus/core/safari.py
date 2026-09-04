@@ -52,12 +52,14 @@ class SafariController:
                 )
 
             # Plain batch processing
+            overall_success = True
             for i in range(0, len(urls), max_batch_size):
                 batch = urls[i : i + max_batch_size]
                 success = await SafariController._run_batch(
                     batch, create_window=True, private_mode=private_mode
                 )
                 if not success:
+                    overall_success = False
                     logger.warning(
                         "Failed to open batch starting with %s",
                         privacy_fingerprint(batch[0], "url"),
@@ -67,14 +69,14 @@ class SafariController:
                         Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
                     )
                     await asyncio.sleep(delay)
-            return True
+            return overall_success
         except (TimeoutError, OSError) as e:
             logger.error("Failed to open URLs in Safari: %s", e)
             return False
 
     @staticmethod
     async def open_urls_in_front_window(
-        urls: list[str], private_mode: bool = False
+        urls: list[str], private_mode: bool = False, max_batch_size: int = 20
     ) -> bool:
         """Open URLs in the front Safari window, creating one if needed."""
         urls = allowed_safari_urls(urls)
@@ -86,25 +88,38 @@ class SafariController:
             logger.error("Failed to ensure Safari is ready")
             return False
 
-        script = build_open_in_front_window_script(urls, private_mode=private_mode)
-        if not script:
-            return False
+        overall_success = True
+        for i in range(0, len(urls), max_batch_size):
+            batch = urls[i : i + max_batch_size]
+            if i == 0:
+                script = build_open_in_front_window_script(
+                    batch, private_mode=private_mode
+                )
+            else:
+                script = build_batch_script(batch, create_window=False)
 
-        try:
-            _stdout, _stderr, rc = await run_applescript(script)
-            if rc != 0:
-                if private_mode:
-                    logger.error(PRIVATE_BROWSING_FAILED)
-                else:
-                    logger.error(
-                        "AppleScript returned non-zero exit status for %d bookmark URL(s)",
-                        len(urls),
-                    )
-                return False
-            return True
-        except Exception as e:
-            logger.error("Failed to run bookmark AppleScript: %s", e, exc_info=True)
-            return False
+            if not script:
+                continue
+
+            try:
+                _stdout, _stderr, rc = await run_applescript(script)
+                if rc != 0:
+                    if private_mode and i == 0:
+                        logger.error(PRIVATE_BROWSING_FAILED)
+                    else:
+                        logger.error(
+                            "AppleScript returned non-zero exit status for %d bookmark URL(s)",
+                            len(batch),
+                        )
+                    overall_success = False
+            except Exception as e:
+                logger.error("Failed to run bookmark AppleScript: %s", e, exc_info=True)
+                overall_success = False
+
+            if i + max_batch_size < len(urls):
+                await asyncio.sleep(0.5)
+
+        return overall_success
 
     # ------------------------------------------------------------------
     # Internal helpers

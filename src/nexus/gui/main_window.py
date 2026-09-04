@@ -2047,6 +2047,16 @@ class MainWindow(QMainWindow):
         urls = [g.url for g in group.items]
         if not urls:
             return
+        if len(urls) > 30:
+            confirm = QMessageBox.question(
+                self,
+                "Open Large Group",
+                f"This group contains {len(urls)} URLs. Are you sure you want to open all of them in Safari?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if confirm != QMessageBox.StandardButton.Yes:
+                return
         self.worker = AsyncWorker(
             self.safari_controller.open_urls_in_front_window,
             urls,

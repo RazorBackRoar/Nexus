@@ -77,6 +77,79 @@ def test_open_urls_batches_plain_mode_and_sleeps_between_batches(
     assert sleeps == [0.25]
 
 
+def test_open_urls_plain_mode_returns_false_when_any_batch_fails(
+    monkeypatch,
+) -> None:
+    async def fake_check_safari_status() -> bool:
+        return True
+
+    batch_call_count = [0]
+
+    async def fake_run_batch(
+        urls: list[str],
+        *,
+        create_window: bool = False,
+        private_mode: bool = True,
+    ) -> bool:
+        batch_call_count[0] += 1
+        # First batch succeeds, second batch fails
+        return batch_call_count[0] == 1
+
+    async def fake_sleep(_delay: float) -> None:
+        pass
+
+    monkeypatch.setattr(safari, "check_safari_status", fake_check_safari_status)
+    monkeypatch.setattr(SafariController, "_run_batch", fake_run_batch)
+    monkeypatch.setattr(safari.random, "uniform", lambda _min, _max: 0.0)
+    monkeypatch.setattr(safari.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(
+        SafariController.open_urls(
+            ["https://a.test", "https://b.test", "https://c.test"],
+            max_batch_size=2,
+            use_stealth=False,
+            private_mode=False,
+        )
+    )
+
+    assert result is False
+    assert batch_call_count[0] == 2
+
+
+def test_open_urls_in_front_window_batches_urls(monkeypatch) -> None:
+    scripts_run: list[str] = []
+
+    async def fake_check_safari_status() -> bool:
+        return True
+
+    async def fake_run_applescript(script: str) -> tuple[str, str, int]:
+        scripts_run.append(script)
+        return "", "", 0
+
+    async def fake_sleep(_delay: float) -> None:
+        pass
+
+    monkeypatch.setattr(safari, "check_safari_status", fake_check_safari_status)
+    monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
+    monkeypatch.setattr(safari.asyncio, "sleep", fake_sleep)
+
+    urls = [f"https://example{i}.com" for i in range(5)]
+    result = asyncio.run(
+        SafariController.open_urls_in_front_window(
+            urls, private_mode=False, max_batch_size=2
+        )
+    )
+
+    assert result is True
+    # 5 URLs with max_batch_size 2 => 3 batches (2, 2, 1)
+    assert len(scripts_run) == 3
+    # First batch uses front-window creation/doc logic
+    assert "if (count of windows) = 0 then" in scripts_run[0]
+    # Subsequent batches use tab-only additions
+    assert "if (count of windows) = 0 then" not in scripts_run[1]
+    assert "make new tab" in scripts_run[1]
+
+
 def test_open_urls_uses_stealth_grouping_when_enabled(monkeypatch) -> None:
     received_groups: list[dict[str, list[str]]] = []
 
