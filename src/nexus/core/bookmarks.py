@@ -144,20 +144,21 @@ class BookmarkManager:
     def load_bookmarks_raw(self) -> list[dict]:
         """Read the bookmark file as raw dicts.
 
-        Tolerates partial corruption; returns ``[]`` if the file is missing
-        or unreadable.
+        Tolerates partial corruption; falls back to ``.bak`` if the primary file
+        is missing or unreadable; returns ``[]`` if neither succeeds.
         """
-        if not self.file_path.exists():
-            return []
-        try:
-            with open(self.file_path, encoding="utf-8") as f:
-                data = json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
-            logger.error("Failed to read raw bookmarks from %s: %s", self.file_path, e)
-            return []
-        if not isinstance(data, list):
-            return []
-        return data
+        backup_path = self.file_path.with_suffix(".bak")
+        for path in (self.file_path, backup_path):
+            if not path.exists():
+                continue
+            try:
+                with open(path, encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    return data
+            except (OSError, json.JSONDecodeError) as e:
+                logger.warning("Failed to read raw bookmarks from %s: %s", path, e)
+        return []
 
     def _serialize_node(self, node: BookmarkNode) -> dict[str, Any]:
         """Converts dataclass objects (or marker dicts) to JSON-friendly dicts."""

@@ -815,19 +815,19 @@ class MainWindow(QMainWindow):
         if self.url_stack.currentWidget() == self.quick_save_panel:
             urls = self.quick_save_panel.get_selected_urls()
             if urls:
-                self.worker = AsyncWorker(
+                worker = AsyncWorker(
                     self.safari_controller.open_urls,
                     urls,
                     private_mode=self.private_mode_enabled,
                 )
-                self.worker.result_ready.connect(
+                worker.result_ready.connect(
                     lambda success: self._set_status(
                         f"Opened {len(urls)} URLs in Safari"
                         if success
                         else "Failed to open URLs"
                     )
                 )
-                self.worker.start()
+                self._start_worker(worker)
                 return
             else:
                 self._show_message("No selected block found in Quick Save.", "warning")
@@ -838,18 +838,18 @@ class MainWindow(QMainWindow):
             for row in range(self.url_table.rowCount()):
                 self.url_table.set_status_state(row, "opening")
 
-            self.worker = AsyncWorker(
+            worker = AsyncWorker(
                 self._open_urls_with_tracking, urls, self.private_mode_enabled
             )
-            self.worker.result_ready.connect(
+            worker.result_ready.connect(
                 lambda success: self._on_safari_operation_complete(success, len(urls))
             )
-            self.worker.error.connect(
+            worker.error.connect(
                 lambda err: self._show_message(
                     f"Error launching URLs: {err}", "warning"
                 )
             )
-            self.worker.start()
+            self._start_worker(worker)
         else:
             self._show_message("No URLs found to launch.", "warning")
 
@@ -903,31 +903,31 @@ class MainWindow(QMainWindow):
         if not url:
             return
         self.url_table.set_status_state(row, "opening")
-        self.worker = AsyncWorker(
+        worker = AsyncWorker(
             self._open_single_url_with_tracking,
             row,
             url,
             self.private_mode_enabled,
         )
-        self.worker.result_ready.connect(self._on_single_url_operation_complete)
-        self.worker.error.connect(lambda err: self._handle_single_url_error(row, err))
-        self.worker.start()
+        worker.result_ready.connect(self._on_single_url_operation_complete)
+        worker.error.connect(lambda err: self._handle_single_url_error(row, err))
+        self._start_worker(worker)
 
     def _open_single_url_direct(self, url: str) -> None:
         """Open a single URL directly in Safari (e.g. from Quick Save click)."""
         if not url:
             return
-        self.worker = AsyncWorker(
+        worker = AsyncWorker(
             self.safari_controller.open_urls,
             [url],
             private_mode=self.private_mode_enabled,
         )
-        self.worker.result_ready.connect(
+        worker.result_ready.connect(
             lambda success: self._set_status(
                 f"Opened {url} in Safari" if success else f"Failed to open {url}"
             )
         )
-        self.worker.start()
+        self._start_worker(worker)
 
     async def _open_single_url_with_tracking(
         self, row: int, url: str, private_mode: bool = False
@@ -1752,14 +1752,17 @@ class MainWindow(QMainWindow):
 
         return item
 
-    def save_bookmarks(self):
+    def save_bookmarks(self) -> bool:
         """Saves the entire hierarchical tree structure to file."""
         data = []
         root = self.bookmark_tree.invisibleRootItem()
         for i in range(root.childCount()):
             data.append(self._serialize_item(root.child(i)))
         bookmark_nodes = [self.bookmark_manager._deserialize_node(d) for d in data]
-        self.bookmark_manager.save_bookmarks(bookmark_nodes)
+        success = self.bookmark_manager.save_bookmarks(bookmark_nodes)
+        if not success:
+            self._show_message("Failed to save bookmarks to disk.", "warning")
+        return success
 
     def _serialize_item(self, item: QTreeWidgetItem) -> dict[str, Any]:
         """Recursively converts a tree item back into a dictionary for saving."""
@@ -2057,12 +2060,12 @@ class MainWindow(QMainWindow):
             )
             if confirm != QMessageBox.StandardButton.Yes:
                 return
-        self.worker = AsyncWorker(
+        worker = AsyncWorker(
             self.safari_controller.open_urls_in_front_window,
             urls,
             self.private_mode_enabled,
         )
-        self.worker.start()
+        self._start_worker(worker)
 
     def _rename_group(self, item: QTreeWidgetItem) -> None:
         """Rename a group in the sidecar and update the tree marker."""
@@ -2146,12 +2149,12 @@ class MainWindow(QMainWindow):
         if data and data.get("type") == "bookmark":
             url = data.get("url")
             if url:
-                self.worker = AsyncWorker(
+                worker = AsyncWorker(
                     self._open_bookmark_in_existing_window,
                     [url],
                     self.private_mode_enabled,
                 )
-                self.worker.start()
+                self._start_worker(worker)
 
     async def _open_bookmark_in_existing_window(
         self, urls: list[str], private_mode: bool = False
@@ -2299,8 +2302,22 @@ class MainWindow(QMainWindow):
         if isinstance(state_data, QByteArray):
             self.restoreState(state_data)
 
+    def _start_worker(self, worker: AsyncWorker) -> None:
+        """Starts a worker thread after safely stopping any active worker."""
+        if hasattr(self, "worker") and self.worker is not None and self.worker.isRunning():
+            try:
+                self.worker.quit()
+                self.worker.wait(1000)
+            except Exception as e:
+                logger.debug("Error waiting for prior worker: %s", e)
+        self.worker = worker
+        self.worker.start()
+
     def closeEvent(self, event):  # noqa: N802 - Qt override
         """Saves window state before closing."""
+        if hasattr(self, "worker") and self.worker is not None and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait(1500)
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
         self.settings.setValue("mainWindow/state", self.saveState())
         super().closeEvent(event)

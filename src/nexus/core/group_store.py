@@ -79,6 +79,12 @@ class GroupStore:
             return True
         except OSError as e:
             logger.error("Failed to save groups: %s", e)
+            if self.backup_path.exists() and not self.file_path.exists():
+                try:
+                    self.backup_path.replace(self.file_path)
+                    logger.info("Restored groups from backup.")
+                except OSError as restore_error:
+                    logger.error("Failed to restore groups backup: %s", restore_error)
             return False
 
     def upsert_group(self, group: BookmarkGroup) -> None:

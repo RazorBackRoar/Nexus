@@ -99,6 +99,7 @@ app = BUNDLE(
         "LSRequiresNativeExecution": True,
         "LSApplicationCategoryType": "public.app-category.utilities",
         "NSAppleEventsUsageDescription": "Nexus needs permission to control Safari to open your organized URL lists.",
+        "NSAccessibilityUsageDescription": "Nexus uses accessibility shortcuts to open Safari Private Windows.",
         "NSHumanReadableCopyright": "Copyright © 2026 RazorBackRoar. All rights reserved.",
     },
 )
