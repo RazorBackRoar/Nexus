@@ -678,11 +678,55 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         return QSize(option.rect.width(), 44)
 
 
+HREF_PATTERN = re.compile(
+    r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE
+)
+
+
+def extract_urls_from_mime_data(
+    mime_data: QMimeData | None,
+    url_processor: URLProcessor,
+) -> list[str]:
+    """Extract URLs from QMimeData across URLs, HTML links, and plain text."""
+    if mime_data is None:
+        return []
+
+    urls: list[str] = []
+
+    # Priority 1: Direct URLs (e.g. copied or dragged links from browsers)
+    if mime_data.hasUrls():
+        for qurl in mime_data.urls():
+            if qurl.isValid():
+                s = qurl.toString()
+                if s.startswith(("http://", "https://")):
+                    urls.append(s)
+
+    # Priority 2: HTML content with links
+    if mime_data.hasHtml():
+        html = mime_data.html()
+        found_urls = HREF_PATTERN.findall(html)
+        if found_urls:
+            urls.extend(found_urls)
+        elif mime_data.hasText():
+            text = mime_data.text()
+            if text:
+                urls.extend(url_processor.extract_urls(text))
+
+    # Priority 3: Plain text
+    elif mime_data.hasText():
+        text = mime_data.text()
+        if text:
+            urls.extend(url_processor.extract_urls(text))
+
+    return url_processor.filter_openable_urls(urls)
+
+
 class URLTableWidget(QTableWidget):
     """A custom table widget for displaying URLs with numbering and status tracking."""
 
     url_activated = Signal(int, str)
     urls_changed = Signal(list)
+    urls_pasted = Signal(list)
     file_dropped = Signal(str)
 
     STATUS_LABELS = {
@@ -695,9 +739,7 @@ class URLTableWidget(QTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.url_processor = URLProcessor()
-        self.href_pattern = re.compile(
-            r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE
-        )
+        self.href_pattern = HREF_PATTERN
         self.url_counter = 0
         self._suspend_url_events = False
 
@@ -729,11 +771,9 @@ class URLTableWidget(QTableWidget):
         self.setAcceptDrops(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.DropOnly)
 
-        # Enable text cursor (blinking caret) for better UX
+        # Stable row selection without inline cell editing stealing paste shortcuts
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setEditTriggers(
-            QAbstractItemView.EditTrigger.AllEditTriggers
-        )  # Enable editing to show cursor
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.itemChanged.connect(self._on_item_changed)
         self.itemDoubleClicked.connect(self._activate_item_url)
@@ -799,7 +839,6 @@ class URLTableWidget(QTableWidget):
             url_item.setFlags(
                 Qt.ItemFlag.ItemIsEnabled
                 | Qt.ItemFlag.ItemIsSelectable
-                | Qt.ItemFlag.ItemIsEditable
             )
             self.setItem(row, 1, url_item)
 
@@ -843,55 +882,32 @@ class URLTableWidget(QTableWidget):
         event.acceptProposedAction()
 
     def keyPressEvent(self, event):  # noqa: N802 - Qt override
-        """Handle keyboard events for pasting."""
+        """Handle keyboard events for pasting and row activation."""
         paste_modifiers = (
             Qt.KeyboardModifier.ControlModifier,
             Qt.KeyboardModifier.MetaModifier,
         )
         if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
-            # Handle Ctrl+V paste
             clipboard = QApplication.clipboard()
-            mime_data = clipboard.mimeData()
-            self._process_mime_data(mime_data)
+            if clipboard is not None:
+                self._process_mime_data(clipboard.mimeData())
+            event.accept()
+            return
         elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._activate_current_row()
         else:
             super().keyPressEvent(event)
 
     def _process_mime_data(self, mime_data: QMimeData):
-        """Process mime data to extract URLs."""
-        urls_to_add = []
-
-        # Priority 1: Direct URLs
-        if mime_data.hasUrls():
-            urls_to_add.extend([url.toString() for url in mime_data.urls()])
-
-        # Priority 2: HTML content with links
-        elif mime_data.hasHtml():
-            html = mime_data.html()
-            found_urls = self.href_pattern.findall(html)
-            if found_urls:
-                urls_to_add.extend(found_urls)
-            else:
-                # Extract from plain text if no HTML links
-                text = mime_data.text()
-                urls_to_add.extend(self.url_processor.extract_urls(text))
-
-        # Priority 3: Plain text
-        elif mime_data.hasText():
-            text = mime_data.text()
-            urls_to_add.extend(self.url_processor.extract_urls(text))
-
-        # Add extracted URLs to table
+        """Process mime data to extract URLs and notify listeners."""
+        urls_to_add = extract_urls_from_mime_data(mime_data, self.url_processor)
         if urls_to_add:
             self.add_urls(urls_to_add)
+            self.urls_pasted.emit(urls_to_add)
 
     def mousePressEvent(self, event):  # noqa: N802 - Qt override
-        """Handle mouse press events to show cursor in URL cells."""
+        """Handle mouse press events on URL rows."""
         super().mousePressEvent(event)
-        item = self.itemAt(event.pos())
-        if item and item.column() == 1:  # URL column
-            self.editItem(item)
 
     def mouseMoveEvent(self, event):  # noqa: N802 - Qt override
         """Show a pointing cursor over activatable URL rows."""
@@ -1355,13 +1371,14 @@ class BookmarkSearchBar(QLineEdit):
         )
         if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
             clipboard = QApplication.clipboard()
-            text = clipboard.text() if clipboard is not None else ""
-            urls = self.url_processor.extract_urls(text) if text else []
-            if urls or (text and "\n" in text):
+            if clipboard is not None:
+                urls = extract_urls_from_mime_data(
+                    clipboard.mimeData(), self.url_processor
+                )
                 if urls:
                     self.urls_pasted.emit(urls)
-                event.accept()
-                return
+                    event.accept()
+                    return
         super().keyPressEvent(event)
 
 
@@ -1414,8 +1431,9 @@ class URLEmptyStateWidget(QWidget):
         if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
             clipboard = QApplication.clipboard()
             if clipboard is not None:
-                text = clipboard.text()
-                urls = self.url_processor.extract_urls(text) if text else []
+                urls = extract_urls_from_mime_data(
+                    clipboard.mimeData(), self.url_processor
+                )
                 if urls:
                     self.urls_pasted.emit(urls)
                     event.accept()

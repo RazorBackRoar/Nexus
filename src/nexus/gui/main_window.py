@@ -15,7 +15,7 @@ from PySide6.QtCore import (
     QStandardPaths,
     Qt,
 )
-from PySide6.QtGui import QColor, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QColor, QKeyEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMenu,
     QMessageBox,
@@ -58,6 +59,7 @@ from nexus.gui.widgets import (
     URLEmptyStateWidget,
     URLTableWidget,
     WindowTitleBar,
+    extract_urls_from_mime_data,
 )
 from nexus.utils.url_processor import URLProcessor
 from razorcore.appinfo import AboutDialog
@@ -587,6 +589,7 @@ class MainWindow(QMainWindow):
         self.url_table.model().rowsRemoved.connect(self._update_url_counter)
         self.url_table.url_activated.connect(self._open_single_url)
         self.url_table.urls_changed.connect(self._on_urls_changed)
+        self.url_table.urls_pasted.connect(self._handle_pasted_urls)
         self.url_table.file_dropped.connect(self.load_file_from_path)
         self.url_table.setToolTip("Double-click a URL row to open it in Safari")
         self.url_table.setStyleSheet("""
@@ -737,11 +740,92 @@ class MainWindow(QMainWindow):
             QKeySequence(QKeySequence.StandardKey.Paste), self
         )
         self.paste_shortcut.activated.connect(self._handle_global_paste)
+        self._setup_menu_bar()
         self.search_bar.clearFocus()
 
         self._current_url_snapshot = self.url_table.get_all_urls()
         self._update_url_empty_state()
         self._update_url_counter()
+
+    def _setup_menu_bar(self) -> None:
+        """Set up standard macOS application menus (Edit, etc.)."""
+        menu_bar = self.menuBar()
+        edit_menu = menu_bar.addMenu("Edit")
+
+        self.undo_action = QAction("Undo", self)
+        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_action.triggered.connect(self._undo_url_change)
+        edit_menu.addAction(self.undo_action)
+
+        edit_menu.addSeparator()
+
+        self.cut_action = QAction("Cut", self)
+        self.cut_action.setShortcut(QKeySequence.StandardKey.Cut)
+        self.cut_action.triggered.connect(self._handle_global_cut)
+        edit_menu.addAction(self.cut_action)
+
+        self.copy_action = QAction("Copy", self)
+        self.copy_action.setShortcut(QKeySequence.StandardKey.Copy)
+        self.copy_action.triggered.connect(self._handle_global_copy)
+        edit_menu.addAction(self.copy_action)
+
+        self.paste_action = QAction("Paste", self)
+        self.paste_action.setShortcut(QKeySequence.StandardKey.Paste)
+        self.paste_action.triggered.connect(self._handle_global_paste)
+        edit_menu.addAction(self.paste_action)
+
+        self.select_all_action = QAction("Select All", self)
+        self.select_all_action.setShortcut(QKeySequence.StandardKey.SelectAll)
+        self.select_all_action.triggered.connect(self._handle_global_select_all)
+        edit_menu.addAction(self.select_all_action)
+
+    def _handle_global_copy(self) -> None:
+        """Global ⌘C / Ctrl+C handler."""
+        focus = QApplication.focusWidget()
+        if isinstance(focus, QLineEdit):
+            focus.copy()
+            return
+        selected_urls: list[str] = []
+        for idx in self.url_table.selectedIndexes():
+            if idx.column() == 1:
+                item = self.url_table.item(idx.row(), 1)
+                if item is not None and item.text():
+                    selected_urls.append(item.text())
+        if not selected_urls and self.url_table.rowCount() > 0:
+            selected_urls = self.url_table.get_all_urls()
+        if selected_urls:
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText("\n".join(selected_urls))
+                self._set_status(
+                    f"Copied {len(selected_urls)} URL{'s' if len(selected_urls) != 1 else ''} to clipboard"
+                )
+
+    def _handle_global_cut(self) -> None:
+        """Global ⌘X / Ctrl+X handler."""
+        focus = QApplication.focusWidget()
+        if isinstance(focus, QLineEdit):
+            focus.cut()
+
+    def _handle_global_select_all(self) -> None:
+        """Global ⌘A / Ctrl+A handler."""
+        focus = QApplication.focusWidget()
+        if isinstance(focus, QLineEdit):
+            focus.selectAll()
+        elif hasattr(self, "url_table") and self.url_table.rowCount() > 0:
+            self.url_table.selectAll()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 - Qt override
+        """Fallback handler for ⌘V / Ctrl+V paste if shortcut was not dispatched."""
+        paste_modifiers = (
+            Qt.KeyboardModifier.ControlModifier,
+            Qt.KeyboardModifier.MetaModifier,
+        )
+        if event.key() == Qt.Key.Key_V and event.modifiers() in paste_modifiers:
+            self._handle_global_paste()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def _handle_pasted_urls(self, urls: list[str]) -> None:
         """Add pasted URLs to the URL table, switch view, and focus the table."""
@@ -756,16 +840,19 @@ class MainWindow(QMainWindow):
 
     def _handle_global_paste(self) -> None:
         """Global ⌘V / Ctrl+V handler to extract and load URLs from clipboard."""
+        focus = QApplication.focusWidget()
+        if isinstance(focus, QLineEdit) and focus is not self.search_bar:
+            focus.paste()
+            return
+
         clipboard = QApplication.clipboard()
         if clipboard is None:
             return
-        text = clipboard.text()
-        if not text:
-            return
-        urls = self.url_processor.extract_urls(text)
-        if urls or "\n" in text:
-            if urls:
-                self._handle_pasted_urls(urls)
+        urls = extract_urls_from_mime_data(clipboard.mimeData(), self.url_processor)
+        if urls:
+            self._handle_pasted_urls(urls)
+        elif isinstance(focus, QLineEdit):
+            focus.paste()
 
     def _update_undo_button_state(self):
         pass

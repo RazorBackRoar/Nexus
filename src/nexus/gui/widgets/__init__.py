@@ -15,6 +15,7 @@ from nexus.gui.widgets._base import (
     URLEmptyStateWidget,
     URLTableWidget,
     WindowTitleBar,
+    extract_urls_from_mime_data,
 )
 from nexus.gui.widgets.quick_save_panel import QuickSavePanel
 
@@ -35,4 +36,5 @@ __all__ = [
     "URLEmptyStateWidget",
     "URLTableWidget",
     "WindowTitleBar",
+    "extract_urls_from_mime_data",
 ]

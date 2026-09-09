@@ -351,11 +351,12 @@ class URLProcessor:
                 if url.startswith(("http://", "https://"))
                 else "https://" + url
             )
-            if not parsed.netloc:
+            host = parsed.hostname
+            if not host:
                 return False
 
-            # Check domain parts
-            domain_parts = parsed.netloc.split(".")
+            # Check domain parts (using hostname without port)
+            domain_parts = host.split(".")
             if len(domain_parts) < 2:
                 return False
 
