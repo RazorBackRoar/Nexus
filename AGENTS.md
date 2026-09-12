@@ -93,8 +93,9 @@ Jules reads this repository-root `AGENTS.md` when it clones the repository. Pare
 
 - Jules runs tasks in an Ubuntu VM; macOS runtime behavior, GUI behavior, Safari automation, AppleScript, and packaged-app behavior are not proven there.
 - The repository's GitHub macOS `quality` workflow is authoritative for merge readiness.
-- Daily audits must inspect existing open and recently closed PRs before proposing work, avoid duplicates, and open at most one focused PR per task.
-- `sentinel-*` security, `bolt-*` performance, and `palette-*` design branches always require human review.
+- **Daily sentinel / bolt / palette audit branches are retired.** Do not create `sentinel-*`, `bolt-*`, or `palette-*` branches for scheduled security, performance, or design audits.
+- Open **real fix PRs only** (concrete bugs, dependency updates, or code-health fixes with a clear verified defect). Inspect existing open and recently closed PRs before proposing work; avoid duplicates; open at most one focused PR per task.
+- Any **legacy** `sentinel-*` / `bolt-*` / `palette-*` branches that already exist still require human review and owner merge. Do not open new ones.
 - Jules PRs are merged by the owner. There is no auto-merge workflow.
 - PR descriptions must list changed files, risk, verification commands and results, benchmark evidence when relevant, and unverified paths.
 - Never auto-merge runtime, dependency, lockfile, workflow, packaging, release, privacy, file-operation, or user-data changes.
@@ -103,8 +104,10 @@ Jules reads this repository-root `AGENTS.md` when it clones the repository. Pare
 - **Jules PR Review**: all Jules PRs require the owner to merge; there is no auto-merge workflow.
 - **No Duplicate Issue/PR Reopening**: Jules subagents must verify existing closed and open PRs before proposing repetitive fixes or contact info updates.
 - **Branch Cleanup**: Head branches are deleted automatically upon squash-merge.
+- **No audit-branch program**: do not schedule or open sentinel/bolt/palette daily-audit PRs. Real fixes only.
 
 
 ### Jules Autonomous Execution Rules
-- **Auto-Approve Plans**: Automatically approve execution plans for background suggestions (testing, code health, performance). Do not pause or wait for human plan approval on routine refactoring.
+- **Auto-Approve Plans**: Automatically approve execution plans for background suggestions that are real fixes (testing, code health, performance) with a concrete defect. Do not pause or wait for human plan approval on routine refactoring.
 - **Batching**: Group related unit tests or code health fixes into a single PR rather than creating endless single-function PRs.
+- **Do not invent audit workstreams**: never create `sentinel-*`, `bolt-*`, or `palette-*` branches for standing audit programs.
