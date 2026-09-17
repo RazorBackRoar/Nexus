@@ -19,9 +19,7 @@ class URLProcessor:
         # before any regex runs.
         self.url_patterns = {
             # Standard URLs with protocols
-            "protocol": re.compile(
-                r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE
-            ),
+            "protocol": re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE),
             # www URLs without protocol
             "www": re.compile(r'www\.[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE),
             # Domain-based URLs without protocol
@@ -317,7 +315,7 @@ class URLProcessor:
                     return False
                 # Filter if it looks like a file
                 return True
-        except (IndexError, AttributeError):
+        except IndexError, AttributeError:
             pass
         return False
 
@@ -347,9 +345,7 @@ class URLProcessor:
         # Check for valid domain structure
         try:
             parsed = urlparse(
-                url
-                if url.startswith(("http://", "https://"))
-                else "https://" + url
+                url if url.startswith(("http://", "https://")) else "https://" + url
             )
             host = parsed.hostname
             if not host:
@@ -365,7 +361,7 @@ class URLProcessor:
             if len(tld) < 2 or not tld.isalpha():
                 return False
 
-        except (ValueError, IndexError, AttributeError):
+        except ValueError, IndexError, AttributeError:
             return False
 
         return True
@@ -422,7 +418,9 @@ class URLProcessor:
             parsed = urlparse((url or "").strip())
         except ValueError:
             return False
-        return parsed.scheme.lower() in Config.SUPPORTED_PROTOCOLS and bool(parsed.netloc)
+        return parsed.scheme.lower() in Config.SUPPORTED_PROTOCOLS and bool(
+            parsed.netloc
+        )
 
     def filter_openable_urls(self, urls: list[str]) -> list[str]:
         """Normalize and keep only http(s) URLs."""

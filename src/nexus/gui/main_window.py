@@ -48,6 +48,7 @@ from nexus.core.models import (
     QuickSaveEntry,
 )
 from nexus.core.safari import SafariController
+from nexus.gui.theme import get_theme_manager
 from nexus.gui.widgets import (
     AsyncWorker,
     BookmarkSearchBar,
@@ -119,6 +120,7 @@ class MainWindow(QMainWindow):
         self._load_window_state()  # Load window geometry/state
         self._setup_ui()  # Setup UI components
         self.load_bookmarks()  # Load bookmarks into the tree
+        get_theme_manager().theme_changed.connect(self._on_theme_changed)
         self._apply_theme()  # Apply theme after all UI is set up
 
         quick_save_shortcut = QShortcut(QKeySequence("Ctrl+Shift+S"), self)
@@ -235,6 +237,10 @@ class MainWindow(QMainWindow):
         self.current_theme_name = legacy_theme_map.get(saved_name, saved_name)
         if self.current_theme_name not in self.themes:
             self.current_theme_name = default_theme_name
+
+        saved_mode = str(self.settings.value("theme/mode", "dark"))
+        if saved_mode in ("dark", "light"):
+            get_theme_manager().set_mode(saved_mode)
         if saved_name != self.current_theme_name:
             self.settings.setValue("theme/name", self.current_theme_name)
 
@@ -356,8 +362,9 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(self.summary_label)
         main_layout.addWidget(header_widget)
 
-        header_rule = QFrame()
-        header_rule.setFixedHeight(2)
+        self.header_rule = QFrame()
+        self.header_rule.setFixedHeight(2)
+        header_rule = self.header_rule
         header_rule.setStyleSheet(
             """
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -438,7 +445,7 @@ class MainWindow(QMainWindow):
 
         self.search_bar = BookmarkSearchBar()
         self.search_bar.setPlaceholderText("Filter bookmarks")
-        self.search_bar.textChanged.connect(self._filter_bookmarks)
+        self.search_bar.debounced_text_changed.connect(self._filter_bookmarks)
         self.search_bar.urls_pasted.connect(self._handle_pasted_urls)
         self.search_bar.setStyleSheet("""
             QLineEdit {
@@ -570,8 +577,9 @@ class MainWindow(QMainWindow):
         tagline_row.addWidget(self.load_file_btn)
         main_content_layout.addLayout(tagline_row)
 
-        url_panel = QWidget()
-        url_panel.setObjectName("urlWell")
+        self.url_panel = QWidget()
+        self.url_panel.setObjectName("urlWell")
+        url_panel = self.url_panel
         url_panel.setStyleSheet("""
             QWidget#urlWell {
                 background: rgb(3, 7, 16);
@@ -891,11 +899,173 @@ class MainWindow(QMainWindow):
         """Legacy method - settings accessible via menu/dialog now."""
         pass
 
+    def _on_theme_changed(self, new_mode: str) -> None:
+        self.settings.setValue("theme/mode", new_mode)
+        self._apply_theme()
+
     def _apply_theme(self):
-        """Glass Noir theme is static - no dynamic theming needed."""
-        # The Glass Noir design uses fixed colors defined inline in _setup_ui
-        # This method is kept for compatibility but does nothing significant
-        pass
+        """Apply active theme styles (Cosmic Obsidian or Frosted Lumina) to all window components."""
+        tm = get_theme_manager()
+        tokens = tm.tokens
+        is_dark = tm.is_dark
+
+        if hasattr(self, "sidebar"):
+            self.sidebar.setStyleSheet(f"""
+                QWidget#bookmarkSidebar {{
+                    background: {tokens.sidebar_bg};
+                    border-right: 1px solid {tokens.sidebar_border};
+                    border-radius: 0px;
+                }}
+            """)
+
+        if hasattr(self, "url_panel"):
+            self.url_panel.setStyleSheet(f"""
+                QWidget#urlWell {{
+                    background: {tokens.well_bg};
+                    border: 1px solid {tokens.well_border};
+                    border-radius: 12px;
+                }}
+            """)
+
+        if hasattr(self, "header_rule"):
+            if is_dark:
+                rule_style = """
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 rgba(74, 144, 232, 0.0),
+                        stop:0.18 rgba(74, 144, 232, 0.70),
+                        stop:0.50 rgba(155, 122, 232, 0.65),
+                        stop:0.82 rgba(46, 196, 160, 0.70),
+                        stop:1 rgba(74, 144, 232, 0.0));
+                    border: none;
+                    border-radius: 1px;
+                """
+            else:
+                rule_style = """
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 rgba(59, 130, 246, 0.0),
+                        stop:0.18 rgba(59, 130, 246, 0.60),
+                        stop:0.50 rgba(139, 92, 246, 0.55),
+                        stop:0.82 rgba(16, 185, 129, 0.60),
+                        stop:1 rgba(59, 130, 246, 0.0));
+                    border: none;
+                    border-radius: 1px;
+                """
+            self.header_rule.setStyleSheet(rule_style)
+
+        if hasattr(self, "status_bar"):
+            self.status_bar.setStyleSheet(f"""
+                QLabel {{
+                    color: {tokens.text_dim};
+                    font-size: 12px;
+                    padding-right: 4px;
+                }}
+            """)
+
+        if hasattr(self, "url_counter_label"):
+            counter_color = tokens.status_ready
+            self.url_counter_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {counter_color};
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.2px;
+                    padding-top: 2px;
+                    padding-right: 4px;
+                }}
+            """)
+
+        if hasattr(self, "add_folder_btn"):
+            if is_dark:
+                self.add_folder_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(74, 144, 232, 0.22);
+                        border: 1px solid rgba(120, 180, 255, 0.55);
+                        border-radius: 7px;
+                        color: #E8F2FF;
+                        font-family: "Helvetica Neue", sans-serif;
+                        font-size: 18px;
+                        font-weight: 500;
+                        padding: 0px;
+                        margin: 0px;
+                    }
+                    QPushButton:hover {
+                        background: rgba(74, 144, 232, 0.38);
+                        color: #FFFFFF;
+                    }
+                    QPushButton:pressed {
+                        background: rgba(74, 144, 232, 0.16);
+                    }
+                """)
+            else:
+                self.add_folder_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(59, 130, 246, 0.15);
+                        border: 1px solid rgba(59, 130, 246, 0.45);
+                        border-radius: 7px;
+                        color: #2563EB;
+                        font-family: "Helvetica Neue", sans-serif;
+                        font-size: 18px;
+                        font-weight: 500;
+                        padding: 0px;
+                        margin: 0px;
+                    }
+                    QPushButton:hover {
+                        background: rgba(59, 130, 246, 0.28);
+                        color: #1D4ED8;
+                    }
+                    QPushButton:pressed {
+                        background: rgba(59, 130, 246, 0.10);
+                    }
+                """)
+
+        if hasattr(self, "load_file_btn"):
+            if is_dark:
+                self.load_file_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(46, 196, 160, 0.15);
+                        border: 1px solid rgba(46, 196, 160, 0.45);
+                        border-radius: 6px;
+                        color: #7AF0D0;
+                        font-family: "Helvetica Neue", sans-serif;
+                        font-size: 12px;
+                        font-weight: 600;
+                        padding: 4px 14px;
+                    }
+                    QPushButton:hover {
+                        background: rgba(46, 196, 160, 0.28);
+                        color: #AAFAE8;
+                    }
+                    QPushButton:pressed {
+                        background: rgba(46, 196, 160, 0.10);
+                    }
+                """)
+            else:
+                self.load_file_btn.setStyleSheet("""
+                    QPushButton {
+                        background: rgba(16, 185, 129, 0.15);
+                        border: 1px solid rgba(16, 185, 129, 0.45);
+                        border-radius: 6px;
+                        color: #059669;
+                        font-family: "Helvetica Neue", sans-serif;
+                        font-size: 12px;
+                        font-weight: 600;
+                        padding: 4px 14px;
+                    }
+                    QPushButton:hover {
+                        background: rgba(16, 185, 129, 0.28);
+                        color: #047857;
+                    }
+                    QPushButton:pressed {
+                        background: rgba(16, 185, 129, 0.10);
+                    }
+                """)
+
+        if hasattr(self, "chrome_frame"):
+            self.chrome_frame.update()
+        if hasattr(self, "url_table"):
+            self.url_table.viewport().update()
+        if hasattr(self, "bookmark_tree"):
+            self.bookmark_tree.viewport().update()
 
     def _run_urls_in_safari(self):
         """Runs URLs from the selected Quick Save block or URL table in Safari."""
@@ -958,9 +1128,7 @@ class MainWindow(QMainWindow):
 
         from PySide6.QtWidgets import QFileDialog
 
-        default_filename = (
-            f"nexus_urls_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        )
+        default_filename = f"nexus_urls_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         desktop_path = Path.home() / "Desktop" / default_filename
 
         file_path, _ = QFileDialog.getSaveFileName(
@@ -1104,9 +1272,9 @@ class MainWindow(QMainWindow):
         )
         self.group_store.upsert_group(group)
 
-        is_quick_save_target = (
-            target == QUICK_SAVE_FOLDER_NAME
-            or target.lower() in ("quick save", "quick saves")
+        is_quick_save_target = target == QUICK_SAVE_FOLDER_NAME or target.lower() in (
+            "quick save",
+            "quick saves",
         )
         target_item = self._find_folder_by_name(target) or self._find_or_create_folder(
             QUICK_SAVE_FOLDER_NAME if is_quick_save_target else target
@@ -1160,9 +1328,7 @@ class MainWindow(QMainWindow):
             )
             return
 
-        normalized = [
-            self.url_processor._normalize_url(url) or url for url in urls
-        ]
+        normalized = [self.url_processor._normalize_url(url) or url for url in urls]
         entry = QuickSaveEntry(
             id="qs_" + token_hex(4),
             created_at=datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -1191,53 +1357,47 @@ class MainWindow(QMainWindow):
         )
 
     def _filter_bookmarks(self, text: str):
-        """Filters the bookmark tree based on search text."""
+        """Filters the bookmark tree based on search text with batched tree updates."""
         search_text = text.lower().strip()
-        root = self.bookmark_tree.invisibleRootItem()
+        self.bookmark_tree.setUpdatesEnabled(False)
+        try:
+            root = self.bookmark_tree.invisibleRootItem()
+            for i in range(root.childCount()):
+                folder_item = root.child(i)
+                folder_matches = search_text in folder_item.text(0).lower()
+                folder_has_visible_children = False
 
-        for i in range(root.childCount()):
-            folder_item = root.child(i)
-            folder_matches = search_text in folder_item.text(0).lower()
-            folder_has_visible_children = False
+                # Check children
+                for j in range(folder_item.childCount()):
+                    bookmark_item = folder_item.child(j)
+                    bookmark_matches = False
 
-            # Check children
-            for j in range(folder_item.childCount()):
-                bookmark_item = folder_item.child(j)
-                bookmark_matches = False
+                    bookmark_data = bookmark_item.data(0, Qt.ItemDataRole.UserRole)
+                    if bookmark_data:
+                        name = bookmark_data.get("name", "").lower()
+                        url = bookmark_data.get("url", "").lower()
 
-                bookmark_data = bookmark_item.data(0, Qt.ItemDataRole.UserRole)
-                if bookmark_data:
-                    name = bookmark_data.get("name", "").lower()
-                    url = bookmark_data.get("url", "").lower()
+                        if search_text in name or search_text in url:
+                            bookmark_matches = True
 
-                    if search_text in name or search_text in url:
-                        bookmark_matches = True
+                    should_show_bookmark = (
+                        bookmark_matches or folder_matches or (search_text == "")
+                    )
 
-                # Show bookmark if:
-                # 1. Search is empty (handled by setHidden check later, but here logic is specific)
-                # 2. Bookmark matches
-                # 3. Parent folder matches (show all content of matched folder)
-                should_show_bookmark = (
-                    bookmark_matches or folder_matches or (search_text == "")
+                    bookmark_item.setHidden(not should_show_bookmark)
+
+                    if should_show_bookmark:
+                        folder_has_visible_children = True
+
+                should_show_folder = (
+                    folder_matches or folder_has_visible_children or (search_text == "")
                 )
+                folder_item.setHidden(not should_show_folder)
 
-                bookmark_item.setHidden(not should_show_bookmark)
-
-                if should_show_bookmark:
-                    folder_has_visible_children = True
-
-            # Show folder if:
-            # 1. Search is empty
-            # 2. Folder matches
-            # 3. Folder has visible children
-            should_show_folder = (
-                folder_matches or folder_has_visible_children or (search_text == "")
-            )
-            folder_item.setHidden(not should_show_folder)
-
-            # Expand folder if we are searching and it is visible
-            if search_text and should_show_folder:
-                folder_item.setExpanded(True)
+                if search_text and should_show_folder:
+                    folder_item.setExpanded(True)
+        finally:
+            self.bookmark_tree.setUpdatesEnabled(True)
 
     def _organize_urls_in_input(self):  # NEW method
         """Extracts, cleans, sorts, and reformats URLs in the table."""
@@ -1439,7 +1599,11 @@ class MainWindow(QMainWindow):
         curr = item
         while curr is not None:
             data = curr.data(0, Qt.ItemDataRole.UserRole)
-            if data and data.get("type") == "folder" and data.get("name") == QUICK_SAVE_FOLDER_NAME:
+            if (
+                data
+                and data.get("type") == "folder"
+                and data.get("name") == QUICK_SAVE_FOLDER_NAME
+            ):
                 return True
             curr = curr.parent()
         return False
@@ -1926,10 +2090,7 @@ class MainWindow(QMainWindow):
                         quick_save_folder = migrated
                     else:
                         quick_save_folder.children.extend(migrated.children)
-                    if (
-                        migrated.name != node.name
-                        or migrated.children != node.children
-                    ):
+                    if migrated.name != node.name or migrated.children != node.children:
                         changed = True
                     continue
             kept_nodes.append(node)
@@ -2111,9 +2272,7 @@ class MainWindow(QMainWindow):
             folder_name = (data or {}).get("name", "")
             if folder_name == QUICK_SAVE_FOLDER_NAME:
                 open_action = menu.addAction("Open Quick Save")
-                open_action.triggered.connect(
-                    lambda: self._show_quick_save_view(item)
-                )
+                open_action.triggered.connect(lambda: self._show_quick_save_view(item))
                 menu.exec(self.bookmark_tree.viewport().mapToGlobal(position))
                 return
 
@@ -2321,13 +2480,19 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def _check_for_updates(self) -> None:
-        """Check GitHub Releases for a newer Nexus version."""
-        result = check_for_updates(Config.APP_NAME, Config.APP_VERSION)
+        """Check GitHub Releases asynchronously without blocking the UI."""
+        self._set_status("Checking for updates…")
+        worker = AsyncWorker(check_for_updates, Config.APP_NAME, Config.APP_VERSION)
+        worker.result_ready.connect(self._on_update_check_finished)
+        worker.error.connect(
+            lambda err: self._show_message(f"Update check failed: {err}", "error")
+        )
+        self._start_worker(worker)
+
+    def _on_update_check_finished(self, result) -> None:
+        self._set_status("URLs open in a Safari Private Window.")
         if result.is_error:
-            self._show_message(
-                f"Update check failed: {result.error}",
-                "error",
-            )
+            self._show_message(f"Update check failed: {result.error}", "error")
             return
         if result.update_available:
             notes = result.release_notes or ""
@@ -2338,10 +2503,7 @@ class MainWindow(QMainWindow):
                 detail = f"{detail}\n\n{notes[:400]}"
             self._show_message(detail, "info")
         else:
-            self._show_message(
-                f"You are up to date (v{Config.APP_VERSION}).",
-                "info",
-            )
+            self._show_message(f"You are up to date (v{Config.APP_VERSION}).", "info")
 
     def _show_title_context_menu(self, position) -> None:
         """Title context menu for About and update checking."""
@@ -2391,7 +2553,11 @@ class MainWindow(QMainWindow):
 
     def _start_worker(self, worker: AsyncWorker) -> None:
         """Starts a worker thread after safely stopping any active worker."""
-        if hasattr(self, "worker") and self.worker is not None and self.worker.isRunning():
+        if (
+            hasattr(self, "worker")
+            and self.worker is not None
+            and self.worker.isRunning()
+        ):
             try:
                 self.worker.quit()
                 self.worker.wait(1000)
@@ -2402,7 +2568,11 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):  # noqa: N802 - Qt override
         """Saves window state before closing."""
-        if hasattr(self, "worker") and self.worker is not None and self.worker.isRunning():
+        if (
+            hasattr(self, "worker")
+            and self.worker is not None
+            and self.worker.isRunning()
+        ):
             self.worker.quit()
             self.worker.wait(1500)
         self.settings.setValue("mainWindow/geometry", self.saveGeometry())
@@ -2451,13 +2621,13 @@ class MainWindow(QMainWindow):
         """Copy all URLs in the table as rich HTML links to the clipboard."""
         urls = self.url_table.get_all_urls()
         if not urls:
-            self._show_message(
-                "No URLs to copy. Paste or load URLs first.", "warning"
-            )
+            self._show_message("No URLs to copy. Paste or load URLs first.", "warning")
             return
 
         # Apply options from QSettings
-        skip_dupes = bool(self.settings.value("richLinks/skipDuplicates", True, type=bool))
+        skip_dupes = bool(
+            self.settings.value("richLinks/skipDuplicates", True, type=bool)
+        )
         sort_alpha = bool(self.settings.value("richLinks/sortAlpha", False, type=bool))
         preserve_blanks = bool(
             self.settings.value("richLinks/preserveBlanks", True, type=bool)
@@ -2507,7 +2677,9 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        skip_dupes = bool(self.settings.value("richLinks/skipDuplicates", True, type=bool))
+        skip_dupes = bool(
+            self.settings.value("richLinks/skipDuplicates", True, type=bool)
+        )
         sort_alpha = bool(self.settings.value("richLinks/sortAlpha", False, type=bool))
         preserve_blanks = bool(
             self.settings.value("richLinks/preserveBlanks", True, type=bool)

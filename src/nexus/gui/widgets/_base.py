@@ -1,4 +1,6 @@
-"""Custom UI widgets for the Nexus application."""
+"""Custom UI widgets for the Nexus application with premium Dark and Light theme support."""
+
+from __future__ import annotations
 
 import re
 from typing import cast
@@ -11,6 +13,7 @@ from PySide6.QtCore import (
     QRectF,
     QSize,
     Qt,
+    QTimer,
     Signal,
 )
 from PySide6.QtGui import (
@@ -42,6 +45,7 @@ from PySide6.QtWidgets import (
 )
 
 from nexus.core.config import Config
+from nexus.gui.theme import get_theme_manager
 from nexus.utils.url_processor import URLProcessor
 from razorcore.threading import AsyncTaskWorker
 
@@ -58,7 +62,7 @@ class AsyncWorker(AsyncTaskWorker):
 
 
 class CosmicFrame(QWidget):
-    """Rounded deep-space shell with a brushed-silver metallic border."""
+    """Rounded floating glass shell with brushed metallic bevel supporting Dark and Light modes."""
 
     # Deterministic starfield: (x%, y%, radius, alpha)
     _STARS = [
@@ -87,7 +91,6 @@ class CosmicFrame(QWidget):
         (0.44, 0.71, 1.8, 175),
     ]
 
-    # Four-point glints — kept to the outer frame, away from the URL well
     _GLINTS = [
         (0.08, 0.10, 5),
         (0.92, 0.12, 5),
@@ -95,13 +98,17 @@ class CosmicFrame(QWidget):
         (0.94, 0.88, 4),
     ]
 
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        get_theme_manager().theme_changed.connect(lambda _: self.update())
+
     def _draw_glint(
-        self, painter: QPainter, rect, sx: float, sy: float, size: float
+        self, painter: QPainter, rect, sx: float, sy: float, size: float, color: QColor
     ) -> None:
         cx = rect.left() + rect.width() * sx
         cy = rect.top() + rect.height() * sy
         half = size / 2
-        painter.setPen(QPen(QColor(236, 242, 252, 210), 1.2))
+        painter.setPen(QPen(color, 1.2))
         painter.drawLine(int(cx - half), int(cy), int(cx + half), int(cy))
         painter.drawLine(int(cx), int(cy - half), int(cx), int(cy + half))
 
@@ -109,104 +116,111 @@ class CosmicFrame(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
+        tm = get_theme_manager()
+        tokens = tm.tokens
         rect = self.rect().adjusted(1, 1, -2, -2)
         rounded_rect = QPainterPath()
         rounded_rect.addRoundedRect(rect, 18, 18)
 
-        # Deep abyss navy — darker than before so accents pop harder
+        # Base Gradient
         base = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        base.setColorAt(0.0, QColor("#030810"))
-        base.setColorAt(0.45, QColor("#02060E"))
-        base.setColorAt(1.0, QColor("#010408"))
+        base.setColorAt(0.0, QColor(tokens.frame_bg_start))
+        base.setColorAt(0.45, QColor(tokens.frame_bg_mid))
+        base.setColorAt(1.0, QColor(tokens.frame_bg_end))
         painter.fillPath(rounded_rect, QBrush(base))
 
         painter.setClipPath(rounded_rect)
 
-        # Faint galactic swirl — cool blue washes drifting across the window
-        swirl = QLinearGradient(rect.topRight(), rect.center())
-        swirl.setColorAt(0.0, QColor(50, 90, 200, 48))
-        swirl.setColorAt(1.0, QColor(50, 90, 200, 0))
-        painter.fillPath(rounded_rect, QBrush(swirl))
+        if tm.is_dark:
+            # Dark: Deep galactic swirl + purple nebula wash
+            swirl = QLinearGradient(rect.topRight(), rect.center())
+            swirl.setColorAt(0.0, QColor(50, 90, 200, 48))
+            swirl.setColorAt(1.0, QColor(50, 90, 200, 0))
+            painter.fillPath(rounded_rect, QBrush(swirl))
 
-        # Purple nebula band through the center, like the icon backdrop
-        nebula = QLinearGradient(
-            rect.left(),
-            rect.top() + rect.height() * 0.35,
-            rect.right(),
-            rect.top() + rect.height() * 0.65,
-        )
-        nebula.setColorAt(0.0, QColor(90, 60, 150, 0))
-        nebula.setColorAt(0.35, QColor(120, 70, 210, 52))
-        nebula.setColorAt(0.55, QColor(60, 110, 230, 44))
-        nebula.setColorAt(0.75, QColor(110, 70, 190, 46))
-        nebula.setColorAt(1.0, QColor(90, 60, 150, 0))
-        painter.fillPath(rounded_rect, QBrush(nebula))
-
-        swirl_low = QLinearGradient(
-            rect.left(),
-            rect.bottom(),
-            rect.left() + rect.width() * 0.5,
-            rect.center().y(),
-        )
-        swirl_low.setColorAt(0.0, QColor(90, 120, 190, 26))
-        swirl_low.setColorAt(1.0, QColor(90, 120, 190, 0))
-        painter.fillPath(rounded_rect, QBrush(swirl_low))
-
-        # Starfield
-        painter.setPen(Qt.PenStyle.NoPen)
-        for sx, sy, radius, alpha in self._STARS:
-            painter.setBrush(QColor(226, 234, 248, alpha))
-            painter.drawEllipse(
-                QRectF(
-                    rect.left() + rect.width() * sx,
-                    rect.top() + rect.height() * sy,
-                    radius * 2,
-                    radius * 2,
-                )
+            nebula = QLinearGradient(
+                rect.left(),
+                rect.top() + rect.height() * 0.35,
+                rect.right(),
+                rect.top() + rect.height() * 0.65,
             )
+            nebula.setColorAt(0.0, QColor(90, 60, 150, 0))
+            nebula.setColorAt(0.35, QColor(120, 70, 210, 52))
+            nebula.setColorAt(0.55, QColor(60, 110, 230, 44))
+            nebula.setColorAt(0.75, QColor(110, 70, 190, 46))
+            nebula.setColorAt(1.0, QColor(90, 60, 150, 0))
+            painter.fillPath(rounded_rect, QBrush(nebula))
 
-        for sx, sy, size in self._GLINTS:
-            self._draw_glint(painter, rect, sx, sy, size)
+            # Starfield
+            painter.setPen(Qt.PenStyle.NoPen)
+            for sx, sy, radius, alpha in self._STARS:
+                painter.setBrush(QColor(226, 234, 248, alpha))
+                painter.drawEllipse(
+                    QRectF(
+                        rect.left() + rect.width() * sx,
+                        rect.top() + rect.height() * sy,
+                        radius * 2,
+                        radius * 2,
+                    )
+                )
+
+            for sx, sy, size in self._GLINTS:
+                self._draw_glint(
+                    painter, rect, sx, sy, size, QColor(236, 242, 252, 210)
+                )
+        else:
+            # Light: Frosted lumina glass ambient sheen
+            lumina = QLinearGradient(rect.topLeft(), rect.bottomRight())
+            lumina.setColorAt(0.0, QColor(255, 255, 255, 120))
+            lumina.setColorAt(0.5, QColor(224, 238, 255, 50))
+            lumina.setColorAt(1.0, QColor(240, 244, 255, 30))
+            painter.fillPath(rounded_rect, QBrush(lumina))
+
+            # Subtle top-edge light wash
+            top_wash = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+            top_wash.setColorAt(0.0, QColor(255, 255, 255, 180))
+            top_wash.setColorAt(0.15, QColor(255, 255, 255, 0))
+            painter.fillPath(rounded_rect, QBrush(top_wash))
 
         painter.setClipping(False)
 
-        # Brushed-silver metallic border, like the icon's bezel
+        # Brushed metallic outer border
         border = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        border.setColorAt(0.0, QColor(235, 238, 244, 230))
-        border.setColorAt(0.25, QColor(140, 148, 160, 210))
-        border.setColorAt(0.5, QColor(216, 222, 232, 235))
-        border.setColorAt(0.75, QColor(120, 128, 142, 205))
-        border.setColorAt(1.0, QColor(228, 232, 240, 225))
+        border.setColorAt(0.0, QColor(tokens.frame_border_start))
+        border.setColorAt(0.25, QColor(tokens.frame_border_mid))
+        border.setColorAt(0.5, QColor(tokens.frame_border_end))
+        border.setColorAt(0.75, QColor(tokens.frame_border_mid))
+        border.setColorAt(1.0, QColor(tokens.frame_border_start))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QBrush(border), 2.4))
+        painter.setPen(QPen(QBrush(border), 2.2))
         painter.drawRoundedRect(rect, 18, 18)
 
-        # Thin inner steel line for machined depth
+        # Machined inner depth line
         inner = rect.adjusted(3, 3, -3, -3)
-        painter.setPen(QPen(QColor(150, 165, 195, 60), 1.0))
+        painter.setPen(QPen(QColor(tokens.frame_inner_border), 1.0))
         painter.drawRoundedRect(inner, 15, 15)
 
         super().paintEvent(event)
 
 
 class MetallicLabel(QLabel):
-    """Silver-gradient label that echoes the icon's brushed metal lettering."""
+    """Refined metallic label with gradient lettering that adapts to light and dark themes."""
 
-    _VARIANTS = {
+    _DARK_VARIANTS = {
         "hero": {
             "size": 48,
             "weight": QFont.Weight.Bold,
             "spacing": 7.0,
             "top": "#FFFFFF",
-            "mid": "#C8D6EC",
-            "bottom": "#8EA4C8",
-            "shadow": QColor(0, 0, 0, 120),
+            "mid": "#D4E2F6",
+            "bottom": "#9AB0D2",
+            "shadow": QColor(0, 0, 0, 130),
         },
         "body": {
             "size": 15,
             "weight": QFont.Weight.DemiBold,
             "spacing": 0.4,
-            "top": "#F2F6FC",
+            "top": "#F8FAFC",
             "mid": "#D0DAEA",
             "bottom": "#A8B8D0",
             "shadow": QColor(0, 0, 0, 80),
@@ -224,19 +238,67 @@ class MetallicLabel(QLabel):
             "size": 16,
             "weight": QFont.Weight.DemiBold,
             "spacing": 0.3,
-            "top": "#B8D8FF",
-            "mid": "#7EB8F8",
-            "bottom": "#4A90E8",
+            "top": "#93C5FD",
+            "mid": "#60A5FA",
+            "bottom": "#3B82F6",
             "shadow": QColor(0, 0, 0, 90),
         },
         "dim": {
             "size": 15,
             "weight": QFont.Weight.Normal,
             "spacing": 0.2,
-            "top": "#B8C4D8",
-            "mid": "#98A8C0",
-            "bottom": "#7888A0",
+            "top": "#CBD5E1",
+            "mid": "#94A3B8",
+            "bottom": "#64748B",
             "shadow": QColor(0, 0, 0, 70),
+        },
+    }
+
+    _LIGHT_VARIANTS = {
+        "hero": {
+            "size": 48,
+            "weight": QFont.Weight.Bold,
+            "spacing": 7.0,
+            "top": "#0F172A",
+            "mid": "#1E293B",
+            "bottom": "#334155",
+            "shadow": QColor(255, 255, 255, 160),
+        },
+        "body": {
+            "size": 15,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.4,
+            "top": "#1E293B",
+            "mid": "#334155",
+            "bottom": "#475569",
+            "shadow": QColor(255, 255, 255, 120),
+        },
+        "section": {
+            "size": 20,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.3,
+            "top": "#0F172A",
+            "mid": "#1E293B",
+            "bottom": "#334155",
+            "shadow": QColor(255, 255, 255, 140),
+        },
+        "accent": {
+            "size": 16,
+            "weight": QFont.Weight.DemiBold,
+            "spacing": 0.3,
+            "top": "#1D4ED8",
+            "mid": "#2563EB",
+            "bottom": "#3B82F6",
+            "shadow": QColor(255, 255, 255, 140),
+        },
+        "dim": {
+            "size": 15,
+            "weight": QFont.Weight.Normal,
+            "spacing": 0.2,
+            "top": "#475569",
+            "mid": "#64748B",
+            "bottom": "#94A3B8",
+            "shadow": QColor(255, 255, 255, 100),
         },
     }
 
@@ -245,6 +307,7 @@ class MetallicLabel(QLabel):
         self._variant = variant
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self._apply_variant()
+        get_theme_manager().theme_changed.connect(lambda _: self.update())
 
     def set_variant(self, variant: str) -> None:
         self._variant = variant
@@ -252,7 +315,10 @@ class MetallicLabel(QLabel):
         self.update()
 
     def _apply_variant(self) -> None:
-        spec = self._VARIANTS.get(self._variant, self._VARIANTS["body"])
+        table = (
+            self._DARK_VARIANTS if get_theme_manager().is_dark else self._LIGHT_VARIANTS
+        )
+        spec = table.get(self._variant, table["body"])
         font = self.font()
         font.setFamily("Helvetica Neue")
         font.setPointSize(cast(int, spec["size"]))
@@ -264,7 +330,10 @@ class MetallicLabel(QLabel):
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         del event
-        spec = self._VARIANTS.get(self._variant, self._VARIANTS["body"])
+        table = (
+            self._DARK_VARIANTS if get_theme_manager().is_dark else self._LIGHT_VARIANTS
+        )
+        spec = table.get(self._variant, table["body"])
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
@@ -340,8 +409,52 @@ class TrafficLightButton(QPushButton):
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, self._symbol)
 
 
+class ThemeToggleButton(QPushButton):
+    """Elegant 1-click theme switch pill button."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(36, 22)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setToolTip("Toggle Light / Dark Mode")
+        self.clicked.connect(self._toggle)
+        get_theme_manager().theme_changed.connect(lambda _: self.update())
+
+    def _toggle(self):
+        get_theme_manager().toggle_theme()
+
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
+        del event
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        tm = get_theme_manager()
+
+        bg_color = QColor(255, 255, 255, 30) if tm.is_dark else QColor(15, 23, 42, 20)
+        if self.underMouse():
+            bg_color = bg_color.lighter(130)
+
+        painter.setPen(
+            QPen(
+                QColor(255, 255, 255, 45) if tm.is_dark else QColor(15, 23, 42, 35),
+                1.0,
+            )
+        )
+        painter.setBrush(bg_color)
+        painter.drawRoundedRect(rect, 10, 10)
+
+        icon_text = "🌙" if tm.is_dark else "☀️"
+        font = painter.font()
+        font.setPointSize(11)
+        painter.setFont(font)
+        painter.setPen(QColor(240, 244, 250) if tm.is_dark else QColor(15, 23, 42))
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, icon_text)
+
+
 class WindowTitleBar(QWidget):
-    """Custom title bar for the frameless window shell."""
+    """Custom title bar for the frameless window shell with traffic lights and theme toggle."""
 
     def __init__(self, target_window: QWidget, title: str = "Nexus", parent=None):
         super().__init__(parent)
@@ -351,7 +464,7 @@ class WindowTitleBar(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 10, 16, 4)
+        layout.setContentsMargins(16, 8, 16, 4)
         layout.setSpacing(0)
 
         controls = QWidget(self)
@@ -371,21 +484,19 @@ class WindowTitleBar(QWidget):
 
         self.title_label = QLabel("", self)
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title_label.setStyleSheet("""
-            QLabel {
-                color: rgba(232, 236, 244, 0.88);
-                font-family: "Helvetica Neue", sans-serif;
-                font-size: 13px;
-                font-weight: 600;
-                background: transparent;
-            }
-        """)
         self.title_label.hide()
+
+        self.theme_toggle = ThemeToggleButton(self)
 
         layout.addWidget(
             controls, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         layout.addStretch()
+        layout.addWidget(
+            self.theme_toggle,
+            0,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+        )
 
         self.close_button.clicked.connect(self._target_window.close)
         self.minimize_button.clicked.connect(self._target_window.showMinimized)
@@ -397,9 +508,6 @@ class WindowTitleBar(QWidget):
         else:
             self._target_window.showMaximized()
 
-    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
-        del event
-
     def mouseDoubleClickEvent(self, event):  # noqa: N802 - Qt override
         if event.button() == Qt.MouseButton.LeftButton:
             self._toggle_zoom()
@@ -408,7 +516,7 @@ class WindowTitleBar(QWidget):
     def mousePressEvent(self, event):  # noqa: N802 - Qt override
         child = self.childAt(event.position().toPoint())
         if event.button() == Qt.MouseButton.LeftButton and not isinstance(
-            child, TrafficLightButton
+            child, (TrafficLightButton, ThemeToggleButton)
         ):
             self._drag_offset = (
                 event.globalPosition().toPoint()
@@ -433,11 +541,12 @@ class WindowTitleBar(QWidget):
 
 
 class BookmarkTreeDelegate(QStyledItemDelegate):
-    """Custom bookmark tree renderer for folder rows and links."""
+    """Custom bookmark tree renderer for folder pills, groups, and links in Light & Dark modes."""
 
     def paint(self, painter, option, index):  # noqa: ANN001
         data = index.data(Qt.ItemDataRole.UserRole) or {}
         is_folder = data.get("type") == "folder"
+        tm = get_theme_manager()
 
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -449,51 +558,72 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
         if is_folder:
             style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
             accent = QColor(style.get("start", "#5B8DEF"))
-            fill = QColor("#08101C")
-            border = QColor(accent.red(), accent.green(), accent.blue(), 70)
 
-            if selected or hovered:
-                fill = QColor("#0E1828")
-                border = QColor(accent.red(), accent.green(), accent.blue(), 150)
+            if tm.is_dark:
+                fill = QColor("#0E1828") if (selected or hovered) else QColor("#08101C")
+                border = QColor(
+                    accent.red(),
+                    accent.green(),
+                    accent.blue(),
+                    160 if (selected or hovered) else 75,
+                )
+                text_color = QColor("#F8FAFC")
+            else:
+                fill = (
+                    QColor(255, 255, 255, 245)
+                    if (selected or hovered)
+                    else QColor(255, 255, 255, 180)
+                )
+                border = QColor(
+                    accent.red(),
+                    accent.green(),
+                    accent.blue(),
+                    180 if (selected or hovered) else 90,
+                )
+                text_color = QColor("#0F172A")
 
             pill_rect = rect.adjusted(0, 2, 0, -2)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(fill)
             painter.drawRoundedRect(pill_rect, 10, 10)
-            painter.setPen(QPen(border, 1.0))
+            painter.setPen(QPen(border, 1.2 if (selected or hovered) else 1.0))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(pill_rect, 10, 10)
 
-            # Accent bar on the left
+            # Vibrant accent bar on the left
             bar = QRectF(
-                pill_rect.left() + 8, pill_rect.top() + 10, 3, pill_rect.height() - 20
+                pill_rect.left() + 8, pill_rect.top() + 9, 3.5, pill_rect.height() - 18
             )
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(accent)
-            painter.drawRoundedRect(bar, 1.5, 1.5)
+            painter.drawRoundedRect(bar, 1.75, 1.75)
 
             text_rect = pill_rect.adjusted(22, 0, -14, 0)
             font = option.font
             font.setPointSize(14)
             font.setWeight(QFont.Weight.DemiBold)
             painter.setFont(font)
-            painter.setPen(QColor("#F0F4FA"))
+            painter.setPen(text_color)
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
         elif data.get("type") == "group":
-            # Indented group row: small accent dot + name + optional count.
             style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
             accent = QColor(style.get("start", "#5B8DEF"))
             text_rect = rect.adjusted(22, 0, -10, 0)
+
             if hovered or selected:
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(QColor(255, 255, 255, 12 if hovered else 18))
+                bg_alpha = 24 if selected else 14
+                painter.setBrush(
+                    QColor(255, 255, 255, bg_alpha)
+                    if tm.is_dark
+                    else QColor(15, 23, 42, bg_alpha)
+                )
                 painter.drawRoundedRect(rect.adjusted(2, 1, -2, -1), 8, 8)
 
-            # Accent dot
             dot_rect = text_rect.adjusted(0, 0, 0, 0)
             dot_rect.setWidth(8)
             dot_rect.moveTop(text_rect.top() + (text_rect.height() - 8) // 2)
@@ -506,18 +636,17 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             font.setPointSize(13)
             font.setWeight(QFont.Weight.Normal)
             painter.setFont(font)
-            painter.setPen(QColor("#B8C4D8"))
+            painter.setPen(QColor("#CBD5E1") if tm.is_dark else QColor("#334155"))
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
 
-            # Child count badge
             count = data.get("count")
             if count:
                 badge_text = f"({count})"
-                painter.setPen(QColor("#8EA0BC"))
+                painter.setPen(QColor("#8EA0BC") if tm.is_dark else QColor("#64748B"))
                 badge_rect = rect.adjusted(rect.width() - 44, 0, -4, 0)
                 painter.drawText(
                     badge_rect,
@@ -525,8 +654,7 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
                     badge_text,
                 )
         else:
-            # Per-bookmark accent (falls back to the parent folder's
-            # accent when the bookmark carries none).
+            # Per-bookmark accent
             bookmark_data = index.data(Qt.ItemDataRole.UserRole) or {}
             accent_hex = bookmark_data.get("accent")
             if not accent_hex and index.parent().isValid():
@@ -536,9 +664,14 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             text_rect = rect.adjusted(22, 0, -10, 0)
             if hovered or selected:
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(QColor(255, 255, 255, 12 if hovered else 18))
+                bg_alpha = 24 if selected else 14
+                painter.setBrush(
+                    QColor(255, 255, 255, bg_alpha)
+                    if tm.is_dark
+                    else QColor(15, 23, 42, bg_alpha)
+                )
                 painter.drawRoundedRect(rect.adjusted(2, 1, -2, -1), 8, 8)
-            # Accent dot
+
             if accent_hex:
                 dot_rect = text_rect.adjusted(0, 0, 0, 0)
                 dot_rect.setWidth(8)
@@ -547,11 +680,12 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
                 painter.setBrush(QColor(accent_hex))
                 painter.drawEllipse(dot_rect)
                 text_rect.adjust(14, 0, 0, 0)
+
             font = option.font
             font.setPointSize(13)
             font.setWeight(QFont.Weight.Normal)
             painter.setFont(font)
-            painter.setPen(QColor("#B8C4D8"))
+            painter.setPen(QColor("#CBD5E1") if tm.is_dark else QColor("#334155"))
             painter.drawText(
                 text_rect,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -570,46 +704,9 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
             height = 34
         return QSize(option.rect.width(), height)
 
-    def _draw_folder_icon(self, painter: QPainter, rect, icon_color: QColor):
-        painter.save()
-
-        tab_path = QPainterPath()
-        tab_path.addRoundedRect(rect.adjusted(3, 1, -18, -16), 5, 5)
-        body_path = QPainterPath()
-        body_path.addRoundedRect(rect.adjusted(1, 12, -2, -1), 8, 8)
-
-        top_gradient = QLinearGradient(
-            rect.left(), rect.top(), rect.left(), rect.bottom()
-        )
-        top_gradient.setColorAt(0.0, icon_color.lighter(135))
-        top_gradient.setColorAt(1.0, icon_color)
-
-        body_gradient = QLinearGradient(
-            rect.left(), rect.top(), rect.right(), rect.bottom()
-        )
-        body_gradient.setColorAt(0.0, icon_color.lighter(120))
-        body_gradient.setColorAt(1.0, icon_color.darker(118))
-
-        painter.setPen(QPen(QColor(255, 255, 255, 90), 1.0))
-        painter.fillPath(tab_path, QBrush(top_gradient))
-        painter.drawPath(tab_path)
-
-        painter.fillPath(body_path, QBrush(body_gradient))
-        painter.setPen(QPen(QColor(255, 255, 255, 120), 1.15))
-        painter.drawPath(body_path)
-
-        painter.restore()
-
 
 class NeonURLItemDelegate(QStyledItemDelegate):
-    """Paints URL rows as clean list items with status indicators."""
-
-    STATE_COLORS = {
-        "ready": QColor("#4AE89A"),
-        "opening": QColor("#FFD166"),
-        "opened": QColor("#3DDB88"),
-        "failed": QColor("#FF6B6B"),
-    }
+    """Paints URL rows as clean list items with luminous status indicator dots."""
 
     def paint(self, painter, option, index):  # noqa: ANN001
         if index.column() == 0:
@@ -618,24 +715,31 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
+        tm = get_theme_manager()
+        tokens = tm.tokens
+
         cell_rect = option.rect.adjusted(8, 2, -8, -2)
         row_rect = cell_rect
 
         if option.state & QStyle.StateFlag.State_Selected:
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(74, 144, 232, 36))
-            painter.drawRect(row_rect)
+            painter.setBrush(
+                QColor(59, 130, 246, 40) if tm.is_dark else QColor(59, 130, 246, 30)
+            )
+            painter.drawRoundedRect(row_rect, 6, 6)
         elif option.state & QStyle.StateFlag.State_MouseOver:
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(255, 255, 255, 10))
-            painter.drawRect(row_rect)
+            painter.setBrush(
+                QColor(255, 255, 255, 14) if tm.is_dark else QColor(15, 23, 42, 10)
+            )
+            painter.drawRoundedRect(row_rect, 6, 6)
 
         if index.column() == 1:
             font = option.font
             font.setPointSize(14)
             font.setWeight(QFont.Weight.Medium)
             painter.setFont(font)
-            painter.setPen(QColor("#F0F4FA"))
+            painter.setPen(QColor(tokens.text_primary))
             painter.drawText(
                 row_rect.adjusted(12, 0, -8, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -644,7 +748,14 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         else:
             status_state = index.data(Qt.ItemDataRole.UserRole) or "ready"
             status_label = str(index.data(Qt.ItemDataRole.DisplayRole))
-            status_color = self.STATE_COLORS.get(status_state, QColor("#6BCB8B"))
+
+            state_colors = {
+                "ready": QColor(tokens.status_ready),
+                "opening": QColor(tokens.status_opening),
+                "opened": QColor(tokens.status_opened),
+                "failed": QColor(tokens.status_failed),
+            }
+            status_color = state_colors.get(status_state, QColor(tokens.status_ready))
 
             font = option.font
             font.setPointSize(13)
@@ -659,11 +770,21 @@ class NeonURLItemDelegate(QStyledItemDelegate):
 
             dot_x = group_left + 4
             dot_y = row_rect.center().y()
-            painter.setBrush(status_color)
+
+            # Outer subtle glow ring
+            painter.setBrush(
+                QColor(
+                    status_color.red(), status_color.green(), status_color.blue(), 50
+                )
+            )
             painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(dot_x - 5, int(dot_y) - 5, 10, 10)
+
+            # Inner bright dot
+            painter.setBrush(status_color)
             painter.drawEllipse(dot_x - 3, int(dot_y) - 3, 6, 6)
 
-            painter.setPen(QColor("#D0DAEA"))
+            painter.setPen(QColor(tokens.text_secondary))
             painter.drawText(
                 row_rect.adjusted(group_left + 14 - row_rect.left(), 0, -10, 0),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -678,9 +799,7 @@ class NeonURLItemDelegate(QStyledItemDelegate):
         return QSize(option.rect.width(), 44)
 
 
-HREF_PATTERN = re.compile(
-    r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE
-)
+HREF_PATTERN = re.compile(r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE)
 
 
 def extract_urls_from_mime_data(
@@ -722,7 +841,7 @@ def extract_urls_from_mime_data(
 
 
 class URLTableWidget(QTableWidget):
-    """A custom table widget for displaying URLs with numbering and status tracking."""
+    """Table widget with batched updates and high performance."""
 
     url_activated = Signal(int, str)
     urls_changed = Signal(list)
@@ -736,6 +855,8 @@ class URLTableWidget(QTableWidget):
         "failed": "Failed",
     }
 
+    _FILE_DROP_EXTENSIONS = {".txt", ".csv", ".md"}
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.url_processor = URLProcessor()
@@ -743,11 +864,9 @@ class URLTableWidget(QTableWidget):
         self.url_counter = 0
         self._suspend_url_events = False
 
-        # Setup table structure
         self.setColumnCount(3)
         self.setHorizontalHeaderLabels(["#", "URL", "Status"])
 
-        # Configure table appearance and behavior
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setAlternatingRowColors(False)
         self.verticalHeader().setVisible(False)
@@ -758,20 +877,17 @@ class URLTableWidget(QTableWidget):
         self.setItemDelegate(NeonURLItemDelegate(self))
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        # Set column widths
         header = self.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)  # Number column
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # URL column
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)  # Status column
-        self.setColumnWidth(0, 0)  # Hide number column
-        self.setColumnWidth(2, 140)  # Status column width
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
+        self.setColumnWidth(0, 0)
+        self.setColumnWidth(2, 140)
         self.setColumnHidden(0, True)
 
-        # Enable drag and drop
         self.setAcceptDrops(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.DropOnly)
 
-        # Stable row selection without inline cell editing stealing paste shortcuts
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -779,7 +895,7 @@ class URLTableWidget(QTableWidget):
         self.itemDoubleClicked.connect(self._activate_item_url)
 
     def add_urls(self, urls: list[str]):
-        """Add URLs to the table with automatic numbering, keeping them in alphabetical order."""
+        """Add URLs with batched sorting and UI update suspension."""
         cleaned = self.url_processor.filter_openable_urls(urls)
         if not cleaned:
             return
@@ -788,11 +904,9 @@ class URLTableWidget(QTableWidget):
         self.replace_urls(combined)
 
     def update_status(self, row: int, success: bool):
-        """Update the status of a URL row."""
         self.set_status_state(row, "opened" if success else "failed")
 
     def set_status_state(self, row: int, state: str):
-        """Set the visual status for a row."""
         if 0 <= row < self.rowCount():
             status_item = self.item(row, 2)
             if status_item:
@@ -800,7 +914,6 @@ class URLTableWidget(QTableWidget):
                 status_item.setData(Qt.ItemDataRole.UserRole, state)
 
     def get_all_urls(self) -> list[str]:
-        """Get all URLs from the table."""
         urls = []
         for row in range(self.rowCount()):
             url_item = self.item(row, 1)
@@ -809,51 +922,54 @@ class URLTableWidget(QTableWidget):
         return urls
 
     def clear_table(self):
-        """Clear all URLs and reset counter."""
         self._suspend_url_events = True
-        self.setRowCount(0)
-        self.url_counter = 0
-        self._suspend_url_events = False
+        self.setUpdatesEnabled(False)
+        try:
+            self.setRowCount(0)
+            self.url_counter = 0
+        finally:
+            self.setUpdatesEnabled(True)
+            self._suspend_url_events = False
         self._emit_urls_changed()
 
     def replace_urls(self, urls: list[str]):
-        """Replace the table contents with a fresh URL list sorted alphabetically."""
+        """Batched row replacement avoiding per-row paint recalculations."""
         self._suspend_url_events = True
-        self.setRowCount(0)
-        self.url_counter = 0
-        sorted_urls = sorted(
-            self.url_processor.filter_openable_urls(urls), key=lambda s: s.lower()
-        )
-        for url in sorted_urls:
-            self.url_counter += 1
-            row = self.rowCount()
-            self.insertRow(row)
-            self.setRowHeight(row, 44)
-
-            number_item = QTableWidgetItem(str(self.url_counter))
-            number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            number_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-            self.setItem(row, 0, number_item)
-
-            url_item = QTableWidgetItem(url)
-            url_item.setFlags(
-                Qt.ItemFlag.ItemIsEnabled
-                | Qt.ItemFlag.ItemIsSelectable
+        self.setUpdatesEnabled(False)
+        try:
+            self.setRowCount(0)
+            self.url_counter = 0
+            sorted_urls = sorted(
+                self.url_processor.filter_openable_urls(urls), key=lambda s: s.lower()
             )
-            self.setItem(row, 1, url_item)
+            for url in sorted_urls:
+                self.url_counter += 1
+                row = self.rowCount()
+                self.insertRow(row)
+                self.setRowHeight(row, 44)
 
-            status_item = QTableWidgetItem()
-            status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            status_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-            self.setItem(row, 2, status_item)
-            self.set_status_state(row, "ready")
-        self._suspend_url_events = False
+                number_item = QTableWidgetItem(str(self.url_counter))
+                number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                number_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                self.setItem(row, 0, number_item)
+
+                url_item = QTableWidgetItem(url)
+                url_item.setFlags(
+                    Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+                )
+                self.setItem(row, 1, url_item)
+
+                status_item = QTableWidgetItem()
+                status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                status_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                self.setItem(row, 2, status_item)
+                self.set_status_state(row, "ready")
+        finally:
+            self.setUpdatesEnabled(True)
+            self._suspend_url_events = False
         self._emit_urls_changed()
 
-    _FILE_DROP_EXTENSIONS = {".txt", ".csv", ".md"}
-
     def dragEnterEvent(self, event):  # noqa: N802 - Qt override
-        """Accept drag events with URLs, text, or supported files."""
         if (
             event.mimeData().hasUrls()
             or event.mimeData().hasText()
@@ -862,13 +978,10 @@ class URLTableWidget(QTableWidget):
             event.acceptProposedAction()
 
     def dragMoveEvent(self, event):  # noqa: N802 - Qt override
-        """Keep accepting the drag as it moves over the widget."""
         event.acceptProposedAction()
 
     def dropEvent(self, event):  # noqa: N802 - Qt override
-        """Handle dropped content, including .txt/.csv/.md files."""
         mime_data = event.mimeData()
-        # Check if a supported file was dropped
         if mime_data.hasUrls():
             for url in mime_data.urls():
                 if url.isLocalFile():
@@ -882,7 +995,6 @@ class URLTableWidget(QTableWidget):
         event.acceptProposedAction()
 
     def keyPressEvent(self, event):  # noqa: N802 - Qt override
-        """Handle keyboard events for pasting and row activation."""
         paste_modifiers = (
             Qt.KeyboardModifier.ControlModifier,
             Qt.KeyboardModifier.MetaModifier,
@@ -899,18 +1011,15 @@ class URLTableWidget(QTableWidget):
             super().keyPressEvent(event)
 
     def _process_mime_data(self, mime_data: QMimeData):
-        """Process mime data to extract URLs and notify listeners."""
         urls_to_add = extract_urls_from_mime_data(mime_data, self.url_processor)
         if urls_to_add:
             self.add_urls(urls_to_add)
             self.urls_pasted.emit(urls_to_add)
 
     def mousePressEvent(self, event):  # noqa: N802 - Qt override
-        """Handle mouse press events on URL rows."""
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):  # noqa: N802 - Qt override
-        """Show a pointing cursor over activatable URL rows."""
         item = self.itemAt(event.pos())
         if item and item.column() in (1, 2):
             self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -919,7 +1028,6 @@ class URLTableWidget(QTableWidget):
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event):  # noqa: N802 - Qt override
-        """Restore the regular cursor when the pointer leaves the table."""
         self.unsetCursor()
         super().leaveEvent(event)
 
@@ -965,7 +1073,7 @@ class URLTableWidget(QTableWidget):
 
 
 class NeonButton(QPushButton):
-    """A custom button with a subtle hover glow."""
+    """Legacy neon button with hover glow animation."""
 
     def __init__(self, text: str = "", color: str = "#5B8DEF"):
         super().__init__(text)
@@ -981,7 +1089,6 @@ class NeonButton(QPushButton):
         self.setGraphicsEffect(self.shadow)
 
     def update_style(self, new_color: str):
-        """Updates the button's color and stylesheet."""
         self.color = new_color
         self.shadow.setColor(QColor(self.color))
         darker_color = QColor(self.color).darker(150).name()
@@ -1026,15 +1133,9 @@ class NeonButton(QPushButton):
 
 
 class GlassButton(QPushButton):
-    """A clean solid button with subtle hover feedback."""
+    """Polished tactile button with top specular highlight, smooth hover glow, and theme support."""
 
     def __init__(self, text: str = "", variant: str = "primary"):
-        """Initialize GlassButton.
-
-        Args:
-            text: Button text
-            variant: 'primary', 'secondary', 'tertiary', 'quaternary', or 'danger'
-        """
         super().__init__(text)
         self.variant = variant
         self._variant_palette: dict[str, str] = {}
@@ -1045,45 +1146,39 @@ class GlassButton(QPushButton):
         self.setFlat(True)
         self.setMinimumHeight(46)
         if text != "+":
-            self.setMinimumWidth(140)
+            self.setMinimumWidth(116)
+        get_theme_manager().theme_changed.connect(lambda _: self._on_theme_changed())
+
+    def _on_theme_changed(self):
+        self._apply_variant_style()
+        self.update()
 
     def _setup_glow_effect(self):
-        """Setup the drop shadow effect for glow."""
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(0)
-        self.shadow.setOffset(0, 0)
+        self.shadow.setOffset(0, 2)
         self.setGraphicsEffect(self.shadow)
 
     def _get_glow_color(self) -> str:
-        """Get the glow color based on variant."""
         colors = {
-            "primary": "#4A90E8",
-            "home": "#4A90E8",
-            "open": "#4A90E8",
-            "secondary": "#2EC4A0",
-            "save": "#2EC4A0",
-            "import": "#5B8DEF",
-            "export": "#A78BFA",
-            "quick": "#00D4FF",
-            "rich": "#A78BFA",
-            "tertiary": "#F0B429",
-            "undo": "#F0B429",
-            "quaternary": "#E85A5A",
-            "clear": "#FF5C8A",
-            "danger": "#E85A5A",
+            "primary": "#3B82F6",
+            "home": "#3B82F6",
+            "open": "#2563EB",
+            "secondary": "#10B981",
+            "save": "#10B981",
+            "import": "#6366F1",
+            "export": "#8B5CF6",
+            "quick": "#06B6D4",
+            "rich": "#8B5CF6",
+            "tertiary": "#F59E0B",
+            "undo": "#F59E0B",
+            "quaternary": "#EF4444",
+            "clear": "#EC4899",
+            "danger": "#EF4444",
         }
-        return colors.get(self.variant, "#4A90E8")
-
-    def _disabled_tint(
-        self, color_hex: str, lift: int = 112, alpha: int = 160
-    ) -> QColor:
-        """Keep disabled controls readable without going flat gray."""
-        color = QColor(color_hex).lighter(lift)
-        color.setAlpha(alpha)
-        return color
+        return colors.get(self.variant, "#3B82F6")
 
     def _setup_animations(self):
-        """Setup hover glow animations."""
         glow_color = self._get_glow_color()
         self.shadow.setColor(QColor(glow_color))
 
@@ -1098,111 +1193,201 @@ class GlassButton(QPushButton):
         self.glow_out.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def enterEvent(self, event):  # noqa: N802 - Qt override
-        """Animate glow in on hover."""
         self.glow_out.stop()
         self.glow_in.setStartValue(self.shadow.blurRadius())
         self.glow_in.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):  # noqa: N802 - Qt override
-        """Animate glow out on leave."""
         self.glow_in.stop()
         self.glow_out.setStartValue(self.shadow.blurRadius())
         self.glow_out.start()
         super().leaveEvent(event)
 
     def _apply_variant_style(self):
-        """Store the palette used by the custom button paint."""
-        palettes = {
-            "primary": {
-                "start": "#4A90E8",
-                "end": "#2D6FD4",
-                "hover_start": "#5BA4FF",
-                "hover_end": "#3B82F0",
-                "border": "#8EC4FF",
-                "text": "#FFFFFF",
-            },
-            "open": {
-                "start": "#4A90E8",
-                "end": "#2D6FD4",
-                "hover_start": "#5BA4FF",
-                "hover_end": "#3B82F0",
-                "border": "#8EC4FF",
-                "text": "#FFFFFF",
-            },
-            "secondary": {
-                "start": "#2EC4A0",
-                "end": "#1A9E78",
-                "hover_start": "#3DDBB0",
-                "hover_end": "#24B088",
-                "border": "#7AF0D0",
-                "text": "#FFFFFF",
-            },
-            "save": {
-                "start": "#2EC4A0",
-                "end": "#1A9E78",
-                "hover_start": "#3DDBB0",
-                "hover_end": "#24B088",
-                "border": "#7AF0D0",
-                "text": "#FFFFFF",
-            },
-            "quick": {
-                "start": "#00C6E0",
-                "end": "#0090B0",
-                "hover_start": "#33DFFF",
-                "hover_end": "#00B4D8",
-                "border": "#7AF0FF",
-                "text": "#061018",
-            },
-            "rich": {
-                "start": "#A78BFA",
-                "end": "#7C5CF0",
-                "hover_start": "#C4B5FD",
-                "hover_end": "#8B6CFF",
-                "border": "#DDD6FE",
-                "text": "#FFFFFF",
-            },
-            "tertiary": {
-                "start": "#F0B429",
-                "end": "#D4920A",
-                "hover_start": "#FFC94A",
-                "hover_end": "#E8A820",
-                "border": "#FFE08A",
-                "text": "#1A1200",
-            },
-            "undo": {
-                "start": "#F0B429",
-                "end": "#D4920A",
-                "hover_start": "#FFC94A",
-                "hover_end": "#E8A820",
-                "border": "#FFE08A",
-                "text": "#1A1200",
-            },
-            "quaternary": {
-                "start": "#E85A5A",
-                "end": "#C04040",
-                "hover_start": "#FF7070",
-                "hover_end": "#D04A4A",
-                "border": "#FFB0B0",
-                "text": "#FFFFFF",
-            },
-            "clear": {
-                "start": "#FF5C8A",
-                "end": "#D63A68",
-                "hover_start": "#FF7AA3",
-                "hover_end": "#E84F7A",
-                "border": "#FFB0C8",
-                "text": "#FFFFFF",
-            },
-            "danger": {
-                "start": "#E85A5A",
-                "end": "#C04040",
-                "hover_start": "#FF7070",
-                "hover_end": "#D04A4A",
-                "border": "#FFB0B0",
-                "text": "#FFFFFF",
-            },
-        }
+        tm = get_theme_manager()
+        if tm.is_dark:
+            palettes = {
+                "primary": {
+                    "start": "#4A90E8",
+                    "end": "#2D6FD4",
+                    "hover_start": "#5BA4FF",
+                    "hover_end": "#3B82F0",
+                    "border": "#8EC4FF",
+                    "text": "#FFFFFF",
+                },
+                "home": {
+                    "start": "#4A90E8",
+                    "end": "#2D6FD4",
+                    "hover_start": "#5BA4FF",
+                    "hover_end": "#3B82F0",
+                    "border": "#8EC4FF",
+                    "text": "#FFFFFF",
+                },
+                "open": {
+                    "start": "#4A90E8",
+                    "end": "#2D6FD4",
+                    "hover_start": "#5BA4FF",
+                    "hover_end": "#3B82F0",
+                    "border": "#8EC4FF",
+                    "text": "#FFFFFF",
+                },
+                "secondary": {
+                    "start": "#2EC4A0",
+                    "end": "#1A9E78",
+                    "hover_start": "#3DDBB0",
+                    "hover_end": "#24B088",
+                    "border": "#7AF0D0",
+                    "text": "#FFFFFF",
+                },
+                "save": {
+                    "start": "#2EC4A0",
+                    "end": "#1A9E78",
+                    "hover_start": "#3DDBB0",
+                    "hover_end": "#24B088",
+                    "border": "#7AF0D0",
+                    "text": "#FFFFFF",
+                },
+                "import": {
+                    "start": "#5B8DEF",
+                    "end": "#3C6ECC",
+                    "hover_start": "#7AAAF8",
+                    "hover_end": "#4C7FE0",
+                    "border": "#A4C7FF",
+                    "text": "#FFFFFF",
+                },
+                "export": {
+                    "start": "#A78BFA",
+                    "end": "#7C5CF0",
+                    "hover_start": "#C4B5FD",
+                    "hover_end": "#8B6CFF",
+                    "border": "#DDD6FE",
+                    "text": "#FFFFFF",
+                },
+                "quick": {
+                    "start": "#00C6E0",
+                    "end": "#0090B0",
+                    "hover_start": "#33DFFF",
+                    "hover_end": "#00B4D8",
+                    "border": "#7AF0FF",
+                    "text": "#061018",
+                },
+                "rich": {
+                    "start": "#A78BFA",
+                    "end": "#7C5CF0",
+                    "hover_start": "#C4B5FD",
+                    "hover_end": "#8B6CFF",
+                    "border": "#DDD6FE",
+                    "text": "#FFFFFF",
+                },
+                "clear": {
+                    "start": "#FF5C8A",
+                    "end": "#D63A68",
+                    "hover_start": "#FF7AA3",
+                    "hover_end": "#E84F7A",
+                    "border": "#FFB0C8",
+                    "text": "#FFFFFF",
+                },
+                "danger": {
+                    "start": "#E85A5A",
+                    "end": "#C04040",
+                    "hover_start": "#FF7070",
+                    "hover_end": "#D04A4A",
+                    "border": "#FFB0B0",
+                    "text": "#FFFFFF",
+                },
+            }
+        else:
+            palettes = {
+                "primary": {
+                    "start": "#3B82F6",
+                    "end": "#2563EB",
+                    "hover_start": "#60A5FA",
+                    "hover_end": "#3B82F6",
+                    "border": "#93C5FD",
+                    "text": "#FFFFFF",
+                },
+                "home": {
+                    "start": "#3B82F6",
+                    "end": "#2563EB",
+                    "hover_start": "#60A5FA",
+                    "hover_end": "#3B82F6",
+                    "border": "#93C5FD",
+                    "text": "#FFFFFF",
+                },
+                "open": {
+                    "start": "#2563EB",
+                    "end": "#1D4ED8",
+                    "hover_start": "#3B82F6",
+                    "hover_end": "#2563EB",
+                    "border": "#93C5FD",
+                    "text": "#FFFFFF",
+                },
+                "secondary": {
+                    "start": "#10B981",
+                    "end": "#059669",
+                    "hover_start": "#34D399",
+                    "hover_end": "#10B981",
+                    "border": "#6EE7B7",
+                    "text": "#FFFFFF",
+                },
+                "save": {
+                    "start": "#10B981",
+                    "end": "#059669",
+                    "hover_start": "#34D399",
+                    "hover_end": "#10B981",
+                    "border": "#6EE7B7",
+                    "text": "#FFFFFF",
+                },
+                "import": {
+                    "start": "#6366F1",
+                    "end": "#4F46E5",
+                    "hover_start": "#818CF8",
+                    "hover_end": "#6366F1",
+                    "border": "#C7D2FE",
+                    "text": "#FFFFFF",
+                },
+                "export": {
+                    "start": "#8B5CF6",
+                    "end": "#7C3AED",
+                    "hover_start": "#A78BFA",
+                    "hover_end": "#8B5CF6",
+                    "border": "#DDD6FE",
+                    "text": "#FFFFFF",
+                },
+                "quick": {
+                    "start": "#06B6D4",
+                    "end": "#0891B2",
+                    "hover_start": "#22D3EE",
+                    "hover_end": "#06B6D4",
+                    "border": "#A5F3FC",
+                    "text": "#0F172A",
+                },
+                "rich": {
+                    "start": "#8B5CF6",
+                    "end": "#7C3AED",
+                    "hover_start": "#A78BFA",
+                    "hover_end": "#8B5CF6",
+                    "border": "#DDD6FE",
+                    "text": "#FFFFFF",
+                },
+                "clear": {
+                    "start": "#EC4899",
+                    "end": "#DB2777",
+                    "hover_start": "#F472B6",
+                    "hover_end": "#EC4899",
+                    "border": "#FBCFE8",
+                    "text": "#FFFFFF",
+                },
+                "danger": {
+                    "start": "#EF4444",
+                    "end": "#DC2626",
+                    "hover_start": "#F87171",
+                    "hover_end": "#EF4444",
+                    "border": "#FECACA",
+                    "text": "#FFFFFF",
+                },
+            }
         self._variant_palette = palettes.get(self.variant, palettes["primary"])
         self.update()
 
@@ -1216,19 +1401,25 @@ class GlassButton(QPushButton):
         hovered = self.underMouse()
         palette = self._variant_palette
         enabled = self.isEnabled()
+
         start = QColor(
-            palette["hover_start"] if hovered or self.isChecked() else palette["start"]
+            palette["hover_start"]
+            if (hovered or self.isChecked())
+            else palette["start"]
         )
         end = QColor(
-            palette["hover_end"] if hovered or self.isChecked() else palette["end"]
+            palette["hover_end"] if (hovered or self.isChecked()) else palette["end"]
         )
-        if pressed:
-            start = start.darker(112)
-            end = end.darker(112)
-        if not enabled:
-            start = self._disabled_tint(palette["start"], lift=108, alpha=140)
-            end = self._disabled_tint(palette["end"], lift=104, alpha=130)
 
+        if pressed:
+            start = start.darker(114)
+            end = end.darker(114)
+
+        if not enabled:
+            start.setAlpha(120)
+            end.setAlpha(110)
+
+        # Base Gradient
         fill = QLinearGradient(rect.topLeft(), rect.bottomLeft())
         fill.setColorAt(0.0, start)
         fill.setColorAt(1.0, end)
@@ -1237,33 +1428,35 @@ class GlassButton(QPushButton):
         painter.setBrush(QBrush(fill))
         painter.drawRoundedRect(rect, 10, 10)
 
-        # Brushed-metal sheen across the button face
+        # Top Specular Highlight Sheen
         sheen = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 28))
-        sheen.setColorAt(0.45, QColor(255, 255, 255, 0))
-        sheen.setColorAt(1.0, QColor(0, 0, 0, 36))
+        sheen.setColorAt(0.0, QColor(255, 255, 255, 60 if enabled else 20))
+        sheen.setColorAt(0.35, QColor(255, 255, 255, 10))
+        sheen.setColorAt(1.0, QColor(0, 0, 0, 30 if enabled else 10))
         painter.setBrush(QBrush(sheen))
         painter.drawRoundedRect(rect, 10, 10)
 
+        # Crisp Border
         border = QColor(palette["border"])
         if not enabled:
-            border.setAlpha(90)
-        painter.setPen(QPen(border, 1.0))
+            border.setAlpha(70)
+        painter.setPen(QPen(border, 1.1))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(rect, 10, 10)
 
+        # Typography
         font = self.font()
         font.setPointSize(14)
         font.setWeight(QFont.Weight.DemiBold)
         painter.setFont(font)
         painter.setPen(
-            QColor(palette["text"]) if enabled else QColor(200, 206, 218, 140)
+            QColor(palette["text"]) if enabled else QColor(160, 170, 185, 140)
         )
         text_rect = rect.adjusted(0, 1, 0, 1) if pressed else rect
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self.text())
 
         if enabled and self.hasFocus():
-            painter.setPen(QPen(QColor(148, 168, 198, 130), 1.0))
+            painter.setPen(QPen(QColor(148, 168, 198, 140), 1.0))
             painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 8, 8)
 
 
@@ -1272,27 +1465,23 @@ class OutlinedLabel(QLabel):
 
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
-        self.outline_color = QColor(0, 0, 0)  # Black outline
+        self.outline_color = QColor(0, 0, 0)
         self.outline_width = 2
 
-    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override        """Custom paint event to draw outlined text."""
+    def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Get the text and font
         text = self.text()
         font = self.font()
         painter.setFont(font)
 
-        # Create a path for the text
         path = QPainterPath()
         path.addText(0, font.pointSize(), font, text)
 
-        # Get the bounding rect and center the text
         rect = self.rect()
         text_rect = painter.fontMetrics().boundingRect(text)
 
-        # Calculate position based on alignment
         if self.alignment() & Qt.AlignmentFlag.AlignHCenter:
             x = (rect.width() - text_rect.width()) / 2
         elif self.alignment() & Qt.AlignmentFlag.AlignRight:
@@ -1307,10 +1496,7 @@ class OutlinedLabel(QLabel):
         else:
             y = text_rect.height()
 
-        # Translate to the correct position
         painter.translate(x, y)
-
-        # Draw the outline
         pen = QPen(
             self.outline_color,
             self.outline_width,
@@ -1319,30 +1505,26 @@ class OutlinedLabel(QLabel):
             Qt.PenJoinStyle.RoundJoin,
         )
         painter.strokePath(path, pen)
-
-        # Draw the fill
         painter.fillPath(path, self.palette().color(self.foregroundRole()))
 
 
 class GlassPanel(QWidget):
     """A semi-transparent panel with a colored border, used as a tab background."""
 
-    def __init__(self):  # Removed default border_color, will be set by update_style
+    def __init__(self):
         super().__init__()
         self.setObjectName("GlassPanel")
-        # Initial style, will be updated by _apply_theme
         self.setStyleSheet(
             """
             #GlassPanel {
-                background-color: transparent; /* Allow main window background to show */
-                border: 2px solid #444; /* Default subtle border */
+                background-color: transparent;
+                border: 2px solid #444;
                 border-radius: 12px;
             }
         """
         )
 
     def update_style(self, color: str):
-        """Updates the panel's border color."""
         self.setStyleSheet(
             f"""
             #GlassPanel {{
@@ -1355,16 +1537,52 @@ class GlassPanel(QWidget):
 
 
 class BookmarkSearchBar(QLineEdit):
-    """Search bar for filtering bookmarks that routes URL paste events to the URL window."""
+    """Search bar with 60ms debounce for instantaneous typing without thread blocking."""
 
     urls_pasted = Signal(list)
+    debounced_text_changed = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.url_processor = URLProcessor()
+        self._debounce_timer = QTimer(self)
+        self._debounce_timer.setSingleShot(True)
+        self._debounce_timer.setInterval(60)
+        self._debounce_timer.timeout.connect(self._on_debounce_timeout)
+        self.textChanged.connect(self._restart_timer)
+        get_theme_manager().theme_changed.connect(lambda _: self._apply_theme_style())
+        self._apply_theme_style()
+
+    def _apply_theme_style(self):
+        tm = get_theme_manager()
+        tokens = tm.tokens
+        self.setStyleSheet(f"""
+            QLineEdit {{
+                background: {tokens.input_bg};
+                border: 1px solid {tokens.input_border};
+                border-radius: 9px;
+                color: {tokens.input_text};
+                padding: 9px 14px;
+                font-size: 14px;
+                font-family: "Helvetica Neue", sans-serif;
+                selection-background-color: rgba(59, 130, 246, 0.50);
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {tokens.input_focus_border};
+            }}
+            QLineEdit::placeholder {{
+                color: {tokens.input_placeholder};
+            }}
+        """)
+
+    def _restart_timer(self, text: str) -> None:
+        self._last_text = text
+        self._debounce_timer.start()
+
+    def _on_debounce_timeout(self) -> None:
+        self.debounced_text_changed.emit(self.text())
 
     def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Intercept ⌘V / Ctrl+V paste; route URLs to URL table instead of filter text."""
         paste_modifiers = (
             Qt.KeyboardModifier.ControlModifier,
             Qt.KeyboardModifier.MetaModifier,
@@ -1383,7 +1601,7 @@ class BookmarkSearchBar(QLineEdit):
 
 
 class URLEmptyStateWidget(QWidget):
-    """Interactive empty state panel that accepts drag-and-drop, key focus, and paste events."""
+    """Interactive, visually refined empty state panel."""
 
     urls_pasted = Signal(list)
     file_dropped = Signal(str)
@@ -1399,7 +1617,7 @@ class URLEmptyStateWidget(QWidget):
 
         empty_layout = QVBoxLayout(self)
         empty_layout.setContentsMargins(28, 28, 28, 28)
-        empty_layout.setSpacing(10)
+        empty_layout.setSpacing(12)
         empty_layout.addStretch()
 
         self.url_empty_title = MetallicLabel(
@@ -1409,7 +1627,7 @@ class URLEmptyStateWidget(QWidget):
         empty_layout.addWidget(self.url_empty_title)
 
         self.url_empty_note = MetallicLabel(
-            "Copied links appear here automatically. Each row shows Ready, Opening, or Failed.",
+            "Copied links appear here automatically. Drag text or drop .txt / .csv files anytime.",
             variant="dim",
         )
         self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1418,12 +1636,10 @@ class URLEmptyStateWidget(QWidget):
         empty_layout.addStretch()
 
     def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Focus the widget on click so keyboard paste works immediately."""
         self.setFocus()
         super().mousePressEvent(event)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Handle ⌘V / Ctrl+V paste on empty state."""
         paste_modifiers = (
             Qt.KeyboardModifier.ControlModifier,
             Qt.KeyboardModifier.MetaModifier,
@@ -1441,21 +1657,14 @@ class URLEmptyStateWidget(QWidget):
         super().keyPressEvent(event)
 
     def dragEnterEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Accept drop operations containing text, HTML, or URLs."""
         mime_data = event.mimeData()
-        if (
-            mime_data.hasUrls()
-            or mime_data.hasText()
-            or mime_data.hasHtml()
-        ):
+        if mime_data.hasUrls() or mime_data.hasText() or mime_data.hasHtml():
             event.acceptProposedAction()
 
     def dragMoveEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Keep accepting drag move events."""
         event.acceptProposedAction()
 
     def dropEvent(self, event) -> None:  # noqa: N802 - Qt override
-        """Handle dropped files or raw URL strings onto empty state."""
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             for url in mime_data.urls():
@@ -1471,4 +1680,3 @@ class URLEmptyStateWidget(QWidget):
         if urls:
             self.urls_pasted.emit(urls)
         event.acceptProposedAction()
-

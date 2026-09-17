@@ -5,6 +5,8 @@ High-level coordinator that delegates AppleScript construction to
 ``nexus.applescript.poller``.
 """
 
+from __future__ import annotations
+
 import asyncio
 import random
 from urllib.parse import urlparse
@@ -16,6 +18,7 @@ from nexus.applescript.builder import (
 )
 from nexus.applescript.poller import check_safari_status, run_applescript
 from nexus.core.config import Config, logger, privacy_fingerprint
+from nexus.core.pacing import DomainPacer
 
 
 PRIVATE_BROWSING_FAILED = (
@@ -27,6 +30,8 @@ PRIVATE_BROWSING_FAILED = (
 
 class SafariController:
     """Manages all interaction with Safari via AppleScript with anti-detection features."""
+
+    pacer = DomainPacer()
 
     @staticmethod
     async def open_urls(
@@ -133,7 +138,7 @@ class SafariController:
             try:
                 domain = urlparse(url).netloc.lower()
                 domain_groups.setdefault(domain, []).append(url)
-            except (ValueError, AttributeError):
+            except ValueError, AttributeError:
                 domain_groups.setdefault("unknown", []).append(url)
         return domain_groups
 
@@ -144,8 +149,9 @@ class SafariController:
         """Open URLs with domain-specific anti-detection strategies in single window."""
         overall_success = True
         is_first_domain = True
+        domains = list(domain_groups.items())
 
-        for domain, domain_urls in domain_groups.items():
+        for idx, (domain, domain_urls) in enumerate(domains):
             logger.info(
                 "Opening %d URLs from %s",
                 len(domain_urls),
@@ -172,13 +178,11 @@ class SafariController:
 
             is_first_domain = False
 
-            base_delay = random.uniform(
-                Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
-            )
-            if domain != "unknown":
-                base_delay += Config.SAME_DOMAIN_EXTRA_DELAY
-            jitter = random.uniform(0.5, 1.2)
-            await asyncio.sleep(base_delay + jitter)
+            # Pacing: If more domains remain, apply cross-domain stagger without
+            # imposing an artificial multi-second stall.
+            if idx < len(domains) - 1:
+                delay = SafariController.pacer.get_cross_domain_delay()
+                await asyncio.sleep(delay)
 
         return overall_success
 
@@ -198,14 +202,7 @@ class SafariController:
                 return False
 
             if is_first_domain:
-                base_delay = random.uniform(
-                    Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
-                )
-                delay = (
-                    base_delay
-                    + Config.SAME_DOMAIN_EXTRA_DELAY
-                    + random.uniform(0.5, 1.0)
-                )
+                delay = SafariController.pacer.get_same_domain_delay(batch_index=0)
                 await asyncio.sleep(delay)
                 remaining_urls = urls[1:]
             else:
@@ -224,13 +221,11 @@ class SafariController:
                         privacy_fingerprint(domain, "domain"),
                     )
 
-                base_delay = random.uniform(
-                    Config.URL_OPENING_DELAY_MIN, Config.URL_OPENING_DELAY_MAX
-                )
-                progressive_delay = (
-                    i // batch_size
-                ) * Config.PROGRESSIVE_DELAY_INCREMENT
-                await asyncio.sleep(base_delay + progressive_delay)
+                if i + batch_size < len(remaining_urls):
+                    delay = SafariController.pacer.get_same_domain_delay(
+                        batch_index=i // batch_size
+                    )
+                    await asyncio.sleep(delay)
 
             return True
         except Exception as e:

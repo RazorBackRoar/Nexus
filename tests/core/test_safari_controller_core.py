@@ -220,7 +220,7 @@ def test_run_batch_handles_empty_script_and_nonzero_return(monkeypatch) -> None:
     monkeypatch.setattr(
         safari,
         "build_batch_script",
-        lambda *_args, **_kwargs: "tell application \"Safari\"",
+        lambda *_args, **_kwargs: 'tell application "Safari"',
     )
     monkeypatch.setattr(safari, "run_applescript", fake_run_applescript)
 

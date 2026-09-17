@@ -21,7 +21,10 @@ def test_home_button_returns_to_url_table_view():
         assert window.url_stack.currentWidget() == window.quick_save_panel
 
         window.home_btn.click()
-        assert window.url_stack.currentWidget() in (window.url_empty_state, window.url_table)
+        assert window.url_stack.currentWidget() in (
+            window.url_empty_state,
+            window.url_table,
+        )
     finally:
         window.close()
 
@@ -42,6 +45,9 @@ def test_title_label_left_click_returns_home():
         )
         handled = window.eventFilter(window.title_label, event)
         assert handled is True
-        assert window.url_stack.currentWidget() in (window.url_empty_state, window.url_table)
+        assert window.url_stack.currentWidget() in (
+            window.url_empty_state,
+            window.url_table,
+        )
     finally:
         window.close()

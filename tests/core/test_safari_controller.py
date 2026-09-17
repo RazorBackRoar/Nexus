@@ -106,7 +106,10 @@ def test_build_open_in_front_window_script_escapes_user_urls():
         ['https://example.com/path?"x"=1\\2\nnext\rline', "https://b.com"]
     )
 
-    assert 'set URL of front document to "https://example.com/path?\\"x\\"=1\\\\2\\nnext\\rline"' in script
+    assert (
+        'set URL of front document to "https://example.com/path?\\"x\\"=1\\\\2\\nnext\\rline"'
+        in script
+    )
     assert 'make new tab with properties {URL:"https://b.com"}' in script
 
 

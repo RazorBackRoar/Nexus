@@ -58,7 +58,11 @@ def test_retired_hey_sort_and_future_tabs_are_removed(tmp_path, monkeypatch, app
             [
                 {"name": "hey", "type": "folder", "children": []},
                 {"name": "Sort", "type": "folder", "children": []},
-                {"name": "Future", "type": "folder", "children": [{"url": "https://x.test", "title": "x"}]},
+                {
+                    "name": "Future",
+                    "type": "folder",
+                    "children": [{"url": "https://x.test", "title": "x"}],
+                },
                 {"name": "Fun", "type": "folder", "children": []},
             ]
         ),
@@ -78,9 +82,7 @@ def test_retired_hey_sort_and_future_tabs_are_removed(tmp_path, monkeypatch, app
 
 
 def test_quick_save_urls_creates_newest_first_block(window):
-    window.url_table.add_urls(
-        ["https://example.com/one", "https://example.com/two"]
-    )
+    window.url_table.add_urls(["https://example.com/one", "https://example.com/two"])
     window._quick_save_urls()
 
     folder = window._find_folder_by_name(QUICK_SAVE_FOLDER_NAME)

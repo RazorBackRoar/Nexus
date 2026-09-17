@@ -84,9 +84,7 @@ class LinkConverter:
     # Transformation
     # ------------------------------------------------------------------
 
-    def parse_lines(
-        self, lines: list[str]
-    ) -> list[dict[str, str]]:
+    def parse_lines(self, lines: list[str]) -> list[dict[str, str]]:
         """Classify each line as a URL or plain text.
 
         Returns a list of dicts:
@@ -174,13 +172,9 @@ class LinkConverter:
                 # HTML-escape the URL for the href attribute
                 safe_url = url.replace("&", "&amp;").replace('"', "&quot;")
                 safe_display = (
-                    url.replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
+                    url.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                 )
-                parts.append(
-                    f'<a href="{safe_url}">{safe_display}</a><br>'
-                )
+                parts.append(f'<a href="{safe_url}">{safe_display}</a><br>')
             elif entry["type"] == "text":
                 safe_text = (
                     entry["text"]

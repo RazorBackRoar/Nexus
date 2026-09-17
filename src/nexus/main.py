@@ -38,7 +38,7 @@ def main():
             from PySide6.QtGui import QIcon
 
             app.setWindowIcon(QIcon(str(icon_path)))
-        except (TypeError, RuntimeError):
+        except TypeError, RuntimeError:
             # Icon setting is purely cosmetic — never fail the launch.
             pass
 
@@ -53,9 +53,7 @@ def main():
                     raise ImportError("AppKit dock APIs unavailable")
 
                 ns_app = ns_application.sharedApplication()
-                ns_image = ns_image_cls.alloc().initWithContentsOfFile_(
-                    str(icon_path)
-                )
+                ns_image = ns_image_cls.alloc().initWithContentsOfFile_(str(icon_path))
                 if ns_image:
                     ns_app.setApplicationIconImage_(ns_image)
             except ImportError:

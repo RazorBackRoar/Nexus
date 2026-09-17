@@ -13,7 +13,9 @@ def test_get_resource_path_resolves_from_project_root_in_development() -> None:
     )
 
 
-def test_get_resource_path_uses_pyinstaller_meipass(monkeypatch, tmp_path: Path) -> None:
+def test_get_resource_path_uses_pyinstaller_meipass(
+    monkeypatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(path_helpers.sys, "frozen", True, raising=False)
     monkeypatch.setattr(path_helpers.sys, "_MEIPASS", str(tmp_path), raising=False)
 

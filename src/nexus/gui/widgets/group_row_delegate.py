@@ -1,10 +1,12 @@
-"""Paint delegate for the indented group rows in the sidebar."""
+"""Paint delegate for the indented group rows in the sidebar with Light & Dark theme support."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
+
+from nexus.gui.theme import get_theme_manager
 
 
 class GroupRowDelegate(QStyledItemDelegate):
@@ -33,13 +35,21 @@ class GroupRowDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
+        tm = get_theme_manager()
+        is_dark = tm.is_dark
+
         rect = option.rect.adjusted(22, 4, -10, -4)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
 
         if hovered or selected:
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(255, 255, 255, 14 if hovered else 22))
+            bg_alpha = 24 if selected else 14
+            painter.setBrush(
+                QColor(255, 255, 255, bg_alpha)
+                if is_dark
+                else QColor(15, 23, 42, bg_alpha)
+            )
             painter.drawRoundedRect(rect, 8, 8)
 
         # Accent dot
@@ -57,10 +67,12 @@ class GroupRowDelegate(QStyledItemDelegate):
         font.setPointSize(12)
         font.setWeight(QFont.Weight.Normal)
         painter.setFont(font)
-        painter.setPen(QColor("#D0DAEA"))
+        painter.setPen(QColor("#D0DAEA") if is_dark else QColor("#334155"))
         text_rect = rect.adjusted(rect.height() + 6, 0, -52, 0)
         metrics = painter.fontMetrics()
-        elided = metrics.elidedText(text, Qt.TextElideMode.ElideRight, text_rect.width())
+        elided = metrics.elidedText(
+            text, Qt.TextElideMode.ElideRight, text_rect.width()
+        )
         painter.drawText(
             text_rect,
             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -70,7 +82,7 @@ class GroupRowDelegate(QStyledItemDelegate):
         # Child count badge
         if self._child_count is not None and self._child_count > 0:
             badge_text = f"({self._child_count})"
-            painter.setPen(QColor("#8EA0BC"))
+            painter.setPen(QColor("#8EA0BC") if is_dark else QColor("#64748B"))
             badge_rect = rect.adjusted(rect.width() - 44, 0, -4, 0)
             painter.drawText(
                 badge_rect,
