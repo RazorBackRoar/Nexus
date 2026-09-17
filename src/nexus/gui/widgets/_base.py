@@ -1977,10 +1977,31 @@ class URLEmptyStateWidget(QWidget):
         self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.url_empty_note.setWordWrap(True)
         empty_layout.addWidget(self.url_empty_note)
+
+        self.paste_btn = GlassButton("Paste from Clipboard", "primary")
+        self.paste_btn.setMinimumHeight(40)
+        self.paste_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.paste_btn.setToolTip("Click to paste copied links (⌘V)")
+        self.paste_btn.clicked.connect(self._paste_from_clipboard)
+        empty_layout.addSpacing(6)
+        empty_layout.addWidget(self.paste_btn, 0, Qt.AlignmentFlag.AlignCenter)
+
         empty_layout.addStretch()
+
+    def _paste_from_clipboard(self) -> None:
+        """Paste URLs from system clipboard."""
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            urls = extract_urls_from_mime_data(
+                clipboard.mimeData(), self.url_processor
+            )
+            if urls:
+                self.urls_pasted.emit(urls)
 
     def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt override
         self.setFocus()
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._paste_from_clipboard()
         super().mousePressEvent(event)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override

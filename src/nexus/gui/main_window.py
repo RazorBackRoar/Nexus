@@ -123,6 +123,20 @@ class MainWindow(QMainWindow):
         get_theme_manager().theme_changed.connect(self._on_theme_changed)
         self._apply_theme()  # Apply theme after all UI is set up
 
+        self._last_cleared_clipboard: str | None = None
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            mime = clipboard.mimeData()
+            if mime and mime.hasText():
+                self._last_auto_ingested_clipboard = mime.text()
+            elif mime and mime.hasUrls():
+                self._last_auto_ingested_clipboard = "".join(u.toString() for u in mime.urls())
+            else:
+                self._last_auto_ingested_clipboard = None
+            clipboard.dataChanged.connect(self._on_clipboard_changed)
+        else:
+            self._last_auto_ingested_clipboard = None
+
         quick_save_shortcut = QShortcut(QKeySequence("Ctrl+Shift+S"), self)
         quick_save_shortcut.activated.connect(self._quick_save_urls)
 
@@ -845,6 +859,50 @@ class MainWindow(QMainWindow):
             event.accept()
             return
         super().keyPressEvent(event)
+
+    def changeEvent(self, event: QEvent) -> None:  # noqa: N802
+        if event.type() == QEvent.Type.ActivationChange:
+            if self.isActiveWindow():
+                self._check_clipboard_for_urls()
+        super().changeEvent(event)
+
+    def _on_clipboard_changed(self) -> None:
+        """Auto-detect copied URLs when clipboard changes."""
+        self._check_clipboard_for_urls()
+
+    def _check_clipboard_for_urls(self) -> None:
+        """Check the clipboard and auto-populate table if valid URLs are found."""
+        if hasattr(self, "url_table") and self.url_table.rowCount() > 0:
+            return
+        if hasattr(self, "url_stack") and hasattr(self, "quick_save_panel"):
+            if self.url_stack.currentWidget() == self.quick_save_panel:
+                return
+
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+        mime_data = clipboard.mimeData()
+        if mime_data is None:
+            return
+
+        text_sig = mime_data.text() if mime_data.hasText() else ""
+        if not text_sig and mime_data.hasUrls():
+            text_sig = "".join(u.toString() for u in mime_data.urls())
+
+        if not text_sig:
+            return
+        if text_sig == getattr(self, "_last_cleared_clipboard", None):
+            return
+        if text_sig == getattr(self, "_last_auto_ingested_clipboard", None):
+            return
+
+        urls = extract_urls_from_mime_data(mime_data, self.url_processor)
+        if urls:
+            self._last_auto_ingested_clipboard = text_sig
+            self._handle_pasted_urls(urls)
+            self._set_status(
+                f"Auto-loaded {len(urls)} copied URL{'s' if len(urls) != 1 else ''} from clipboard"
+            )
 
     def _handle_pasted_urls(self, urls: list[str]) -> None:
         """Add pasted URLs to the URL table, switch view, and focus the table."""
@@ -2826,6 +2884,14 @@ class MainWindow(QMainWindow):
 
     def _clear_all_data(self):
         """Clear all URLs and optionally cleanup logs for privacy."""
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            mime = clipboard.mimeData()
+            if mime and mime.hasText():
+                self._last_cleared_clipboard = mime.text()
+            elif mime and mime.hasUrls():
+                self._last_cleared_clipboard = "".join(u.toString() for u in mime.urls())
+        self._last_auto_ingested_clipboard = None
         self.url_table.clear_table()
 
         if Config.AUTO_LOG_CLEANUP:

@@ -13,6 +13,7 @@ from nexus.core.config import Config
 from nexus.core.safari import SafariController
 from nexus.gui import main_window as main_window_module
 from nexus.gui.main_window import MainWindow
+from nexus.gui.widgets import URLEmptyStateWidget
 
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -135,3 +136,34 @@ def test_staggered_opening_slices_remaining_without_duplication(monkeypatch):
     # Ensure no duplicates
     assert len(set(flattened)) == 25
     assert flattened == test_urls
+
+
+def test_empty_state_paste_button_emits_urls():
+    _app()
+    widget = URLEmptyStateWidget()
+    clipboard = QApplication.clipboard()
+    assert clipboard is not None
+    clipboard.setText("https://alpha.com\nhttps://beta.com")
+
+    pasted: list[list[str]] = []
+    widget.urls_pasted.connect(pasted.append)
+
+    # Click paste button
+    widget.paste_btn.click()
+    assert len(pasted) == 1
+    assert set(pasted[0]) == {"https://alpha.com", "https://beta.com"}
+
+
+def test_auto_load_on_clipboard_changed(tmp_path, monkeypatch):
+    window = _make_window(tmp_path, monkeypatch)
+    assert window.url_table.rowCount() == 0
+
+    clipboard = QApplication.clipboard()
+    assert clipboard is not None
+    # Simulate user copying new links
+    clipboard.setText("https://auto1.com\nhttps://auto2.com")
+    window._on_clipboard_changed()
+
+    assert window.url_table.rowCount() == 2
+    assert set(window.url_table.get_all_urls()) == {"https://auto1.com", "https://auto2.com"}
+    assert "Auto-loaded 2 copied URLs" in window.status_bar.text()
