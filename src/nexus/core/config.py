@@ -31,22 +31,22 @@ class Config:
 
     # Stealth mode settings
     STEALTH_MODE = True
-    SAME_DOMAIN_DELAY = 2.0  # Delay between same-domain URLs
-    DIFFERENT_DOMAIN_DELAY = 1.0  # Delay between different domains
-    MAX_SAME_DOMAIN_BATCH = 3  # Max URLs per batch for same domain
-    PROGRESSIVE_DELAY_INCREMENT = 0.5  # Additional delay per batch
+    SAME_DOMAIN_DELAY = 0.5  # Delay between same-domain URLs
+    DIFFERENT_DOMAIN_DELAY = 0.25  # Delay between different domains
+    MAX_SAME_DOMAIN_BATCH = 10  # Max URLs per batch for same domain
+    PROGRESSIVE_DELAY_INCREMENT = 0.2  # Additional delay per batch
 
     # Privacy and safety settings
     URL_OPENING_DELAY_MIN = (
-        3.0  # Minimum delay between URLs (seconds) - increased for 503 prevention
+        0.35  # Minimum delay between URLs (seconds)
     )
     URL_OPENING_DELAY_MAX = (
-        5.0  # Maximum delay between URLs (seconds) - increased for 503 prevention
+        0.6  # Maximum delay between URLs (seconds)
     )
     SAME_DOMAIN_EXTRA_DELAY = (
-        2.0  # Additional delay for same domain to prevent rate limiting
+        0.3  # Additional delay for same domain to prevent rate limiting
     )
-    DEFAULT_PRIVATE_MODE = True  # Open Safari Private Windows (⇧⌘N via System Events)
+    DEFAULT_PRIVATE_MODE = False  # Standard Safari window by default (100% reliable without Accessibility permissions)
     AUTO_LOG_CLEANUP = True  # Automatically cleanup logs after use
 
     # Enhanced URL extraction settings

@@ -18,11 +18,11 @@ class DomainPacer:
 
     def __init__(
         self,
-        same_domain_delay_min: float = 2.0,
-        same_domain_delay_max: float = 3.5,
-        different_domain_delay: float = 0.25,
-        max_same_domain_batch: int = 3,
-        progressive_delay_increment: float = 0.5,
+        same_domain_delay_min: float = 0.35,
+        same_domain_delay_max: float = 0.6,
+        different_domain_delay: float = 0.2,
+        max_same_domain_batch: int = 10,
+        progressive_delay_increment: float = 0.2,
     ) -> None:
         self.same_domain_delay_min = same_domain_delay_min
         self.same_domain_delay_max = same_domain_delay_max

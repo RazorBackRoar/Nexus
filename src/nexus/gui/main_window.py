@@ -731,16 +731,24 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(main_content, 1)
         main_layout.addWidget(content_widget, 1)
 
-        self.status_bar = QLabel("URLs open in a Safari Private Window.")
-        self.status_bar.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.status_bar.setStyleSheet("""
-            QLabel {
-                color: #6A7890;
-                font-size: 12px;
-                padding-right: 4px;
-            }
-        """)
-        main_layout.addWidget(self.status_bar)
+        # Footer Bar: Status label on left, Private / Standard toggle button on right
+        self.footer_widget = QWidget()
+        footer_layout = QHBoxLayout(self.footer_widget)
+        footer_layout.setContentsMargins(10, 2, 10, 6)
+        footer_layout.setSpacing(10)
+
+        self.status_bar = QLabel("Ready")
+        self.status_bar.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        self.private_mode_btn = QPushButton("🌐 Standard Safari")
+        self.private_mode_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.private_mode_btn.setFixedHeight(24)
+        self.private_mode_btn.setToolTip("Toggle between Standard Safari and Private Window browsing")
+        self.private_mode_btn.clicked.connect(self._toggle_private_mode)
+
+        footer_layout.addWidget(self.status_bar, 1)
+        footer_layout.addWidget(self.private_mode_btn, 0)
+        main_layout.addWidget(self.footer_widget)
 
         self.safari_panel = main_content
         self.bookmarks_panel = self.sidebar
@@ -960,9 +968,11 @@ class MainWindow(QMainWindow):
                 QLabel {{
                     color: {tokens.text_dim};
                     font-size: 12px;
-                    padding-right: 4px;
+                    padding-left: 2px;
                 }}
             """)
+        if hasattr(self, "private_mode_btn"):
+            self._update_private_mode_button()
 
         if hasattr(self, "url_counter_label"):
             counter_color = tokens.status_ready
@@ -1070,6 +1080,44 @@ class MainWindow(QMainWindow):
         if hasattr(self, "bookmark_tree"):
             self.bookmark_tree.viewport().update()
 
+    def _toggle_private_mode(self) -> None:
+        """Toggle between Standard Safari and Private Window browsing."""
+        self.private_mode_enabled = not self.private_mode_enabled
+        self._update_private_mode_button()
+        mode_text = "Private Window" if self.private_mode_enabled else "Standard Window"
+        self._set_status(f"Safari mode: {mode_text}")
+
+    def _update_private_mode_button(self) -> None:
+        """Update the private mode toggle button styling and label."""
+        if not hasattr(self, "private_mode_btn"):
+            return
+        is_dark = get_theme_manager().is_dark
+        if self.private_mode_enabled:
+            self.private_mode_btn.setText("🔒 Private Safari")
+            bg = "rgba(168, 85, 247, 0.25)" if is_dark else "rgba(147, 51, 234, 0.20)"
+            border = "#C084FC" if is_dark else "#9333EA"
+            text_color = "#E9D5FF" if is_dark else "#581C87"
+        else:
+            self.private_mode_btn.setText("🌐 Standard Safari")
+            bg = "rgba(14, 165, 233, 0.20)" if is_dark else "rgba(2, 132, 199, 0.15)"
+            border = "#38BDF8" if is_dark else "#0284C7"
+            text_color = "#BAE6FD" if is_dark else "#0369A1"
+
+        self.private_mode_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {bg};
+                color: {text_color};
+                border: 1px solid {border};
+                border-radius: 12px;
+                padding: 3px 12px;
+                font-size: 11px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                border-color: #FFFFFF;
+            }}
+        """)
+
     def _run_urls_in_safari(self):
         """Runs URLs from the selected Quick Save block or URL table in Safari."""
         if self.url_stack.currentWidget() == self.quick_save_panel:
@@ -1094,6 +1142,17 @@ class MainWindow(QMainWindow):
                 return
 
         urls = self.url_table.get_all_urls()
+        if not urls:
+            # Auto-ingest from clipboard if user copied links and clicked Open All
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                extracted = extract_urls_from_mime_data(
+                    clipboard.mimeData(), self.url_processor
+                )
+                if extracted:
+                    self._handle_pasted_urls(extracted)
+                    urls = extracted
+
         if urls:
             for row in range(self.url_table.rowCount()):
                 self.url_table.set_status_state(row, "opening")
@@ -1111,7 +1170,10 @@ class MainWindow(QMainWindow):
             )
             self._start_worker(worker)
         else:
-            self._show_message("No URLs found to launch.", "warning")
+            self._show_message(
+                "No URLs found to launch. Copy URLs to clipboard or paste them into the table first.",
+                "warning",
+            )
 
     def _export_urls(self) -> None:
         """Export URLs from the selected Quick Save block or URL table to a text file."""
@@ -1223,6 +1285,19 @@ class MainWindow(QMainWindow):
                 urls, private_mode=private_mode
             )
 
+            # Fallback to standard window if private mode failed (e.g. Accessibility restriction)
+            if not success and private_mode:
+                logger.warning(
+                    "Private window launch failed (Accessibility required); falling back to standard Safari window."
+                )
+                success = await self.safari_controller.open_urls(
+                    urls, private_mode=False
+                )
+                if success:
+                    self._set_status(
+                        f"Opened {len(urls)} URLs in Standard Safari (Private Mode blocked by macOS)"
+                    )
+
             # Update status for all URLs based on overall success
             for row in range(self.url_table.rowCount()):
                 self.url_table.update_status(row, success)
@@ -1237,10 +1312,27 @@ class MainWindow(QMainWindow):
 
     def _on_safari_operation_complete(self, success: bool, url_count: int):
         """Called when Safari operation completes."""
-        # Don't show popup message to avoid dock bouncing
         logger.info(
             f"Safari operation completed: {url_count} URLs processed, success: {success}"
         )
+        if success:
+            mode_str = "Private" if self.private_mode_enabled else "Standard"
+            self._set_status(f"Opened {url_count} URLs in Safari ({mode_str} Mode)")
+        else:
+            if self.private_mode_enabled:
+                self._show_message(
+                    "Safari Private Window failed. macOS requires Accessibility permissions for Nexus in "
+                    "System Settings → Privacy & Security → Accessibility.\n\n"
+                    "You can switch to Standard Safari Mode using the toggle in the bottom right corner.",
+                    "warning",
+                )
+                self._set_status("Private window launch failed (Accessibility required)")
+            else:
+                self._show_message(
+                    "Failed to open URLs in Safari. Make sure Safari is installed and running.",
+                    "warning",
+                )
+                self._set_status("Failed to open URLs in Safari")
 
     def _save_urls_to_bookmarks(self):
         """Save the URLs in the table as a new bookmark group."""

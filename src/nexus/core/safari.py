@@ -201,12 +201,13 @@ class SafariController:
             if not success:
                 return False
 
+            remaining_urls = urls[1:]
+            if not remaining_urls:
+                return True
+
             if is_first_domain:
                 delay = SafariController.pacer.get_same_domain_delay(batch_index=0)
                 await asyncio.sleep(delay)
-                remaining_urls = urls[1:]
-            else:
-                remaining_urls = urls
 
             batch_size = Config.MAX_SAME_DOMAIN_BATCH
 
