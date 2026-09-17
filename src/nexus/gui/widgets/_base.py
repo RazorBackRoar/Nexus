@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import math
+import random
 import re
+from dataclasses import dataclass
 from typing import cast
 
 from PySide6.QtCore import (
     QEasingCurve,
     QMimeData,
     QPoint,
+    QPointF,
     QPropertyAnimation,
     QRectF,
     QSize,
@@ -61,8 +65,22 @@ class AsyncWorker(AsyncTaskWorker):
         self.finished.connect(self.result_ready.emit)
 
 
+@dataclass
+class ShootingStar:
+    x: float
+    y: float
+    vx: float
+    vy: float
+    length: float
+    thickness: float
+    opacity: float
+    life: int
+    max_life: int
+    tail_color: tuple[int, int, int]
+
+
 class CosmicFrame(QWidget):
-    """Rounded floating glass shell with brushed metallic bevel supporting Dark and Light modes."""
+    """Rounded floating glass shell with dynamic shooting stars and iOS 27 glossy refraction."""
 
     # Deterministic starfield: (x%, y%, radius, alpha)
     _STARS = [
@@ -100,7 +118,91 @@ class CosmicFrame(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._meteors: list[ShootingStar] = []
+        self._tick: int = 0
+        self._anim_timer = QTimer(self)
+        self._anim_timer.setInterval(33)  # ~30 FPS
+        self._anim_timer.timeout.connect(self._advance_animation)
+        self._anim_timer.start()
+        # Seed 5 shooting stars with staggered start
+        for i in range(5):
+            self._meteors.append(self._create_meteor(1000, 700, stagger=i * 18))
         get_theme_manager().theme_changed.connect(lambda _: self.update())
+
+    def _create_meteor(self, w: int, h: int, stagger: int = 0) -> ShootingStar:
+        speed = random.uniform(8.0, 14.0)
+        angle = math.radians(random.uniform(28.0, 42.0))
+        vx = speed * math.cos(angle)
+        vy = speed * math.sin(angle)
+        length = random.uniform(70.0, 150.0)
+        thickness = random.uniform(1.4, 2.5)
+        max_life = random.randint(45, 95)
+        if random.random() < 0.70:
+            x = random.uniform(-40.0, max(200.0, w * 0.75))
+            y = random.uniform(-40.0, 20.0)
+        else:
+            x = random.uniform(-60.0, -10.0)
+            y = random.uniform(0.0, max(100.0, h * 0.45))
+
+        tm = get_theme_manager()
+        if tm.is_dark:
+            colors = [
+                (56, 189, 248),  # Electric Cyan
+                (147, 197, 253),  # Sky Light Blue
+                (192, 132, 252),  # Purple
+                (255, 255, 255),  # Pure White
+                (45, 212, 191),  # Teal
+            ]
+        else:
+            # Light Blue Mode: Sparkling celestial sky meteors
+            colors = [
+                (2, 132, 199),  # Azure Blue
+                (14, 165, 233),  # Vivid Sky Blue
+                (56, 189, 248),  # Bright Cyan
+                (255, 255, 255),  # Brilliant White
+                (99, 102, 241),  # Indigo
+            ]
+        color = random.choice(colors)
+        return ShootingStar(
+            x=x,
+            y=y,
+            vx=vx,
+            vy=vy,
+            length=length,
+            thickness=thickness,
+            opacity=0.0,
+            life=-stagger,
+            max_life=max_life,
+            tail_color=color,
+        )
+
+    def _advance_animation(self) -> None:
+        self._tick += 1
+        w = max(400, self.width())
+        h = max(300, self.height())
+        alive: list[ShootingStar] = []
+        for m in self._meteors:
+            m.life += 1
+            if m.life <= 0:
+                alive.append(m)
+                continue
+            m.x += m.vx
+            m.y += m.vy
+            progress = m.life / max(1, m.max_life)
+            if progress < 0.15:
+                m.opacity = progress / 0.15
+            elif progress > 0.60:
+                m.opacity = max(0.0, (1.0 - progress) / 0.40)
+            else:
+                m.opacity = 1.0
+
+            if m.life < m.max_life and m.x < w + 150 and m.y < h + 150:
+                alive.append(m)
+            else:
+                alive.append(self._create_meteor(w, h))
+
+        self._meteors = alive
+        self.update()
 
     def _draw_glint(
         self, painter: QPainter, rect, sx: float, sy: float, size: float, color: QColor
@@ -150,41 +252,108 @@ class CosmicFrame(QWidget):
             nebula.setColorAt(0.75, QColor(110, 70, 190, 46))
             nebula.setColorAt(1.0, QColor(90, 60, 150, 0))
             painter.fillPath(rounded_rect, QBrush(nebula))
+        else:
+            # Light Blue: Luminous sky-blue and cyan nebula wash
+            swirl = QLinearGradient(rect.topRight(), rect.center())
+            swirl.setColorAt(0.0, QColor(56, 189, 248, 60))
+            swirl.setColorAt(1.0, QColor(14, 165, 233, 0))
+            painter.fillPath(rounded_rect, QBrush(swirl))
 
-            # Starfield
-            painter.setPen(Qt.PenStyle.NoPen)
-            for sx, sy, radius, alpha in self._STARS:
-                painter.setBrush(QColor(226, 234, 248, alpha))
-                painter.drawEllipse(
-                    QRectF(
-                        rect.left() + rect.width() * sx,
-                        rect.top() + rect.height() * sy,
-                        radius * 2,
-                        radius * 2,
-                    )
+            nebula = QLinearGradient(
+                rect.left(),
+                rect.top() + rect.height() * 0.30,
+                rect.right(),
+                rect.top() + rect.height() * 0.70,
+            )
+            nebula.setColorAt(0.0, QColor(186, 230, 253, 0))
+            nebula.setColorAt(0.40, QColor(125, 211, 252, 70))
+            nebula.setColorAt(0.70, QColor(56, 189, 248, 60))
+            nebula.setColorAt(1.0, QColor(186, 230, 253, 0))
+            painter.fillPath(rounded_rect, QBrush(nebula))
+
+        # Twinkling Starfield
+        painter.setPen(Qt.PenStyle.NoPen)
+        for idx, (sx, sy, radius, alpha) in enumerate(self._STARS):
+            twinkle = 0.65 + 0.35 * math.sin(self._tick * 0.07 + idx * 1.3)
+            star_alpha = int(alpha * twinkle)
+            star_color = (
+                QColor(226, 234, 248, star_alpha)
+                if tm.is_dark
+                else QColor(2, 132, 199, int(star_alpha * 0.70))
+            )
+            painter.setBrush(star_color)
+            painter.drawEllipse(
+                QRectF(
+                    rect.left() + rect.width() * sx,
+                    rect.top() + rect.height() * sy,
+                    radius * 2,
+                    radius * 2,
                 )
+            )
 
+        if tm.is_dark:
             for sx, sy, size in self._GLINTS:
                 self._draw_glint(
                     painter, rect, sx, sy, size, QColor(236, 242, 252, 210)
                 )
         else:
-            # Light: Frosted lumina glass ambient sheen
-            lumina = QLinearGradient(rect.topLeft(), rect.bottomRight())
-            lumina.setColorAt(0.0, QColor(255, 255, 255, 120))
-            lumina.setColorAt(0.5, QColor(224, 238, 255, 50))
-            lumina.setColorAt(1.0, QColor(240, 244, 255, 30))
-            painter.fillPath(rounded_rect, QBrush(lumina))
+            for sx, sy, size in self._GLINTS:
+                self._draw_glint(
+                    painter, rect, sx, sy, size, QColor(255, 255, 255, 230)
+                )
 
-            # Subtle top-edge light wash
-            top_wash = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-            top_wash.setColorAt(0.0, QColor(255, 255, 255, 180))
-            top_wash.setColorAt(0.15, QColor(255, 255, 255, 0))
-            painter.fillPath(rounded_rect, QBrush(top_wash))
+        # Dynamic Shooting Stars (Meteors)
+        for m in self._meteors:
+            if m.life <= 0 or m.opacity <= 0.01:
+                continue
+            head_x = rect.left() + m.x
+            head_y = rect.top() + m.y
+            angle = math.atan2(m.vy, m.vx)
+            tail_x = head_x - math.cos(angle) * m.length
+            tail_y = head_y - math.sin(angle) * m.length
+
+            r, g, b = m.tail_color
+            tail_grad = QLinearGradient(
+                QPointF(head_x, head_y), QPointF(tail_x, tail_y)
+            )
+            tail_grad.setColorAt(0.0, QColor(255, 255, 255, int(250 * m.opacity)))
+            tail_grad.setColorAt(0.18, QColor(r, g, b, int(210 * m.opacity)))
+            tail_grad.setColorAt(0.55, QColor(r, g, b, int(80 * m.opacity)))
+            tail_grad.setColorAt(1.0, QColor(r, g, b, 0))
+
+            pen = QPen(QBrush(tail_grad), m.thickness)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            painter.setPen(pen)
+            painter.drawLine(QPointF(tail_x, tail_y), QPointF(head_x, head_y))
+
+            spark_col = (
+                QColor(255, 255, 255, int(255 * m.opacity))
+                if tm.is_dark
+                else QColor(240, 249, 255, int(255 * m.opacity))
+            )
+            painter.setBrush(spark_col)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(
+                QPointF(head_x, head_y), m.thickness * 1.3, m.thickness * 1.3
+            )
+
+        # iOS 27 Liquid Glass Curved Specular Dome (across upper 28%)
+        dome = QLinearGradient(
+            rect.left(), rect.top(), rect.left(), rect.top() + rect.height() * 0.28
+        )
+        if tm.is_dark:
+            dome.setColorAt(0.0, QColor(255, 255, 255, 80))
+            dome.setColorAt(0.35, QColor(255, 255, 255, 22))
+            dome.setColorAt(1.0, QColor(255, 255, 255, 0))
+        else:
+            dome.setColorAt(0.0, QColor(255, 255, 255, 180))
+            dome.setColorAt(0.40, QColor(255, 255, 255, 60))
+            dome.setColorAt(1.0, QColor(255, 255, 255, 0))
+        painter.fillPath(rounded_rect, QBrush(dome))
 
         painter.setClipping(False)
 
-        # Brushed metallic outer border
+        # Brushed metallic / crystalline outer border
         border = QLinearGradient(rect.topLeft(), rect.bottomRight())
         border.setColorAt(0.0, QColor(tokens.frame_border_start))
         border.setColorAt(0.25, QColor(tokens.frame_border_mid))
@@ -259,46 +428,46 @@ class MetallicLabel(QLabel):
             "size": 48,
             "weight": QFont.Weight.Bold,
             "spacing": 7.0,
-            "top": "#0F172A",
-            "mid": "#1E293B",
-            "bottom": "#334155",
-            "shadow": QColor(255, 255, 255, 160),
+            "top": "#032B56",
+            "mid": "#0284C7",
+            "bottom": "#0369A1",
+            "shadow": QColor(255, 255, 255, 220),
         },
         "body": {
             "size": 15,
             "weight": QFont.Weight.DemiBold,
             "spacing": 0.4,
-            "top": "#1E293B",
-            "mid": "#334155",
-            "bottom": "#475569",
-            "shadow": QColor(255, 255, 255, 120),
+            "top": "#032B56",
+            "mid": "#0C4A6E",
+            "bottom": "#1E3A8A",
+            "shadow": QColor(255, 255, 255, 180),
         },
         "section": {
             "size": 20,
             "weight": QFont.Weight.DemiBold,
             "spacing": 0.3,
-            "top": "#0F172A",
-            "mid": "#1E293B",
-            "bottom": "#334155",
-            "shadow": QColor(255, 255, 255, 140),
+            "top": "#032B56",
+            "mid": "#0284C7",
+            "bottom": "#0369A1",
+            "shadow": QColor(255, 255, 255, 190),
         },
         "accent": {
             "size": 16,
             "weight": QFont.Weight.DemiBold,
             "spacing": 0.3,
-            "top": "#1D4ED8",
-            "mid": "#2563EB",
-            "bottom": "#3B82F6",
-            "shadow": QColor(255, 255, 255, 140),
+            "top": "#0284C7",
+            "mid": "#0369A1",
+            "bottom": "#075985",
+            "shadow": QColor(255, 255, 255, 190),
         },
         "dim": {
             "size": 15,
             "weight": QFont.Weight.Normal,
             "spacing": 0.2,
-            "top": "#475569",
-            "mid": "#64748B",
-            "bottom": "#94A3B8",
-            "shadow": QColor(255, 255, 255, 100),
+            "top": "#1E5B8E",
+            "mid": "#3B82F6",
+            "bottom": "#0284C7",
+            "shadow": QColor(255, 255, 255, 150),
         },
     }
 
@@ -410,19 +579,38 @@ class TrafficLightButton(QPushButton):
 
 
 class ThemeToggleButton(QPushButton):
-    """Elegant 1-click theme switch pill button."""
+    """Glossy iOS 27 glass capsule toggle button positioned in top right."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(36, 22)
+        self.setFixedSize(54, 26)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setToolTip("Toggle Light / Dark Mode")
+        self.setToolTip("Toggle Light (Sky Blue) / Dark (Cosmic) Mode")
         self.clicked.connect(self._toggle)
-        get_theme_manager().theme_changed.connect(lambda _: self.update())
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(0)
+        self.shadow.setOffset(0, 1)
+        self.setGraphicsEffect(self.shadow)
+        get_theme_manager().theme_changed.connect(lambda _: self._on_theme_changed())
+        self._on_theme_changed()
+
+    def _on_theme_changed(self):
+        tm = get_theme_manager()
+        glow = QColor(56, 189, 248, 120) if tm.is_dark else QColor(2, 132, 199, 100)
+        self.shadow.setColor(glow)
+        self.update()
 
     def _toggle(self):
         get_theme_manager().toggle_theme()
+
+    def enterEvent(self, event):  # noqa: N802 - Qt override
+        self.shadow.setBlurRadius(12)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):  # noqa: N802 - Qt override
+        self.shadow.setBlurRadius(0)
+        super().leaveEvent(event)
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
         del event
@@ -431,40 +619,99 @@ class ThemeToggleButton(QPushButton):
 
         rect = self.rect().adjusted(1, 1, -1, -1)
         tm = get_theme_manager()
+        is_dark = tm.is_dark
+        under_mouse = self.underMouse()
 
-        bg_color = QColor(255, 255, 255, 30) if tm.is_dark else QColor(15, 23, 42, 20)
-        if self.underMouse():
-            bg_color = bg_color.lighter(130)
+        # 1. Capsule Base
+        capsule_path = QPainterPath()
+        capsule_path.addRoundedRect(rect, 12, 12)
+
+        bg_grad = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        if is_dark:
+            bg_grad.setColorAt(0.0, QColor(18, 26, 44, 210 if under_mouse else 170))
+            bg_grad.setColorAt(1.0, QColor(8, 12, 22, 230 if under_mouse else 190))
+        else:
+            bg_grad.setColorAt(0.0, QColor(255, 255, 255, 240 if under_mouse else 200))
+            bg_grad.setColorAt(1.0, QColor(224, 242, 254, 240 if under_mouse else 200))
+
+        painter.fillPath(capsule_path, QBrush(bg_grad))
+
+        # 2. Top Specular Shine
+        sheen = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        sheen.setColorAt(0.0, QColor(255, 255, 255, 140 if not is_dark else 70))
+        sheen.setColorAt(0.48, QColor(255, 255, 255, 20 if not is_dark else 10))
+        sheen.setColorAt(0.50, QColor(255, 255, 255, 0))
+        painter.fillPath(capsule_path, QBrush(sheen))
+
+        # 3. Outer Glossy Border
+        border_grad = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        if is_dark:
+            border_grad.setColorAt(0.0, QColor(255, 255, 255, 140))
+            border_grad.setColorAt(0.5, QColor(56, 189, 248, 120))
+            border_grad.setColorAt(1.0, QColor(147, 197, 253, 60))
+        else:
+            border_grad.setColorAt(0.0, QColor(255, 255, 255, 240))
+            border_grad.setColorAt(0.5, QColor(56, 189, 248, 160))
+            border_grad.setColorAt(1.0, QColor(2, 132, 199, 120))
+
+        painter.setPen(QPen(QBrush(border_grad), 1.2))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect, 12, 12)
+
+        # 4. Sliding Glowing Jewel Indicator
+        thumb_w = 23.0
+        thumb_h = 20.0
+        thumb_y = rect.top() + (rect.height() - thumb_h) / 2.0
+        thumb_x = rect.right() - thumb_w - 2.0 if is_dark else rect.left() + 2.0
+        thumb_rect = QRectF(thumb_x, thumb_y, thumb_w, thumb_h)
+        thumb_path = QPainterPath()
+        thumb_path.addRoundedRect(thumb_rect, 10, 10)
+
+        thumb_fill = QLinearGradient(thumb_rect.topLeft(), thumb_rect.bottomLeft())
+        if is_dark:
+            thumb_fill.setColorAt(0.0, QColor(96, 165, 250, 240))
+            thumb_fill.setColorAt(1.0, QColor(37, 99, 235, 240))
+        else:
+            thumb_fill.setColorAt(0.0, QColor(253, 224, 71, 245))
+            thumb_fill.setColorAt(1.0, QColor(245, 158, 11, 245))
+
+        painter.fillPath(thumb_path, QBrush(thumb_fill))
+
+        # Top shine on thumb
+        thumb_sheen = QLinearGradient(thumb_rect.topLeft(), thumb_rect.bottomLeft())
+        thumb_sheen.setColorAt(0.0, QColor(255, 255, 255, 180))
+        thumb_sheen.setColorAt(0.5, QColor(255, 255, 255, 0))
+        painter.fillPath(thumb_path, QBrush(thumb_sheen))
+
+        # 5. Icons: ☀️ and 🌙
+        font = painter.font()
+        font.setPointSize(10)
+        painter.setFont(font)
+
+        sun_rect = QRectF(rect.left() + 3, rect.top(), 22, rect.height())
+        moon_rect = QRectF(rect.right() - 25, rect.top(), 22, rect.height())
 
         painter.setPen(
-            QPen(
-                QColor(255, 255, 255, 45) if tm.is_dark else QColor(15, 23, 42, 35),
-                1.0,
-            )
+            QColor(15, 23, 42) if not is_dark else QColor(148, 163, 184, 160)
         )
-        painter.setBrush(bg_color)
-        painter.drawRoundedRect(rect, 10, 10)
+        painter.drawText(sun_rect, Qt.AlignmentFlag.AlignCenter, "☀️")
 
-        icon_text = "🌙" if tm.is_dark else "☀️"
-        font = painter.font()
-        font.setPointSize(11)
-        painter.setFont(font)
-        painter.setPen(QColor(240, 244, 250) if tm.is_dark else QColor(15, 23, 42))
-        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, icon_text)
+        painter.setPen(QColor(255, 255, 255) if is_dark else QColor(71, 85, 105, 160))
+        painter.drawText(moon_rect, Qt.AlignmentFlag.AlignCenter, "🌙")
 
 
 class WindowTitleBar(QWidget):
-    """Custom title bar for the frameless window shell with traffic lights and theme toggle."""
+    """Custom title bar for the frameless window shell with traffic lights and theme toggle at top right."""
 
     def __init__(self, target_window: QWidget, title: str = "Nexus", parent=None):
         super().__init__(parent)
         self._target_window = target_window
         self._drag_offset: QPoint | None = None
-        self.setFixedHeight(36)
+        self.setFixedHeight(38)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 8, 16, 4)
+        layout.setContentsMargins(12, 4, 8, 4)
         layout.setSpacing(0)
 
         controls = QWidget(self)
@@ -491,7 +738,7 @@ class WindowTitleBar(QWidget):
         layout.addWidget(
             controls, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        layout.addStretch()
+        layout.addStretch(1)
         layout.addWidget(
             self.theme_toggle,
             0,
@@ -1133,7 +1380,7 @@ class NeonButton(QPushButton):
 
 
 class GlassButton(QPushButton):
-    """Polished tactile button with top specular highlight, smooth hover glow, and theme support."""
+    """iOS 27 ultra-glossy tactile glass button with 3D gel dome optics and distinct vibrant colors."""
 
     def __init__(self, text: str = "", variant: str = "primary"):
         super().__init__(text)
@@ -1161,22 +1408,25 @@ class GlassButton(QPushButton):
 
     def _get_glow_color(self) -> str:
         colors = {
-            "primary": "#3B82F6",
-            "home": "#3B82F6",
-            "open": "#2563EB",
+            "primary": "#0284C7",
+            "home": "#0284C7",
+            "open": "#059669",
             "secondary": "#10B981",
-            "save": "#10B981",
-            "import": "#6366F1",
-            "export": "#8B5CF6",
+            "save": "#0891B2",
+            "import": "#4F46E5",
+            "export": "#9333EA",
             "quick": "#06B6D4",
             "rich": "#8B5CF6",
-            "tertiary": "#F59E0B",
-            "undo": "#F59E0B",
-            "quaternary": "#EF4444",
-            "clear": "#EC4899",
-            "danger": "#EF4444",
+            "tertiary": "#D97706",
+            "undo": "#D97706",
+            "amber": "#D97706",
+            "load_file": "#D97706",
+            "teal": "#0D9488",
+            "quaternary": "#E11D48",
+            "clear": "#E11D48",
+            "danger": "#DC2626",
         }
-        return colors.get(self.variant, "#3B82F6")
+        return colors.get(self.variant, "#0284C7")
 
     def _setup_animations(self):
         glow_color = self._get_glow_color()
@@ -1208,114 +1458,8 @@ class GlassButton(QPushButton):
         tm = get_theme_manager()
         if tm.is_dark:
             palettes = {
+                # Home: Electric Sapphire
                 "primary": {
-                    "start": "#4A90E8",
-                    "end": "#2D6FD4",
-                    "hover_start": "#5BA4FF",
-                    "hover_end": "#3B82F0",
-                    "border": "#8EC4FF",
-                    "text": "#FFFFFF",
-                },
-                "home": {
-                    "start": "#4A90E8",
-                    "end": "#2D6FD4",
-                    "hover_start": "#5BA4FF",
-                    "hover_end": "#3B82F0",
-                    "border": "#8EC4FF",
-                    "text": "#FFFFFF",
-                },
-                "open": {
-                    "start": "#4A90E8",
-                    "end": "#2D6FD4",
-                    "hover_start": "#5BA4FF",
-                    "hover_end": "#3B82F0",
-                    "border": "#8EC4FF",
-                    "text": "#FFFFFF",
-                },
-                "secondary": {
-                    "start": "#2EC4A0",
-                    "end": "#1A9E78",
-                    "hover_start": "#3DDBB0",
-                    "hover_end": "#24B088",
-                    "border": "#7AF0D0",
-                    "text": "#FFFFFF",
-                },
-                "save": {
-                    "start": "#2EC4A0",
-                    "end": "#1A9E78",
-                    "hover_start": "#3DDBB0",
-                    "hover_end": "#24B088",
-                    "border": "#7AF0D0",
-                    "text": "#FFFFFF",
-                },
-                "import": {
-                    "start": "#5B8DEF",
-                    "end": "#3C6ECC",
-                    "hover_start": "#7AAAF8",
-                    "hover_end": "#4C7FE0",
-                    "border": "#A4C7FF",
-                    "text": "#FFFFFF",
-                },
-                "export": {
-                    "start": "#A78BFA",
-                    "end": "#7C5CF0",
-                    "hover_start": "#C4B5FD",
-                    "hover_end": "#8B6CFF",
-                    "border": "#DDD6FE",
-                    "text": "#FFFFFF",
-                },
-                "quick": {
-                    "start": "#00C6E0",
-                    "end": "#0090B0",
-                    "hover_start": "#33DFFF",
-                    "hover_end": "#00B4D8",
-                    "border": "#7AF0FF",
-                    "text": "#061018",
-                },
-                "rich": {
-                    "start": "#A78BFA",
-                    "end": "#7C5CF0",
-                    "hover_start": "#C4B5FD",
-                    "hover_end": "#8B6CFF",
-                    "border": "#DDD6FE",
-                    "text": "#FFFFFF",
-                },
-                "clear": {
-                    "start": "#FF5C8A",
-                    "end": "#D63A68",
-                    "hover_start": "#FF7AA3",
-                    "hover_end": "#E84F7A",
-                    "border": "#FFB0C8",
-                    "text": "#FFFFFF",
-                },
-                "danger": {
-                    "start": "#E85A5A",
-                    "end": "#C04040",
-                    "hover_start": "#FF7070",
-                    "hover_end": "#D04A4A",
-                    "border": "#FFB0B0",
-                    "text": "#FFFFFF",
-                },
-            }
-        else:
-            palettes = {
-                "primary": {
-                    "start": "#3B82F6",
-                    "end": "#2563EB",
-                    "hover_start": "#60A5FA",
-                    "hover_end": "#3B82F6",
-                    "border": "#93C5FD",
-                    "text": "#FFFFFF",
-                },
-                "home": {
-                    "start": "#3B82F6",
-                    "end": "#2563EB",
-                    "hover_start": "#60A5FA",
-                    "hover_end": "#3B82F6",
-                    "border": "#93C5FD",
-                    "text": "#FFFFFF",
-                },
-                "open": {
                     "start": "#2563EB",
                     "end": "#1D4ED8",
                     "hover_start": "#3B82F6",
@@ -1323,36 +1467,153 @@ class GlassButton(QPushButton):
                     "border": "#93C5FD",
                     "text": "#FFFFFF",
                 },
+                "home": {
+                    "start": "#2563EB",
+                    "end": "#1D4ED8",
+                    "hover_start": "#3B82F6",
+                    "hover_end": "#2563EB",
+                    "border": "#93C5FD",
+                    "text": "#FFFFFF",
+                },
+                # Open All: Vivid Emerald Mint
+                "open": {
+                    "start": "#059669",
+                    "end": "#047857",
+                    "hover_start": "#10B981",
+                    "hover_end": "#059669",
+                    "border": "#6EE7B7",
+                    "text": "#FFFFFF",
+                },
+                "secondary": {
+                    "start": "#059669",
+                    "end": "#047857",
+                    "hover_start": "#10B981",
+                    "hover_end": "#059669",
+                    "border": "#6EE7B7",
+                    "text": "#FFFFFF",
+                },
+                # Save: Radiant Neon Cyan
+                "save": {
+                    "start": "#0891B2",
+                    "end": "#0E7490",
+                    "hover_start": "#06B6D4",
+                    "hover_end": "#0891B2",
+                    "border": "#67E8F9",
+                    "text": "#FFFFFF",
+                },
+                "quick": {
+                    "start": "#0891B2",
+                    "end": "#0E7490",
+                    "hover_start": "#06B6D4",
+                    "hover_end": "#0891B2",
+                    "border": "#67E8F9",
+                    "text": "#FFFFFF",
+                },
+                # Import: Royal Electric Indigo
+                "import": {
+                    "start": "#4F46E5",
+                    "end": "#4338CA",
+                    "hover_start": "#6366F1",
+                    "hover_end": "#4F46E5",
+                    "border": "#A5B4FC",
+                    "text": "#FFFFFF",
+                },
+                # Export: Luminous Magenta Violet
+                "export": {
+                    "start": "#9333EA",
+                    "end": "#7E22CE",
+                    "hover_start": "#A855F7",
+                    "hover_end": "#9333EA",
+                    "border": "#C084FC",
+                    "text": "#FFFFFF",
+                },
+                "rich": {
+                    "start": "#9333EA",
+                    "end": "#7E22CE",
+                    "hover_start": "#A855F7",
+                    "hover_end": "#9333EA",
+                    "border": "#C084FC",
+                    "text": "#FFFFFF",
+                },
+                # Clear: Fiery Coral Crimson
+                "clear": {
+                    "start": "#E11D48",
+                    "end": "#BE123C",
+                    "hover_start": "#F43F5E",
+                    "hover_end": "#E11D48",
+                    "border": "#FB7185",
+                    "text": "#FFFFFF",
+                },
+                "danger": {
+                    "start": "#DC2626",
+                    "end": "#B91C1C",
+                    "hover_start": "#EF4444",
+                    "hover_end": "#DC2626",
+                    "border": "#FCA5A5",
+                    "text": "#FFFFFF",
+                },
+                # Amber Gold Glass
+                "amber": {
+                    "start": "#D97706",
+                    "end": "#B45309",
+                    "hover_start": "#F59E0B",
+                    "hover_end": "#D97706",
+                    "border": "#FCD34D",
+                    "text": "#FFFFFF",
+                },
+                "undo": {
+                    "start": "#D97706",
+                    "end": "#B45309",
+                    "hover_start": "#F59E0B",
+                    "hover_end": "#D97706",
+                    "border": "#FCD34D",
+                    "text": "#FFFFFF",
+                },
+            }
+        else:
+            # Light Mode Palettes (Tailored for Light Blue aesthetic)
+            palettes = {
+                # Home: Electric Ocean Azure
+                "primary": {
+                    "start": "#0284C7",
+                    "end": "#0369A1",
+                    "hover_start": "#38BDF8",
+                    "hover_end": "#0284C7",
+                    "border": "#7DD3FC",
+                    "text": "#FFFFFF",
+                },
+                "home": {
+                    "start": "#0284C7",
+                    "end": "#0369A1",
+                    "hover_start": "#38BDF8",
+                    "hover_end": "#0284C7",
+                    "border": "#7DD3FC",
+                    "text": "#FFFFFF",
+                },
+                # Open All: Vivid Emerald Mint
+                "open": {
+                    "start": "#10B981",
+                    "end": "#059669",
+                    "hover_start": "#34D399",
+                    "hover_end": "#10B981",
+                    "border": "#A7F3D0",
+                    "text": "#FFFFFF",
+                },
                 "secondary": {
                     "start": "#10B981",
                     "end": "#059669",
                     "hover_start": "#34D399",
                     "hover_end": "#10B981",
-                    "border": "#6EE7B7",
+                    "border": "#A7F3D0",
                     "text": "#FFFFFF",
                 },
+                # Save: Radiant Electric Cyan
                 "save": {
-                    "start": "#10B981",
-                    "end": "#059669",
-                    "hover_start": "#34D399",
-                    "hover_end": "#10B981",
-                    "border": "#6EE7B7",
-                    "text": "#FFFFFF",
-                },
-                "import": {
-                    "start": "#6366F1",
-                    "end": "#4F46E5",
-                    "hover_start": "#818CF8",
-                    "hover_end": "#6366F1",
-                    "border": "#C7D2FE",
-                    "text": "#FFFFFF",
-                },
-                "export": {
-                    "start": "#8B5CF6",
-                    "end": "#7C3AED",
-                    "hover_start": "#A78BFA",
-                    "hover_end": "#8B5CF6",
-                    "border": "#DDD6FE",
+                    "start": "#06B6D4",
+                    "end": "#0891B2",
+                    "hover_start": "#22D3EE",
+                    "hover_end": "#06B6D4",
+                    "border": "#A5F3FC",
                     "text": "#FFFFFF",
                 },
                 "quick": {
@@ -1361,7 +1622,25 @@ class GlassButton(QPushButton):
                     "hover_start": "#22D3EE",
                     "hover_end": "#06B6D4",
                     "border": "#A5F3FC",
-                    "text": "#0F172A",
+                    "text": "#FFFFFF",
+                },
+                # Import: Royal Electric Indigo
+                "import": {
+                    "start": "#6366F1",
+                    "end": "#4F46E5",
+                    "hover_start": "#818CF8",
+                    "hover_end": "#6366F1",
+                    "border": "#C7D2FE",
+                    "text": "#FFFFFF",
+                },
+                # Export: Luminous Magenta Violet
+                "export": {
+                    "start": "#8B5CF6",
+                    "end": "#7C3AED",
+                    "hover_start": "#A78BFA",
+                    "hover_end": "#8B5CF6",
+                    "border": "#DDD6FE",
+                    "text": "#FFFFFF",
                 },
                 "rich": {
                     "start": "#8B5CF6",
@@ -1371,12 +1650,13 @@ class GlassButton(QPushButton):
                     "border": "#DDD6FE",
                     "text": "#FFFFFF",
                 },
+                # Clear: Fiery Coral Crimson
                 "clear": {
-                    "start": "#EC4899",
-                    "end": "#DB2777",
-                    "hover_start": "#F472B6",
-                    "hover_end": "#EC4899",
-                    "border": "#FBCFE8",
+                    "start": "#F43F5E",
+                    "end": "#E11D48",
+                    "hover_start": "#FB7185",
+                    "hover_end": "#F43F5E",
+                    "border": "#FECDD3",
                     "text": "#FFFFFF",
                 },
                 "danger": {
@@ -1387,8 +1667,27 @@ class GlassButton(QPushButton):
                     "border": "#FECACA",
                     "text": "#FFFFFF",
                 },
+                # Amber Gold Glass
+                "amber": {
+                    "start": "#F59E0B",
+                    "end": "#D97706",
+                    "hover_start": "#FBBF24",
+                    "hover_end": "#F59E0B",
+                    "border": "#FDE68A",
+                    "text": "#FFFFFF",
+                },
+                "undo": {
+                    "start": "#F59E0B",
+                    "end": "#D97706",
+                    "hover_start": "#FBBF24",
+                    "hover_end": "#F59E0B",
+                    "border": "#FDE68A",
+                    "text": "#FFFFFF",
+                },
             }
         self._variant_palette = palettes.get(self.variant, palettes["primary"])
+        glow_color = self._get_glow_color()
+        self.shadow.setColor(QColor(glow_color))
         self.update()
 
     def paintEvent(self, event: QPaintEvent):  # noqa: N802 - Qt override
@@ -1412,52 +1711,97 @@ class GlassButton(QPushButton):
         )
 
         if pressed:
-            start = start.darker(114)
-            end = end.darker(114)
+            start = start.darker(118)
+            end = end.darker(118)
 
         if not enabled:
             start.setAlpha(120)
             end.setAlpha(110)
 
-        # Base Gradient
+        rounded_rect = QPainterPath()
+        rounded_rect.addRoundedRect(rect, 12, 12)
+
+        # 1. Base Glass Fill Gradient
         fill = QLinearGradient(rect.topLeft(), rect.bottomLeft())
         fill.setColorAt(0.0, start)
         fill.setColorAt(1.0, end)
 
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(fill))
-        painter.drawRoundedRect(rect, 10, 10)
+        painter.drawRoundedRect(rect, 12, 12)
 
-        # Top Specular Highlight Sheen
-        sheen = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-        sheen.setColorAt(0.0, QColor(255, 255, 255, 60 if enabled else 20))
-        sheen.setColorAt(0.35, QColor(255, 255, 255, 10))
-        sheen.setColorAt(1.0, QColor(0, 0, 0, 30 if enabled else 10))
-        painter.setBrush(QBrush(sheen))
-        painter.drawRoundedRect(rect, 10, 10)
+        # 2. iOS 27 Curved Gel Dome Specular Reflection (top 50%)
+        shine_rect = QRectF(rect.left(), rect.top(), rect.width(), rect.height() * 0.50)
+        shine_path = QPainterPath()
+        shine_path.addRoundedRect(shine_rect, 12, 12)
+        shine = QLinearGradient(shine_rect.topLeft(), shine_rect.bottomLeft())
+        shine.setColorAt(0.0, QColor(255, 255, 255, 130 if enabled else 40))
+        shine.setColorAt(0.50, QColor(255, 255, 255, 35 if enabled else 15))
+        shine.setColorAt(1.0, QColor(255, 255, 255, 0))
 
-        # Crisp Border
-        border = QColor(palette["border"])
+        painter.save()
+        painter.setClipPath(rounded_rect)
+        painter.fillPath(shine_path, QBrush(shine))
+
+        # 3. Top Specular Edge Line
+        top_edge = QLinearGradient(rect.topLeft(), rect.topRight())
+        top_edge.setColorAt(0.0, QColor(255, 255, 255, 40))
+        top_edge.setColorAt(0.5, QColor(255, 255, 255, 230 if enabled else 70))
+        top_edge.setColorAt(1.0, QColor(255, 255, 255, 40))
+        painter.setPen(QPen(QBrush(top_edge), 1.2))
+        painter.drawLine(
+            QPointF(rect.left() + 10, rect.top() + 1.2),
+            QPointF(rect.right() - 10, rect.top() + 1.2),
+        )
+
+        # 4. Bottom Ambient Bevel Shadow
+        bottom_shadow = QLinearGradient(
+            rect.left(), rect.bottom() - 6, rect.left(), rect.bottom()
+        )
+        bottom_shadow.setColorAt(0.0, QColor(0, 0, 0, 0))
+        bottom_shadow.setColorAt(1.0, QColor(0, 0, 0, 45))
+        painter.fillPath(rounded_rect, QBrush(bottom_shadow))
+        painter.restore()
+
+        # 5. Multi-Stop Glossy Outer Border
+        border_col = QColor(palette["border"])
         if not enabled:
-            border.setAlpha(70)
-        painter.setPen(QPen(border, 1.1))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(rect, 10, 10)
+            border_col.setAlpha(70)
+        border_grad = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        border_grad.setColorAt(0.0, QColor(255, 255, 255, 180 if enabled else 70))
+        border_grad.setColorAt(0.40, border_col)
+        border_grad.setColorAt(1.0, border_col.darker(125))
 
-        # Typography
+        painter.setPen(QPen(QBrush(border_grad), 1.3))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect, 12, 12)
+
+        # 6. Typography with 3D physical text drop shadow
         font = self.font()
+        font.setFamily("Helvetica Neue")
         font.setPointSize(14)
         font.setWeight(QFont.Weight.DemiBold)
         painter.setFont(font)
+
+        text_rect = rect.adjusted(0, 1, 0, 1) if pressed else rect
+
+        # Text shadow
+        painter.setPen(QColor(0, 0, 0, 110 if enabled else 40))
+        painter.drawText(
+            text_rect.adjusted(0, 1, 0, 1),
+            Qt.AlignmentFlag.AlignCenter,
+            self.text(),
+        )
+
+        # Text foreground
         painter.setPen(
             QColor(palette["text"]) if enabled else QColor(160, 170, 185, 140)
         )
-        text_rect = rect.adjusted(0, 1, 0, 1) if pressed else rect
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self.text())
 
         if enabled and self.hasFocus():
-            painter.setPen(QPen(QColor(148, 168, 198, 140), 1.0))
-            painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 8, 8)
+            painter.setPen(QPen(QColor(255, 255, 255, 180), 1.0))
+            painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 10, 10)
 
 
 class OutlinedLabel(QLabel):

@@ -60,8 +60,8 @@ class ClickableURLLabel(QLabel):
 
     def _apply_style(self):
         is_dark = get_theme_manager().is_dark
-        color = "#60A5FA" if is_dark else "#2563EB"
-        hover_color = "#93C5FD" if is_dark else "#1D4ED8"
+        color = "#60A5FA" if is_dark else "#0284C7"
+        hover_color = "#93C5FD" if is_dark else "#0369A1"
         self.setStyleSheet(f"""
             QLabel {{
                 color: {color};
@@ -189,20 +189,20 @@ class QuickSaveBlock(QFrame):
                 block_border = "2px solid #059669"
         else:
             if is_dark:
-                block_bg = "rgba(18, 22, 32, 0.72)"
-                block_border = "1px solid rgba(255, 255, 255, 0.10)"
+                block_bg = "rgba(18, 22, 32, 0.76)"
+                block_border = "1px solid rgba(255, 255, 255, 0.12)"
             else:
-                block_bg = "rgba(255, 255, 255, 0.88)"
-                block_border = "1px solid rgba(203, 213, 225, 0.75)"
+                block_bg = "rgba(255, 255, 255, 0.92)"
+                block_border = "1px solid rgba(186, 230, 253, 0.85)"
 
         hover_border = (
-            "rgba(255, 255, 255, 0.22)" if is_dark else "rgba(148, 163, 184, 0.90)"
+            "rgba(56, 189, 248, 0.50)" if is_dark else "rgba(14, 165, 233, 0.85)"
         )
-        text_primary = "#F8FAFC" if is_dark else "#0F172A"
-        text_secondary = "#94A3B8" if is_dark else "#475569"
-        text_badge = "#34D399" if is_dark else "#059669"
+        text_primary = "#F8FAFC" if is_dark else "#032B56"
+        text_secondary = "#94A3B8" if is_dark else "#1E5B8E"
+        text_badge = "#34D399" if is_dark else "#0284C7"
         divider_color = (
-            "rgba(255, 255, 255, 0.10)" if is_dark else "rgba(203, 213, 225, 0.60)"
+            "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(186, 230, 253, 0.75)"
         )
 
         self.setStyleSheet(f"""

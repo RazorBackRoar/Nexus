@@ -326,12 +326,15 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(self.chrome_frame)
 
         main_layout = QVBoxLayout(self.chrome_frame)
-        main_layout.setContentsMargins(22, 0, 22, 16)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(18, 4, 18, 16)
+        main_layout.setSpacing(6)
 
-        if sys.platform == "darwin":
-            self.window_titlebar = WindowTitleBar(self, "Nexus")
-            main_layout.addWidget(self.window_titlebar)
+        self.window_titlebar = WindowTitleBar(self, "Nexus")
+        main_layout.addWidget(self.window_titlebar)
+        if sys.platform != "darwin":
+            self.window_titlebar.close_button.hide()
+            self.window_titlebar.minimize_button.hide()
+            self.window_titlebar.zoom_button.hide()
 
         header_widget = QWidget()
         header_widget.setStyleSheet("background: transparent;")
