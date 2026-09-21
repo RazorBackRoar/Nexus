@@ -53,11 +53,11 @@ extra-paths = [
 
 [dependency-groups]
 dev = [
-    "pyinstaller>=6.22.2",
+    "pyinstaller>=6.22.3",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.7",
-    "ty>=0.0.80",
+    "ruff>=0.16.8",
+    "ty>=0.0.82",
 ]
 
 [tool.uv]
