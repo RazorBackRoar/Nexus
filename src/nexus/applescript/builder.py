@@ -58,6 +58,24 @@ CHECK_RUNNING_SCRIPT: str = (
 LAUNCH_SCRIPT: str = 'tell application "Safari" to activate'
 """Bring Safari to front, launching it if necessary."""
 
+GET_ALL_TABS_SCRIPT: str = (
+    'tell application "Safari"\n'
+    '    if not (exists (windows)) or (count of windows) = 0 then return ""\n'
+    '    set output to ""\n'
+    '    repeat with w in windows\n'
+    '        repeat with t in tabs of w\n'
+    '            set tabURL to URL of t\n'
+    '            set tabTitle to name of t\n'
+    '            if tabURL is not missing value and tabURL is not "" then\n'
+    '                set output to output & tabTitle & tab & tabURL & linefeed\n'
+    '            end if\n'
+    '        end repeat\n'
+    '    end repeat\n'
+    '    return output\n'
+    'end tell'
+)
+"""Returns tab titles and URLs for all open Safari windows as TSV lines."""
+
 
 # ---------------------------------------------------------------------------
 # Dynamic script builders

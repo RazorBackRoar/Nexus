@@ -25,6 +25,7 @@ def test_bookmark_accent_round_trips(tmp_path):
 
     reloaded = manager.load_bookmarks()
     assert len(reloaded) == 1
+    assert isinstance(reloaded[0], BookmarkFolder)
     inner = reloaded[0].children
     assert len(inner) == 1
     assert isinstance(inner[0], Bookmark)
@@ -38,4 +39,5 @@ def test_bookmark_folder_accent_round_trips(tmp_path):
     manager.save_bookmarks([folder])
 
     reloaded = manager.load_bookmarks()
+    assert isinstance(reloaded[0], BookmarkFolder)
     assert reloaded[0].accent == "#5B8DEF"

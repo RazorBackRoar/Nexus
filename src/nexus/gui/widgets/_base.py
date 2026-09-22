@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QSizeGrip,
     QStyle,
     QStyledItemDelegate,
     QTableWidget,
@@ -128,6 +129,10 @@ class CosmicFrame(QWidget):
         for i in range(5):
             self._meteors.append(self._create_meteor(1000, 700, stagger=i * 18))
         get_theme_manager().theme_changed.connect(lambda _: self.update())
+
+        self._size_grip = QSizeGrip(self)
+        self._size_grip.setFixedSize(14, 14)
+        self._size_grip.setStyleSheet("background: transparent;")
 
     def _create_meteor(self, w: int, h: int, stagger: int = 0) -> ShootingStar:
         speed = random.uniform(8.0, 14.0)
@@ -370,6 +375,11 @@ class CosmicFrame(QWidget):
         painter.drawRoundedRect(inner, 15, 15)
 
         super().paintEvent(event)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 - Qt override
+        super().resizeEvent(event)
+        if hasattr(self, "_size_grip"):
+            self._size_grip.move(self.width() - 16, self.height() - 16)
 
 
 class MetallicLabel(QLabel):
@@ -856,6 +866,28 @@ class BookmarkTreeDelegate(QStyledItemDelegate):
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 str(index.data(Qt.ItemDataRole.DisplayRole)),
             )
+
+            # Folder count badge
+            child_count = 0
+            if index.model():
+                child_count = index.model().rowCount(index)
+            if not child_count and isinstance(data.get("children"), list):
+                child_count = len(data["children"])
+            if child_count > 0:
+                badge_text = str(child_count)
+                badge_font = option.font
+                badge_font.setPointSize(11)
+                badge_font.setWeight(QFont.Weight.Medium)
+                painter.setFont(badge_font)
+                painter.setPen(
+                    QColor("#8EA0BC") if tm.is_dark else QColor("#64748B")
+                )
+                badge_rect = pill_rect.adjusted(pill_rect.width() - 44, 0, -12, 0)
+                painter.drawText(
+                    badge_rect,
+                    Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                    badge_text,
+                )
         elif data.get("type") == "group":
             style = index.data(Qt.ItemDataRole.UserRole + 1) or {}
             accent = QColor(style.get("start", "#5B8DEF"))
@@ -1949,6 +1981,7 @@ class URLEmptyStateWidget(QWidget):
 
     urls_pasted = Signal(list)
     file_dropped = Signal(str)
+    safari_import_requested = Signal()
 
     _FILE_DROP_EXTENSIONS = {".txt", ".csv", ".md"}
 
@@ -1971,20 +2004,33 @@ class URLEmptyStateWidget(QWidget):
         empty_layout.addWidget(self.url_empty_title)
 
         self.url_empty_note = MetallicLabel(
-            "Copied links appear here automatically. Drag text or drop .txt / .csv files anytime.",
+            "Copied links appear here automatically. Paste (⌘V), import Safari tabs (⌘⇧I), or drop .txt / .csv files anytime.",
             variant="dim",
         )
         self.url_empty_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.url_empty_note.setWordWrap(True)
         empty_layout.addWidget(self.url_empty_note)
 
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+        btn_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         self.paste_btn = GlassButton("Paste from Clipboard", "primary")
         self.paste_btn.setMinimumHeight(40)
         self.paste_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.paste_btn.setToolTip("Click to paste copied links (⌘V)")
         self.paste_btn.clicked.connect(self._paste_from_clipboard)
+
+        self.safari_import_btn = GlassButton("Import Safari Tabs", "secondary")
+        self.safari_import_btn.setMinimumHeight(40)
+        self.safari_import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.safari_import_btn.setToolTip("Import all open tabs from Safari (⌘⇧I)")
+        self.safari_import_btn.clicked.connect(self.safari_import_requested.emit)
+
+        btn_row.addWidget(self.paste_btn)
+        btn_row.addWidget(self.safari_import_btn)
         empty_layout.addSpacing(6)
-        empty_layout.addWidget(self.paste_btn, 0, Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addLayout(btn_row)
 
         empty_layout.addStretch()
 

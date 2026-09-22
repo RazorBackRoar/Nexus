@@ -49,7 +49,8 @@ def test_domain_pacer_group_by_domain():
     assert groups["apple.com"] == ["https://apple.com/mac"]
 
 
-def test_domain_pacer_delays():
+def test_domain_pacer_delays(monkeypatch):
+    monkeypatch.setattr("random.uniform", lambda a, b: (a + b) / 2)
     pacer = DomainPacer(
         same_domain_delay_min=2.0,
         same_domain_delay_max=3.0,

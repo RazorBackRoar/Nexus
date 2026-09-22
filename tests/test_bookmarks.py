@@ -189,7 +189,7 @@ def test_default_bookmark_folders_match_glossy_sidebar(tmp_path):
 
     defaults = manager._create_default_bookmarks()
 
-    assert [node.name for node in defaults] == [
+    assert [node.name for node in defaults if isinstance(node, BookmarkFolder)] == [
         "Fun",
         "Misc",
         "Tech",
@@ -263,7 +263,9 @@ def test_load_bookmarks_keeps_valid_nodes_when_sibling_is_malformed(tmp_path):
     assert isinstance(bookmarks[0], BookmarkFolder)
     assert bookmarks[0].name == "Favorites"
     assert len(bookmarks[0].children) == 1
-    assert bookmarks[0].children[0].name == "Keep Me"
+    child = bookmarks[0].children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "Keep Me"
 
 
 def test_load_bookmarks_recovers_from_bak_when_primary_missing(tmp_path):
@@ -293,7 +295,9 @@ def test_load_bookmarks_recovers_from_bak_when_primary_missing(tmp_path):
 
     assert len(bookmarks) == 1
     assert isinstance(bookmarks[0], BookmarkFolder)
-    assert bookmarks[0].children[0].name == "Recovered"
+    child = bookmarks[0].children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "Recovered"
     assert manager.file_path.exists()
 
 
@@ -328,8 +332,10 @@ def test_load_bookmarks_keeps_valid_children_when_sibling_is_malformed(tmp_path)
     assert isinstance(folder, BookmarkFolder)
     assert folder.name == "Favorites"
     assert len(folder.children) == 1
-    assert folder.children[0].name == "Keep Me"
-    assert folder.children[0].url == "https://example.com"
+    child = folder.children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "Keep Me"
+    assert child.url == "https://example.com"
 
 
 def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
@@ -341,7 +347,7 @@ def test_load_bookmarks_rejects_non_list_json_without_crashing(tmp_path):
 
     bookmarks = manager.load_bookmarks()
 
-    assert [node.name for node in bookmarks] == [
+    assert [node.name for node in bookmarks if isinstance(node, BookmarkFolder)] == [
         "Fun",
         "Misc",
         "Tech",
@@ -381,7 +387,9 @@ def test_load_bookmarks_recovers_from_bak_when_primary_corrupt(tmp_path):
 
     assert len(bookmarks) == 1
     assert isinstance(bookmarks[0], BookmarkFolder)
-    assert bookmarks[0].children[0].name == "From Backup"
+    child = bookmarks[0].children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "From Backup"
     assert manager.file_path.exists()
 
 
@@ -413,7 +421,9 @@ def test_load_bookmarks_recovers_from_bak_when_primary_empty(tmp_path):
 
     assert len(bookmarks) == 1
     assert isinstance(bookmarks[0], BookmarkFolder)
-    assert bookmarks[0].children[0].name == "From Backup"
+    child = bookmarks[0].children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "From Backup"
     assert manager.file_path.exists()
     assert backup.exists()
 
@@ -438,6 +448,7 @@ def test_load_bookmarks_skips_non_dict_top_level_entries(tmp_path):
     bookmarks = manager.load_bookmarks()
 
     assert len(bookmarks) == 1
+    assert isinstance(bookmarks[0], BookmarkFolder)
     assert bookmarks[0].name == "Favorites"
 
 
@@ -470,4 +481,6 @@ def test_load_bookmarks_keeps_valid_children_when_sibling_child_malformed(tmp_pa
     folder = bookmarks[0]
     assert isinstance(folder, BookmarkFolder)
     assert len(folder.children) == 1
-    assert folder.children[0].name == "Keep Me"
+    child = folder.children[0]
+    assert isinstance(child, Bookmark)
+    assert child.name == "Keep Me"

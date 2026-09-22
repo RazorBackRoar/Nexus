@@ -230,9 +230,10 @@ def test_main_window_migrates_sidebar_folders_to_reference_set(tmp_path, monkeyp
 
         reading_item = next(
             (
-                window.bookmark_tree.topLevelItem(i)
+                item
                 for i in range(window.bookmark_tree.topLevelItemCount())
-                if window.bookmark_tree.topLevelItem(i).text(0) == "Reading"
+                if (item := window.bookmark_tree.topLevelItem(i)) is not None
+                and item.text(0) == "Reading"
             ),
             None,
         )

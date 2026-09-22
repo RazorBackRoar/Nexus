@@ -1,6 +1,7 @@
 """Bookmark Manager to handle loading and saving of bookmarks."""
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -97,7 +98,7 @@ class BookmarkManager:
         )
         return bookmarks
 
-    def save_bookmarks(self, bookmarks: list[BookmarkNode]) -> bool:
+    def save_bookmarks(self, bookmarks: Sequence[BookmarkNode]) -> bool:
         """Saves bookmarks using an atomic write process to prevent data loss."""
         backup_path = self.file_path.with_suffix(".bak")
         try:

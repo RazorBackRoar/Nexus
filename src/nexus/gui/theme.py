@@ -2,13 +2,34 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from typing import Literal
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, QTimer, Signal
 
 
-ThemeMode = Literal["dark", "light"]
+ThemeMode = Literal["dark", "light", "system"]
+
+
+def detect_system_appearance() -> Literal["dark", "light"]:
+    """Detect whether macOS is currently configured for Dark or Light appearance."""
+    if sys.platform != "darwin":
+        return "dark"
+    try:
+        import AppKit
+
+        ns_app_cls = getattr(AppKit, "NSApplication", None)
+        if ns_app_cls is None:
+            return "dark"
+        app = ns_app_cls.sharedApplication()
+        appearance = app.effectiveAppearance()
+        if appearance and "Dark" in appearance.name():
+            return "dark"
+        return "light"
+    except Exception:
+        return "dark"
+
 
 
 @dataclass(frozen=True)
@@ -157,35 +178,56 @@ LIGHT_TOKENS = ThemeTokens(
 
 
 class ThemeManager(QObject):
-    """Central observable theme manager."""
+    """Central observable theme manager with System appearance sync."""
 
     theme_changed = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
         self._mode: ThemeMode = "dark"
+        self._effective_mode: Literal["dark", "light"] = "dark"
+        self._sync_timer = QTimer(self)
+        self._sync_timer.setInterval(2000)
+        self._sync_timer.timeout.connect(self._check_system_appearance_sync)
+        self._sync_timer.start()
 
     @property
     def mode(self) -> ThemeMode:
         return self._mode
 
     @property
+    def effective_mode(self) -> Literal["dark", "light"]:
+        if self._mode == "system":
+            return detect_system_appearance()
+        return self._mode
+
+    @property
     def tokens(self) -> ThemeTokens:
-        return DARK_TOKENS if self._mode == "dark" else LIGHT_TOKENS
+        return DARK_TOKENS if self.effective_mode == "dark" else LIGHT_TOKENS
 
     @property
     def is_dark(self) -> bool:
-        return self._mode == "dark"
+        return self.effective_mode == "dark"
 
     def set_mode(self, mode: ThemeMode) -> None:
-        if mode not in ("dark", "light"):
+        if mode not in ("dark", "light", "system"):
             mode = "dark"
-        if self._mode != mode:
-            self._mode = mode
+        old_effective = self._effective_mode
+        self._mode = mode
+        new_effective = self.effective_mode
+        self._effective_mode = new_effective
+        if old_effective != new_effective or mode == "system":
             self.theme_changed.emit(self._mode)
 
+    def _check_system_appearance_sync(self) -> None:
+        if self._mode == "system":
+            detected = detect_system_appearance()
+            if detected != self._effective_mode:
+                self._effective_mode = detected
+                self.theme_changed.emit("system")
+
     def toggle_theme(self) -> str:
-        new_mode: ThemeMode = "light" if self._mode == "dark" else "dark"
+        new_mode: ThemeMode = "light" if self.is_dark else "dark"
         self.set_mode(new_mode)
         return new_mode
 

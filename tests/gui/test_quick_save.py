@@ -37,7 +37,11 @@ def window(tmp_path, monkeypatch, app):
 
 def _folder_names(window: MainWindow) -> list[str]:
     tree = window.bookmark_tree
-    return [tree.topLevelItem(i).text(0) for i in range(tree.topLevelItemCount())]
+    return [
+        item.text(0)
+        for i in range(tree.topLevelItemCount())
+        if (item := tree.topLevelItem(i)) is not None
+    ]
 
 
 def test_quick_save_folder_is_first_and_has_no_tree_children(window):
@@ -131,6 +135,7 @@ def test_legacy_quick_saves_bookmarks_migrate_to_blocks(tmp_path, monkeypatch, a
         assert "Quick Saves" not in names
         assert names[0] == QUICK_SAVE_FOLDER_NAME
         folder = window._find_folder_by_name(QUICK_SAVE_FOLDER_NAME)
+        assert folder is not None
         data = folder.data(0, Qt.ItemDataRole.UserRole)
         children = data.get("children") or []
         assert len(children) == 1

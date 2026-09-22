@@ -80,6 +80,49 @@ class SafariController:
             return False
 
     @staticmethod
+    async def import_safari_tabs() -> list[dict[str, str]]:
+        """Query Safari for all open tabs across all windows.
+
+        Returns a list of dicts with ``"title"`` and ``"url"`` keys for valid
+        browser URLs, deduplicated in order of appearance.
+        """
+        from nexus.applescript.builder import (
+            GET_ALL_TABS_SCRIPT,
+            is_allowed_safari_url,
+        )
+
+        try:
+            safari_ready = await check_safari_status()
+            if not safari_ready:
+                logger.info("Safari is not running or not ready for automation")
+                return []
+
+            stdout, _stderr, rc = await run_applescript(GET_ALL_TABS_SCRIPT)
+            if rc != 0 or not stdout:
+                return []
+
+            tabs: list[dict[str, str]] = []
+            seen_urls: set[str] = set()
+            for line in stdout.strip().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split("\t", 1)
+                if len(parts) == 2:
+                    title, url = parts[0].strip(), parts[1].strip()
+                else:
+                    title, url = "", parts[0].strip()
+
+                if url and url not in seen_urls and is_allowed_safari_url(url):
+                    seen_urls.add(url)
+                    tabs.append({"title": title or url, "url": url})
+
+            return tabs
+        except Exception as e:
+            logger.error("Failed to import Safari tabs: %s", e, exc_info=True)
+            return []
+
+    @staticmethod
     async def open_urls_in_front_window(
         urls: list[str], private_mode: bool = False, max_batch_size: int = 20
     ) -> bool:

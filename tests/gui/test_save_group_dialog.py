@@ -27,6 +27,7 @@ def test_default_target_is_first_folder(app):
 def test_name_required_to_enable_ok(app):
     dlg = SaveGroupDialog(folders=["Favorites"])
     button_box = dlg.findChild(QDialogButtonBox)
+    assert button_box is not None
     ok_button = button_box.button(QDialogButtonBox.StandardButton.Ok)
     assert ok_button.isEnabled() is False
     dlg.group_name = "Sunday reading"

@@ -14,6 +14,7 @@ from PySide6.QtCore import (
     QSettings,
     QStandardPaths,
     Qt,
+    QTimer,
 )
 from PySide6.QtGui import QAction, QColor, QKeyEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -137,8 +138,20 @@ class MainWindow(QMainWindow):
         else:
             self._last_auto_ingested_clipboard = None
 
-        quick_save_shortcut = QShortcut(QKeySequence("Ctrl+Shift+S"), self)
-        quick_save_shortcut.activated.connect(self._quick_save_urls)
+        # Platform-aware Quick Save shortcut (⌘⇧S on macOS)
+        quick_save_key = (
+            QKeySequence("Meta+Shift+S")
+            if sys.platform == "darwin"
+            else QKeySequence("Ctrl+Shift+S")
+        )
+        self.quick_save_shortcut = QShortcut(quick_save_key, self)
+        self.quick_save_shortcut.activated.connect(self._quick_save_urls)
+
+        # Tree delete shortcuts (Delete and Backspace)
+        del_sc = QShortcut(QKeySequence.StandardKey.Delete, self.bookmark_tree)
+        del_sc.activated.connect(self._handle_tree_delete_key)
+        bs_sc = QShortcut(QKeySequence(Qt.Key.Key_Backspace), self.bookmark_tree)
+        bs_sc.activated.connect(self._handle_tree_delete_key)
 
         logger.info(
             "MainWindow initialized successfully with hierarchical bookmark support."
@@ -253,7 +266,7 @@ class MainWindow(QMainWindow):
             self.current_theme_name = default_theme_name
 
         saved_mode = str(self.settings.value("theme/mode", "dark"))
-        if saved_mode in ("dark", "light"):
+        if saved_mode in ("dark", "light", "system"):
             get_theme_manager().set_mode(saved_mode)
         if saved_name != self.current_theme_name:
             self.settings.setValue("theme/name", self.current_theme_name)
@@ -663,6 +676,7 @@ class MainWindow(QMainWindow):
         self.url_empty_state = URLEmptyStateWidget()
         self.url_empty_state.urls_pasted.connect(self._handle_pasted_urls)
         self.url_empty_state.file_dropped.connect(self.load_file_from_path)
+        self.url_empty_state.safari_import_requested.connect(self._import_safari_tabs)
         self.url_empty_title = self.url_empty_state.url_empty_title
         self.url_empty_note = self.url_empty_state.url_empty_note
 
@@ -687,7 +701,7 @@ class MainWindow(QMainWindow):
         url_panel_layout.addWidget(self.url_stack_host, 1)
         main_content_layout.addWidget(url_panel, 1)
 
-        self.url_counter_label = QLabel("0 URLs ready")
+        self.url_counter_label = QLabel("Waiting for pasted URLs")
         self.url_counter_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.url_counter_label.setStyleSheet("""
             QLabel {
@@ -706,21 +720,27 @@ class MainWindow(QMainWindow):
         button_row.setSpacing(14)
 
         self.home_btn = GlassButton("Home", "home")
+        self.home_btn.setToolTip("Return to URL List (⌘H / ⌘1)")
         self.home_btn.clicked.connect(self._go_home)
 
         self.run_btn = GlassButton("Open All", "open")
+        self.run_btn.setToolTip("Open all URLs in Safari (⌘⇧O)")
         self.run_btn.clicked.connect(self._run_urls_in_safari)
 
         self.save_btn = GlassButton("Save", "save")
+        self.save_btn.setToolTip("Save URLs as bookmark group (⌘S)")
         self.save_btn.clicked.connect(self._save_urls_to_bookmarks)
 
         self.import_btn = GlassButton("Import", "import")
+        self.import_btn.setToolTip("Import URLs from file (⌘O)")
         self.import_btn.clicked.connect(self._load_file_into_table)
 
         self.export_btn = GlassButton("Export", "export")
+        self.export_btn.setToolTip("Export URLs to text/CSV (⌘E)")
         self.export_btn.clicked.connect(self._export_urls)
 
         self.clear_btn = GlassButton("Clear", "clear")
+        self.clear_btn.setToolTip("Clear all URLs (⌘⌫)")
         self.clear_btn.clicked.connect(self._clear_all_data)
         for button in (
             self.home_btn,
@@ -781,8 +801,52 @@ class MainWindow(QMainWindow):
         self._update_url_counter()
 
     def _setup_menu_bar(self) -> None:
-        """Set up standard macOS application menus (Edit, etc.)."""
+        """Set up standard macOS application menus (File, Edit, View, Safari, Tools, Help)."""
         menu_bar = self.menuBar()
+
+        # 1. File Menu
+        file_menu = menu_bar.addMenu("File")
+
+        new_folder_action = QAction("New Folder…", self)
+        new_folder_action.setShortcut(QKeySequence("Meta+N"))
+        new_folder_action.triggered.connect(self.add_bookmark_section)
+        file_menu.addAction(new_folder_action)
+
+        file_menu.addSeparator()
+
+        import_action = QAction("Import URLs from File…", self)
+        import_action.setShortcut(QKeySequence.StandardKey.Open)
+        import_action.triggered.connect(self._load_file_into_table)
+        file_menu.addAction(import_action)
+
+        import_safari_action = QAction("Import Safari Tabs", self)
+        import_safari_action.setShortcut(QKeySequence("Meta+Shift+I"))
+        import_safari_action.triggered.connect(self._import_safari_tabs)
+        file_menu.addAction(import_safari_action)
+
+        save_group_action = QAction("Save URLs as Group…", self)
+        save_group_action.setShortcut(QKeySequence.StandardKey.Save)
+        save_group_action.triggered.connect(self._save_urls_to_bookmarks)
+        file_menu.addAction(save_group_action)
+
+        quick_save_action = QAction("Quick Save Current URLs", self)
+        quick_save_action.setShortcut(QKeySequence("Meta+Shift+S"))
+        quick_save_action.triggered.connect(self._quick_save_urls)
+        file_menu.addAction(quick_save_action)
+
+        export_action = QAction("Export URLs…", self)
+        export_action.setShortcut(QKeySequence("Meta+E"))
+        export_action.triggered.connect(self._export_urls)
+        file_menu.addAction(export_action)
+
+        file_menu.addSeparator()
+
+        close_action = QAction("Close Window", self)
+        close_action.setShortcut(QKeySequence.StandardKey.Close)
+        close_action.triggered.connect(self.close)
+        file_menu.addAction(close_action)
+
+        # 2. Edit Menu
         edit_menu = menu_bar.addMenu("Edit")
 
         self.undo_action = QAction("Undo", self)
@@ -811,6 +875,96 @@ class MainWindow(QMainWindow):
         self.select_all_action.setShortcut(QKeySequence.StandardKey.SelectAll)
         self.select_all_action.triggered.connect(self._handle_global_select_all)
         edit_menu.addAction(self.select_all_action)
+
+        edit_menu.addSeparator()
+
+        copy_rich_action = QAction("Copy Rich Links", self)
+        copy_rich_action.setShortcut(QKeySequence("Meta+Shift+C"))
+        copy_rich_action.triggered.connect(self._copy_rich_links)
+        edit_menu.addAction(copy_rich_action)
+
+        clear_action = QAction("Clear URL Table", self)
+        clear_action.setShortcut(QKeySequence("Meta+Backspace"))
+        clear_action.triggered.connect(self._clear_all_data)
+        edit_menu.addAction(clear_action)
+
+        # 3. View Menu
+        view_menu = menu_bar.addMenu("View")
+
+        home_action = QAction("URL Workspace", self)
+        home_action.setShortcut(QKeySequence("Meta+1"))
+        home_action.triggered.connect(self._go_home)
+        view_menu.addAction(home_action)
+
+        qs_view_action = QAction("Quick Save View", self)
+        qs_view_action.setShortcut(QKeySequence("Meta+2"))
+        qs_view_action.triggered.connect(lambda: self._show_quick_save_view())
+        view_menu.addAction(qs_view_action)
+
+        view_menu.addSeparator()
+
+        find_action = QAction("Find in Bookmarks…", self)
+        find_action.setShortcut(QKeySequence.StandardKey.Find)
+        find_action.triggered.connect(self._focus_search)
+        view_menu.addAction(find_action)
+
+        view_menu.addSeparator()
+
+        toggle_theme_action = QAction("Toggle Dark / Light Theme", self)
+        toggle_theme_action.setShortcut(QKeySequence("Meta+D"))
+        toggle_theme_action.triggered.connect(self._toggle_theme_mode)
+        view_menu.addAction(toggle_theme_action)
+
+        # 4. Safari Menu
+        safari_menu = menu_bar.addMenu("Safari")
+
+        open_all_action = QAction("Open All URLs in Safari", self)
+        open_all_action.setShortcut(QKeySequence("Meta+Shift+O"))
+        open_all_action.triggered.connect(self._run_urls_in_safari)
+        safari_menu.addAction(open_all_action)
+
+        safari_menu.addAction(import_safari_action)
+
+        safari_menu.addSeparator()
+
+        self.private_mode_menu_action = QAction("Private Browsing Window", self)
+        self.private_mode_menu_action.setCheckable(True)
+        self.private_mode_menu_action.setChecked(self.private_mode_enabled)
+        self.private_mode_menu_action.triggered.connect(self._toggle_private_mode)
+        safari_menu.addAction(self.private_mode_menu_action)
+
+        # 5. Tools Menu
+        tools_menu = menu_bar.addMenu("Tools")
+
+        health_action = QAction("Bookmark Health Scanner…", self)
+        health_action.setShortcut(QKeySequence("Meta+Shift+H"))
+        health_action.triggered.connect(self._show_health_scanner_dialog)
+        tools_menu.addAction(health_action)
+
+        tools_menu.addSeparator()
+
+        pref_action = QAction("Preferences…", self)
+        pref_action.setShortcut(QKeySequence.StandardKey.Preferences)
+        pref_action.triggered.connect(self._show_preferences_dialog)
+        tools_menu.addAction(pref_action)
+
+        # 6. Help Menu
+        help_menu = menu_bar.addMenu("Help")
+
+        shortcuts_action = QAction("Keyboard Shortcuts…", self)
+        shortcuts_action.setShortcut(QKeySequence("Meta+/"))
+        shortcuts_action.triggered.connect(self._show_shortcuts_dialog)
+        help_menu.addAction(shortcuts_action)
+
+        updates_action = QAction("Check for Updates…", self)
+        updates_action.triggered.connect(self._check_for_updates)
+        help_menu.addAction(updates_action)
+
+        help_menu.addSeparator()
+
+        about_action = QAction("About Nexus", self)
+        about_action.triggered.connect(self._show_about)
+        help_menu.addAction(about_action)
 
     def _handle_global_copy(self) -> None:
         """Global ⌘C / Ctrl+C handler."""
@@ -1581,18 +1735,25 @@ class MainWindow(QMainWindow):
         msg.setIcon(QMessageBox.Icon.Warning)
         msg.setWindowTitle("Warning")
         msg.setText(message)
+        tm = get_theme_manager()
+        tokens = tm.tokens
         msg.setStyleSheet(
             f"""
             QMessageBox {{
-                background: #1e1e1e;
-                color: #fff;
+                background-color: {tokens.card_bg};
+                color: {tokens.text_primary};
             }}
             QMessageBox QPushButton {{
-                background: {self.current_theme["safari"]["accent"]}; # Use accent from safari tab
-                color: #d0d0d0;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
+                background-color: {tokens.card_bg};
+                color: {tokens.text_primary};
+                border: 1px solid {tokens.card_border};
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-weight: 600;
+            }}
+            QMessageBox QPushButton:hover {{
+                border-color: {tokens.card_hover_border};
+                background-color: {tokens.card_selected_bg};
             }}
         """
         )
@@ -1609,10 +1770,10 @@ class MainWindow(QMainWindow):
         count = self.url_table.rowCount()
         if count == 0:
             self.url_counter_label.setText("Waiting for pasted URLs")
+        elif count == 1:
+            self.url_counter_label.setText("1 URL ready")
         else:
-            self.url_counter_label.setText(
-                f"{count} URL{'s' if count != 1 else ''} ready"
-            )
+            self.url_counter_label.setText(f"{count} URLs ready")
 
     def _track_url_history(self, urls: list[str]):
         """Track URL list mutations so the Undo action can restore the prior state."""
@@ -2069,10 +2230,17 @@ class MainWindow(QMainWindow):
                 return item
         return None
 
-    def _set_status(self, message: str) -> None:
-        """Update the status bar label if it has been created."""
+    def _set_status(self, message: str, timeout_ms: int = 5000) -> None:
+        """Update the status bar label with optional auto-clear timer back to Ready."""
         if hasattr(self, "status_bar"):
             self.status_bar.setText(message)
+            if hasattr(self, "_status_clear_timer") and self._status_clear_timer is not None:
+                self._status_clear_timer.stop()
+            if message and message != "Ready" and timeout_ms > 0:
+                self._status_clear_timer = QTimer(self)
+                self._status_clear_timer.setSingleShot(True)
+                self._status_clear_timer.timeout.connect(lambda: self.status_bar.setText("Ready"))
+                self._status_clear_timer.start(timeout_ms)
 
     def _on_top_level_reordered(self) -> None:
         """Called after a drag-reorder of top-level tabs; persists the new order."""
@@ -2342,24 +2510,26 @@ class MainWindow(QMainWindow):
             return
 
         menu = QMenu(self)
-        # Apply theme styling to the context menu
+        tm = get_theme_manager()
+        tokens = tm.tokens
         menu.setStyleSheet(
-            """
-            QMenu {
-                background-color: #1C1F27;
-                color: #E8ECF4;
-                border: 1px solid rgba(255, 255, 255, 0.10);
+            f"""
+            QMenu {{
+                background-color: {tokens.card_bg};
+                color: {tokens.text_primary};
+                border: 1px solid {tokens.card_border};
                 border-radius: 8px;
                 padding: 4px;
-            }
-            QMenu::item {
+            }}
+            QMenu::item {{
                 padding: 6px 16px;
                 border-radius: 4px;
-            }
-            QMenu::item:selected {
-                background-color: rgba(91, 141, 239, 0.28);
-                color: #E8ECF4;
-            }
+                color: {tokens.text_primary};
+            }}
+            QMenu::item:selected {{
+                background-color: {tokens.card_selected_bg};
+                color: {tokens.text_primary};
+            }}
             """
         )
 
@@ -2812,22 +2982,25 @@ class MainWindow(QMainWindow):
     def _show_rich_links_options(self, position):
         """Show a context menu with toggleable options for Copy Rich Links."""
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #1C1F27;
-                color: #E8ECF4;
-                border: 1px solid rgba(255, 255, 255, 0.10);
+        tm = get_theme_manager()
+        tokens = tm.tokens
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {tokens.card_bg};
+                color: {tokens.text_primary};
+                border: 1px solid {tokens.card_border};
                 border-radius: 8px;
                 padding: 4px;
-            }
-            QMenu::item {
+            }}
+            QMenu::item {{
                 padding: 6px 16px;
                 border-radius: 4px;
-            }
-            QMenu::item:selected {
-                background-color: rgba(46, 196, 160, 0.28);
-                color: #E8ECF4;
-            }
+                color: {tokens.text_primary};
+            }}
+            QMenu::item:selected {{
+                background-color: {tokens.card_selected_bg};
+                color: {tokens.text_primary};
+            }}
         """)
 
         skip_dupes = bool(
@@ -2915,3 +3088,83 @@ class MainWindow(QMainWindow):
             f"background-color: #1e1e1e; color: #fff; QPushButton {{ background-color: {color}; color: #fff; padding: 5px 10px; border-radius: 4px; }}"
         )
         msg.exec()
+
+    # ------------------------------------------------------------------
+    # New Modernized Actions & Dialogs
+    # ------------------------------------------------------------------
+
+    def _focus_search(self) -> None:
+        """Focus and select all text in the bookmark search bar."""
+        self.search_bar.setFocus()
+        self.search_bar.selectAll()
+
+    def _handle_tree_delete_key(self) -> None:
+        """Delete selected bookmark tree item on Delete / Backspace."""
+        if hasattr(self, "bookmark_tree") and self.bookmark_tree.hasFocus():
+            item = self.bookmark_tree.currentItem()
+            if item is not None:
+                self._delete_bookmark_item(item)
+
+    def _toggle_theme_mode(self) -> None:
+        """Cycle or toggle between Dark and Light mode."""
+        tm = get_theme_manager()
+        new_mode = tm.toggle_theme()
+        self.settings.setValue("theme/mode", new_mode)
+        self._set_status(f"Theme changed to {new_mode.title()} Mode")
+
+    def _show_preferences_dialog(self) -> None:
+        """Open the application preferences panel."""
+        from nexus.gui.dialogs.preferences_dialog import PreferencesDialog
+
+        dlg = PreferencesDialog(self)
+        dlg.exec()
+
+    def _show_shortcuts_dialog(self) -> None:
+        """Open the keyboard shortcuts reference sheet."""
+        from nexus.gui.dialogs.shortcuts_dialog import ShortcutsDialog
+
+        dlg = ShortcutsDialog(self)
+        dlg.exec()
+
+    def _show_health_scanner_dialog(self) -> None:
+        """Open the bookmark health scanner dialog for duplicates and dead links."""
+        from nexus.gui.dialogs.health_report_dialog import HealthReportDialog
+
+        dlg = HealthReportDialog(self.bookmark_manager, self.group_store, self)
+        dlg.exec()
+
+    def _import_safari_tabs(self) -> None:
+        """Query Safari for open tabs across all windows and add them to the URL workspace."""
+        self._set_status("Importing open tabs from Safari…", timeout_ms=0)
+        worker = AsyncWorker(self.safari_controller.import_safari_tabs)
+        worker.result_ready.connect(self._on_safari_tabs_imported)
+        worker.error.connect(
+            lambda err: self._set_status(f"Failed to import Safari tabs: {err}")
+        )
+        self._start_worker(worker)
+
+    def _on_safari_tabs_imported(self, tabs: list[dict[str, str]]) -> None:
+        """Handle completed Safari tab import."""
+        if not tabs:
+            self._set_status("No open tabs found in Safari (is Safari running?)")
+            return
+
+        urls = [tab["url"] for tab in tabs if tab.get("url")]
+        if not urls:
+            self._set_status("No valid URLs found in Safari tabs")
+            return
+
+        self._go_home()
+        current_urls = self.url_table.get_all_urls()
+        combined = list(current_urls)
+        added_count = 0
+        for u in urls:
+            if u not in combined:
+                combined.append(u)
+                added_count += 1
+
+        self.url_table.replace_urls(combined)
+        self._on_urls_changed(combined)
+        self._set_status(
+            f"Imported {len(urls)} tab{'s' if len(urls) != 1 else ''} from Safari ({added_count} new)"
+        )
