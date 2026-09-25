@@ -1,26 +1,16 @@
 # Nexus
 
 [![Download](https://img.shields.io/github/v/release/RazorBackRoar/Nexus?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Nexus/releases/latest)
-[![Version](https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge)](https://github.com/RazorBackRoar/Nexus/releases/tag/v3.0.0)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge)](https://github.com/RazorBackRoar/Nexus/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Nexus/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.14-2ea44f?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![PySide6](https://img.shields.io/badge/PySide6-Qt6-41cd52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
+[![Swift](https://img.shields.io/badge/swift-6-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org/)
+[![SwiftUI](https://img.shields.io/badge/SwiftUI-macOS-0078D7?style=for-the-badge)](https://developer.apple.com/swiftui/)
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
-
-<!-- Workspace Health Layer -->
-![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
-![Build](https://img.shields.io/badge/build-swift-F05138?style=for-the-badge)
-
-<!-- Workspace Health Layer -->
-![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
-![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)
 
 **Native macOS Safari bookmark manager and batch URL opener.**
 
-Organize bookmarks, batch open URLs, and manage your browsing workflow with a dark native interface.
+Swift 6 and SwiftUI. Deep purple glass, a star field, and colored controls. Opens links in Private Safari.
 
 <p align="center">
   <a href="https://github.com/RazorBackRoar/Nexus/releases/latest/download/Nexus.dmg"><strong>↓ Download Nexus.dmg</strong></a>
@@ -32,15 +22,12 @@ Organize bookmarks, batch open URLs, and manage your browsing workflow with a da
 
 ## Features
 
-- **Safari Integration** — batch open URLs in Safari via AppleScript
-- **Quick Save** — dated URL blocks with notes (`Ctrl+Shift+S`); copy or delete via right-click
-- **Bookmark Groups** — save named groups under any tab; draggable group rows
-- **Copy Rich Links** — Apple Notes–friendly HTML links to the clipboard
-- **Smart URL Extraction** — paste text or drop `.txt`/`.csv`/`.md` onto the URL table
-- **Hierarchical Bookmarks** — drag-and-drop folder organization across nine columns
-- **Private Browsing** — one-click stealth/private mode support
-- **Export / Import** — back up your collections as JSON
-- **Apple Silicon Native** — arm64 build optimized for M-series Macs
+- **Private Safari** — launches in Private Browsing and pauses between tabs
+- **Quick Save** — dated URL cards with notes (⌘⇧S)
+- **Bookmark folders** — colored glass rows you can filter and reorder
+- **Copy Rich Links** — Apple Notes–friendly HTML on the clipboard
+- **Paste and drop** — links from the clipboard, or `.txt` / `.csv` / `.md` files
+- **Apple Silicon** — Swift 6, arm64 only
 
 ---
 
@@ -56,7 +43,7 @@ Organize bookmarks, batch open URLs, and manage your browsing workflow with a da
 ## Usage
 
 1. **Add Bookmarks** — click `+`, paste URLs, or drop a text file onto the URL table
-2. **Quick Save** — press `Ctrl+Shift+S` to capture the current URL block with a timestamp
+2. **Quick Save** — press ⌘⇧S to capture the current links with a timestamp
 3. **Organize** — create folders, save groups, and drag to rearrange
 4. **Batch Open** — select bookmarks → **Open in Safari**
 5. **Rich Links** — copy formatted links for Apple Notes
@@ -70,33 +57,30 @@ Data files live under `~/Library/Application Support/Nexus/`:
 
 ### Requirements
 
-- Python 3.14
-- macOS 12.0+
-- [uv](https://github.com/astral-sh/uv)
+- Swift 6
+- macOS 14 or newer
+- Apple Silicon
 
 ### Setup
 
 ```bash
 git clone https://github.com/RazorBackRoar/Nexus.git
 cd Nexus
-# Workspace layout: sibling Apps/.razorcore provides editable razorcore
-uv sync
-uv run python -m nexus.main
+swift test
+swift run
 ```
 
 ### Build
 
 ```bash
-razorbuild Nexus
-# Output: dist/Nexus.dmg
+./scripts/build-mac.sh
+# Output: build/Release/Nexus.dmg
 ```
 
-### Lint & Test
+### Test
 
 ```bash
-uv run ruff check .
-uv run ty check src --python-version 3.14
-uv run pytest tests/ -q
+swift test
 ```
 
 ---
@@ -118,11 +102,11 @@ Copyright © 2026 RazorBackRoar
 ## Runtime Requirements
 
 For users:
-- Download the macOS `.dmg` or `.app` release. Python does not need to be installed.
+- Download the macOS DMG. Nexus is a native Swift app.
 
 For developers:
-- Primary development/build target: Python 3.14 with `uv`.
-- Source/build target: Python 3.14 only.
-- Setup: `uv sync`
-- Run: `uv run python -m nexus.main`
+- Swift 6, SwiftUI, Apple Silicon.
+- Test: `swift test`
+- Run: `swift run`
+- Package: `./scripts/build-mac.sh`
 <!-- razorcore:runtime:end -->

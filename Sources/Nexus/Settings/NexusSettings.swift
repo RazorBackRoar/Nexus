@@ -25,7 +25,7 @@ struct NexusSettings: Equatable, Sendable {
                 delayMin: 0.35,
                 delayMax: 0.6,
                 staggerSameSite: true,
-                privateByDefault: false,
+                privateByDefault: true,
                 watchClipboard: true,
                 skipDuplicateRichLinks: true,
                 sortRichLinks: false,

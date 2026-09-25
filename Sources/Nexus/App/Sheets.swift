@@ -233,9 +233,9 @@ struct SettingsView: View {
         TabView {
             Form {
                 Picker("Appearance", selection: $model.settings.appearance) {
-                    Text("System").tag("system")
-                    Text("Light").tag("light")
-                    Text("Dark").tag("dark")
+                    Text("Match System").tag("system")
+                    Text("Light Purple").tag("light")
+                    Text("Deep Purple").tag("dark")
                 }
             }
             .padding(20)

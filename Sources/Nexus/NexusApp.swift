@@ -12,6 +12,7 @@ struct NexusApp: App {
                 .frame(minWidth: 1100, minHeight: 720)
         }
         .defaultSize(width: 1200, height: 760)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Folder…") { model.showNewFolder = true }
@@ -44,8 +45,8 @@ struct NexusApp: App {
                     .keyboardShortcut("f", modifiers: .command)
                 Divider()
                 Button("System Appearance") { model.settings.appearance = "system"; model.settings.save() }
-                Button("Light") { model.settings.appearance = "light"; model.settings.save() }
-                Button("Dark") { model.settings.appearance = "dark"; model.settings.save() }
+                Button("Light Purple") { model.settings.appearance = "light"; model.settings.save() }
+                Button("Deep Purple") { model.settings.appearance = "dark"; model.settings.save() }
             }
             CommandMenu("Safari") {
                 Button("Open All URLs in Safari") { Task { await model.openAll() } }

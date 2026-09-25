@@ -16,7 +16,7 @@ RAZORCORE_DIR="$(cd "$SCRIPT_DIR/../../.razorcore" && pwd)"
 
 echo "Building Nexus ${VERSION}..."
 cd "$PROJECT_DIR"
-swift build -c release
+swift build -c release --arch arm64
 
 echo "Packaging $APP_NAME.app..."
 rm -rf "$APP_PATH"

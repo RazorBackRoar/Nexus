@@ -10,32 +10,54 @@ struct MainView: View {
     var body: some View {
         @Bindable var model = model
         ZStack {
-            StarfieldBackground()
-            VStack(spacing: 8) {
+            StarfieldBackground(day: isDay)
+            VStack(spacing: 6) {
                 Text("Nexus")
-                    .font(.system(size: 44, weight: .semibold, design: .default))
-                    .tracking(2)
+                    .font(.system(size: 52, weight: .semibold, design: .rounded))
+                    .tracking(1.8)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(white: 0.98), Color(red: 0.72, green: 0.78, blue: 0.88), Color(white: 0.86)],
+                            colors: isDay
+                                ? [Color(red: 0.28, green: 0.12, blue: 0.48), Color(red: 0.45, green: 0.22, blue: 0.72)]
+                                : [Color(white: 1), Color(red: 0.86, green: 0.80, blue: 1), Color(red: 0.72, green: 0.66, blue: 0.92)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
+                    .shadow(color: Color(red: 0.6, green: 0.4, blue: 1).opacity(isDay ? 0.25 : 0.55), radius: 18)
                 Text("Safari bookmark manager and batch URL opener")
-                    .font(.callout)
-                    .foregroundStyle(.white.opacity(0.72))
-                NavigationSplitView {
+                    .font(.system(size: 13))
+                    .foregroundStyle(isDay ? Color(red: 0.28, green: 0.16, blue: 0.42).opacity(0.75) : .white.opacity(0.62))
+                    .padding(.bottom, 6)
+                HStack(spacing: 16) {
                     SidebarView()
-                        .navigationSplitViewColumnWidth(min: 240, ideal: 260, max: 320)
-                } detail: {
+                        .frame(width: 272)
                     DetailColumn()
                 }
-                .navigationSplitViewStyle(.balanced)
+                .background {
+                    Ellipse()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color(red: 0.55, green: 0.30, blue: 1).opacity(isDay ? 0.18 : 0.32), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 520
+                            )
+                        )
+                        .blur(radius: 40)
+                        .allowsHitTesting(false)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .padding(.top, 8)
+            .padding(.top, 2)
         }
         .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Color.clear.frame(width: 1, height: 1)
+            }
+        }
         .toolbarBackground(.hidden, for: .windowToolbar)
         .background(WindowFrameSaver())
         .alert("Nexus", isPresented: Binding(
@@ -75,6 +97,14 @@ struct MainView: View {
         NSApp.appearance = name.map { NSAppearance(named: $0) } ?? nil
     }
 
+    private var isDay: Bool {
+        switch model.settings.appearance {
+        case "light": return true
+        case "dark": return false
+        default: return colorScheme == .light
+        }
+    }
+
     private func watchClipboard() {
         guard model.settings.watchClipboard else { return }
         guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty else { return }
@@ -103,12 +133,14 @@ struct DetailColumn: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Paste URLs. Open in Safari.")
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.92))
                 Spacer()
-                Button("Load File") { model.importFile() }
+                ColorActionButton(title: "Load File", colors: [Color(hex: "#7C5CFF"), Color(hex: "#5B3FD9")]) { model.importFile() }
+                    .scaleEffect(0.85)
             }
             Group {
                 if model.showQuickSave {
@@ -120,39 +152,37 @@ struct DetailColumn: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.08))
-            )
+            .glass(radius: 16, tint: Color(red: 0.55, green: 0.35, blue: 0.85), opacity: 0.04, elevated: false)
 
             HStack(spacing: 12) {
                 Spacer(minLength: 0)
-                ColorActionButton(title: "Home", colors: [Color(hex: "#3B82F6"), Color(hex: "#1D4ED8")]) { model.goHome() }
-                ColorActionButton(title: "Open All", colors: [Color(hex: "#10B981"), Color(hex: "#047857")]) { Task { await model.openAll() } }
-                ColorActionButton(title: "Save", colors: [Color(hex: "#22D3EE"), Color(hex: "#0E7490")]) { model.showSaveGroup = true }
-                ColorActionButton(title: "Import", colors: [Color(hex: "#818CF8"), Color(hex: "#4338CA")]) { model.importFile() }
-                ColorActionButton(title: "Export", colors: [Color(hex: "#C084FC"), Color(hex: "#7E22CE")]) { model.exportFile() }
-                ColorActionButton(title: "Clear", colors: [Color(hex: "#FB7185"), Color(hex: "#BE123C")]) { model.clearURLs() }
+                ColorActionButton(title: "Home", colors: [Color(hex: "#5B8DEF"), Color(hex: "#2F5FD0")]) { model.goHome() }
+                ColorActionButton(title: "Open All", colors: [Color(hex: "#2EC4A0"), Color(hex: "#158F72")]) { Task { await model.openAll() } }
+                ColorActionButton(title: "Save", colors: [Color(hex: "#38BDF8"), Color(hex: "#0E86B8")]) { model.showSaveGroup = true }
+                ColorActionButton(title: "Import", colors: [Color(hex: "#9B7AE8"), Color(hex: "#6A4BC4")]) { model.importFile() }
+                ColorActionButton(title: "Export", colors: [Color(hex: "#E57BC4"), Color(hex: "#B24A93")]) { model.exportFile() }
+                ColorActionButton(title: "Clear", colors: [Color(hex: "#F07070"), Color(hex: "#B83A3A")]) { model.clearURLs() }
                 Spacer(minLength: 0)
             }
 
             HStack {
                 Text(model.status)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.62))
                 Spacer()
                 Picker("Safari", selection: Bindable(model).settings.privateByDefault) {
                     Text("Standard Safari").tag(false)
                     Text("Private Safari").tag(true)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 280)
+                .labelsHidden()
+                .frame(width: 260)
                 .onChange(of: model.settings.privateByDefault) { _, _ in model.settings.save() }
             }
         }
-        .padding(20)
+        .padding(18)
         .foregroundStyle(.white)
-        .background(Color.black.opacity(0.28), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .glass(radius: 20, opacity: 0.05)
         .background(KeyboardCatcher())
     }
 }

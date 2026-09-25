@@ -10,69 +10,74 @@ struct SidebarView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Bookmarks")
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.92))
                 Spacer()
                 Button {
                     model.showNewFolder = true
                 } label: {
                     Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 26, height: 26)
                 }
                 .help("New Folder")
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
+                .interactiveGlass(accent: Color(hex: "#9B7AE8"), radius: 8, lift: 1.08, sparkles: false)
             }
             TextField("Filter Bookmarks", text: $model.filter)
-                .textFieldStyle(.roundedBorder)
-            List {
-                ForEach(Array(model.visibleFolders.enumerated()), id: \.offset) { _, node in
-                    if case let .folder(folder) = node {
-                        folderBlock(folder)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 10)
+                .frame(height: 30)
+                .glass(radius: 9, opacity: 0.08, elevated: false)
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                    ForEach(Array(model.visibleFolders.enumerated()), id: \.offset) { _, node in
+                        if case let .folder(node) = node {
+                            folderBlock(node)
+                        }
                     }
                 }
-                .onMove(perform: model.moveFolders)
+                .padding(.vertical, 2)
             }
-            .listStyle(.sidebar)
-            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
         }
         .padding(16)
         .foregroundStyle(.white)
-        .background(Color.black.opacity(0.28))
+        .glass(radius: 20, opacity: 0.05)
     }
 
     @ViewBuilder
     private func folderBlock(_ folder: FolderNode) -> some View {
+        let accent = Color(hex: folder.accent ?? "#5B8DEF")
+        let selected = model.selectedFolder.caseInsensitiveCompare(folder.name) == .orderedSame
         Button {
             model.selectFolder(folder.name)
         } label: {
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color(hex: folder.accent ?? "#5B8DEF"))
-                    .frame(width: 3, height: 22)
-                Text(folder.name)
-                    .font(.body.weight(.semibold))
-                Spacer()
-                if folder.children.count > 0 {
-                    Text("\(folder.children.count)")
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
+            GlassRow(accent: accent, selected: selected) {
+                HStack(spacing: 10) {
+                    Text(folder.name)
+                        .font(.system(size: 13, weight: .semibold))
+                        .padding(.leading, 10)
+                    Spacer()
+                    if folder.children.count > 0 {
+                        Text("\(folder.children.count)")
+                            .font(.system(size: 11, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(.white.opacity(0.7))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(accent.opacity(0.3), in: Capsule())
+                    }
                 }
             }
-            .frame(minHeight: 44)
-            .padding(.horizontal, 8)
-            .background(
-                model.selectedFolder.caseInsensitiveCompare(folder.name) == .orderedSame
-                    ? Color.accentColor.opacity(0.16)
-                    : Color.clear,
-                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-            )
         }
         .buttonStyle(.plain)
         .contextMenu { folderMenu(folder) }
 
-        if model.selectedFolder.caseInsensitiveCompare(folder.name) == .orderedSame,
-           !LibraryDefaults.isQuickSave(folder.name) {
+        if selected, !LibraryDefaults.isQuickSave(folder.name) {
             ForEach(Array(folder.children.enumerated()), id: \.offset) { _, child in
                 childRow(child, folder: folder)
-                    .padding(.leading, 18)
+                    .padding(.leading, 16)
             }
         }
     }
@@ -99,9 +104,7 @@ struct SidebarView: View {
             let count = model.groupItems(marker.id).count
             Button {
                 Task {
-                    for item in model.groupItems(marker.id) {
-                        await model.openOne(item.url)
-                    }
+                    await model.openMany(model.groupItems(marker.id).map(\.url))
                 }
             } label: {
                 HStack {
@@ -137,21 +140,31 @@ struct EmptyURLState: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             Spacer()
+            Image(systemName: "sparkles")
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(
+                    LinearGradient(colors: [Color(hex: "#C9B8FF"), Color(hex: "#7C5CFF")], startPoint: .top, endPoint: .bottom)
+                )
+                .shadow(color: Color(hex: "#7C5CFF").opacity(0.7), radius: 14)
             Text("Paste URLs to get started")
-                .font(.title2.weight(.semibold))
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.95))
             Text("Copied links show up here. Paste, import your open Safari tabs, or drop a text file.")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.62))
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 460)
+                .frame(maxWidth: 420)
             HStack(spacing: 12) {
-                Button("Paste from Clipboard") {
+                ColorActionButton(title: "Paste from Clipboard", colors: [Color(hex: "#5B8DEF"), Color(hex: "#2F5FD0")]) {
                     model.ingest(URLExtractor.extract(from: NSPasteboard.general.string(forType: .string) ?? ""))
                 }
-                Button("Import Safari Tabs") { Task { await model.importSafariTabs() } }
+                ColorActionButton(title: "Import Safari Tabs", colors: [Color(hex: "#2EC4A0"), Color(hex: "#158F72")]) {
+                    Task { await model.importSafariTabs() }
+                }
             }
+            .padding(.top, 6)
             Spacer()
         }
         .padding(28)
@@ -174,7 +187,7 @@ struct URLList: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 2) {
+            LazyVStack(spacing: 6) {
                 ForEach(model.urls) { row in
                     HStack(spacing: 12) {
                         Text(row.url)
@@ -189,6 +202,8 @@ struct URLList: View {
                     .frame(minHeight: 36)
                     .padding(.horizontal, 14)
                     .contentShape(Rectangle())
+                    .interactiveGlass(accent: statusColor(row.status), radius: 10, intensity: 0.45, lift: 1.006, sparkles: false, pressable: false)
+                    .padding(.horizontal, 10)
                     .onTapGesture(count: 2) { Task { await model.openOne(row.url) } }
                 }
             }
@@ -251,8 +266,7 @@ private struct QuickSaveCard: View {
                 .onSubmit { model.updateQuickSaveNotes(id: entry.id, notes: notes) }
         }
         .padding(14)
-        .background(.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08)))
+        .interactiveGlass(accent: Color(hex: "#2EC4A0"), radius: 14, intensity: 0.55, lift: 1.008, sparkles: false, pressable: false)
         .onAppear { notes = entry.notes }
         .onChange(of: notes) { _, newValue in
             model.updateQuickSaveNotes(id: entry.id, notes: newValue)

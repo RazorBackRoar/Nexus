@@ -60,6 +60,8 @@ final class AppModel {
         libraryDirectory = directory
         store = BookmarkStore(directory: directory)
         settings = NexusSettings.load()
+        settings.privateByDefault = true
+        settings.save()
         reloadLibrary()
     }
 
@@ -346,9 +348,8 @@ final class AppModel {
             return
         }
         status = settings.privateByDefault ? "Opening in Private Safari" : "Opening in Safari"
-        let plan = OpenPlanner.plan(urls: list, batchSize: settings.batchSize, staggerSameSite: settings.staggerSameSite)
         for index in urls.indices { urls[index].status = .opening }
-        let result = await SafariRunner.open(plan: plan, privateMode: settings.privateByDefault, delayMin: settings.delayMin, delayMax: settings.delayMax)
+        let result = await SafariRunner.open(urls: list, privateMode: settings.privateByDefault, delay: settings.delayMin)
         for index in urls.indices {
             urls[index].status = result.ok ? .opened : .failed
         }
@@ -356,13 +357,16 @@ final class AppModel {
         if let message = result.alert { alertMessage = message }
     }
 
+    func openMany(_ list: [String]) async {
+        guard !list.isEmpty else { return }
+        status = settings.privateByDefault ? "Opening in Private Safari" : "Opening in Safari"
+        let result = await SafariRunner.open(urls: list, privateMode: settings.privateByDefault, delay: settings.delayMin)
+        status = result.message
+        if let message = result.alert { alertMessage = message }
+    }
+
     func openOne(_ url: String) async {
-        let result = await SafariRunner.open(
-            plan: OpenPlan(batches: [[url]]),
-            privateMode: settings.privateByDefault,
-            delayMin: 0,
-            delayMax: 0
-        )
+        let result = await SafariRunner.open(urls: [url], privateMode: settings.privateByDefault, delay: settings.delayMin)
         status = result.message
         if let message = result.alert { alertMessage = message }
     }

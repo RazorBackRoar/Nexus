@@ -8,18 +8,17 @@ struct SafariRunResult: Sendable {
 }
 
 enum SafariRunner {
-    static func open(plan: OpenPlan, privateMode: Bool, delayMin: Double, delayMax: Double) async -> SafariRunResult {
-        let batches = plan.batches
-        guard !batches.isEmpty else {
+    /// Opens one Safari tab at a time. The pause keeps Safari from failing when many links fire at once.
+    static func open(urls: [String], privateMode: Bool, delay: Double) async -> SafariRunResult {
+        let urls = SafariScripts.allowed(urls)
+        guard let first = urls.first else {
             return SafariRunResult(ok: false, message: "No links to open.", alert: nil, urls: [])
         }
-        if privateMode {
-            guard let first = batches.first?.first else {
-                return SafariRunResult(ok: false, message: "No links to open.", alert: nil, urls: [])
-            }
-            let script = SafariScripts.privateWindow(first)
-            let firstResult = await run(script)
-            if !firstResult.ok {
+        let pause = max(delay, 0.55)
+        let firstScript = privateMode ? SafariScripts.privateWindow(first) : SafariScripts.newDocument(first)
+        let firstResult = await run(firstScript)
+        if !firstResult.ok {
+            if privateMode {
                 return SafariRunResult(
                     ok: false,
                     message: "Private Safari needs Accessibility permission.",
@@ -27,31 +26,21 @@ enum SafariRunner {
                     urls: []
                 )
             }
-            let rest = batches.flatMap { $0 }.dropFirst()
-            if !rest.isEmpty {
-                let tabScript = SafariScripts.openInFrontWindow(Array(rest))
-                let tabResult = await run(tabScript.replacingOccurrences(of: "make new document", with: "make new tab"))
-                if !tabResult.ok {
-                    return SafariRunResult(ok: false, message: "Some links did not open.", alert: tabResult.error, urls: [])
-                }
-            }
-            return SafariRunResult(ok: true, message: "Opened in Private Safari", alert: nil, urls: [])
+            return SafariRunResult(ok: false, message: "Safari did not open the links.", alert: firstResult.error, urls: [])
         }
-        for (index, batch) in batches.enumerated() {
-            let script = SafariScripts.openInFrontWindow(batch)
-            let result = await run(script)
-            if !result.ok {
-                return SafariRunResult(ok: false, message: "Safari did not open the links.", alert: result.error, urls: [])
-            }
-            if index + 1 < batches.count {
-                let low = min(delayMin, delayMax)
-                let high = max(delayMin, delayMax)
-                let span = high - low
-                let delay = low + Double.random(in: 0...max(span, 0.01))
-                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        for url in urls.dropFirst() {
+            try? await Task.sleep(nanoseconds: UInt64(pause * 1_000_000_000))
+            let tabResult = await run(SafariScripts.newTab(url))
+            if !tabResult.ok {
+                return SafariRunResult(ok: false, message: "Some links did not open.", alert: tabResult.error, urls: [])
             }
         }
-        return SafariRunResult(ok: true, message: "Opened in Safari", alert: nil, urls: [])
+        return SafariRunResult(
+            ok: true,
+            message: privateMode ? "Opened in Private Safari" : "Opened in Safari",
+            alert: nil,
+            urls: []
+        )
     }
 
     static func importTabs() async -> SafariRunResult {
