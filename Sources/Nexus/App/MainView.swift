@@ -9,14 +9,34 @@ struct MainView: View {
 
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 240, ideal: 260, max: 320)
-        } detail: {
-            DetailColumn()
+        ZStack {
+            StarfieldBackground()
+            VStack(spacing: 8) {
+                Text("Nexus")
+                    .font(.system(size: 44, weight: .semibold, design: .default))
+                    .tracking(2)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color(white: 0.98), Color(red: 0.72, green: 0.78, blue: 0.88), Color(white: 0.86)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                Text("Safari bookmark manager and batch URL opener")
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.72))
+                NavigationSplitView {
+                    SidebarView()
+                        .navigationSplitViewColumnWidth(min: 240, ideal: 260, max: 320)
+                } detail: {
+                    DetailColumn()
+                }
+                .navigationSplitViewStyle(.balanced)
+            }
+            .padding(.top, 8)
         }
-        .navigationTitle("Nexus")
-        .tint(Color(red: 0.10, green: 0.27, blue: 0.49))
+        .navigationTitle("")
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .background(WindowFrameSaver())
         .alert("Nexus", isPresented: Binding(
             get: { model.alertMessage != nil },
@@ -31,6 +51,11 @@ struct MainView: View {
         .sheet(isPresented: $model.showHealth) { HealthSheet() }
         .sheet(isPresented: $model.showShortcuts) { ShortcutsSheet() }
         .sheet(isPresented: $model.showAbout) { AboutSheet() }
+        .sheet(isPresented: $model.showRename) { RenameSheet() }
+        .confirmationDialog("Clear every URL in the list?", isPresented: $model.confirmClear, titleVisibility: .visible) {
+            Button("Clear", role: .destructive) { model.confirmClearURLs() }
+            Button("Cancel", role: .cancel) {}
+        }
         .onAppear {
             applyAppearance()
             model.status = model.urls.isEmpty ? "Waiting for pasted URLs" : "\(model.urls.count) URLs"
@@ -83,7 +108,7 @@ struct DetailColumn: View {
                 Text("Paste URLs. Open in Safari.")
                     .font(.title3.weight(.semibold))
                 Spacer()
-                Button("Load File") { loadFile() }
+                Button("Load File") { model.importFile() }
             }
             Group {
                 if model.showQuickSave {
@@ -103,12 +128,12 @@ struct DetailColumn: View {
 
             HStack(spacing: 12) {
                 Spacer(minLength: 0)
-                action("Home") { model.goHome() }
-                action("Open All") { Task { await model.openAll() } }
-                action("Save") { model.showSaveGroup = true }
-                action("Import") { loadFile() }
-                action("Export") { exportFile() }
-                action("Clear") { model.clearURLs() }
+                ColorActionButton(title: "Home", colors: [Color(hex: "#3B82F6"), Color(hex: "#1D4ED8")]) { model.goHome() }
+                ColorActionButton(title: "Open All", colors: [Color(hex: "#10B981"), Color(hex: "#047857")]) { Task { await model.openAll() } }
+                ColorActionButton(title: "Save", colors: [Color(hex: "#22D3EE"), Color(hex: "#0E7490")]) { model.showSaveGroup = true }
+                ColorActionButton(title: "Import", colors: [Color(hex: "#818CF8"), Color(hex: "#4338CA")]) { model.importFile() }
+                ColorActionButton(title: "Export", colors: [Color(hex: "#C084FC"), Color(hex: "#7E22CE")]) { model.exportFile() }
+                ColorActionButton(title: "Clear", colors: [Color(hex: "#FB7185"), Color(hex: "#BE123C")]) { model.clearURLs() }
                 Spacer(minLength: 0)
             }
 
@@ -126,33 +151,9 @@ struct DetailColumn: View {
             }
         }
         .padding(20)
+        .foregroundStyle(.white)
+        .background(Color.black.opacity(0.28), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .background(KeyboardCatcher())
-    }
-
-    private func action(_ title: String, perform: @escaping () -> Void) -> some View {
-        Button(title, action: perform)
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(minWidth: 108)
-    }
-
-    private func loadFile() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.plainText, .commaSeparatedText]
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK, let url = panel.url {
-            let text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-            model.ingest(URLExtractor.parseFile(name: url.lastPathComponent, text: text))
-        }
-    }
-
-    private func exportFile() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText, .commaSeparatedText]
-        panel.nameFieldStringValue = "nexus-urls.txt"
-        if panel.runModal() == .OK, let url = panel.url {
-            model.exportURLs(to: url)
-        }
     }
 }
 

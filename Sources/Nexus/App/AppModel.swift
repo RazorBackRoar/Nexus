@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 public enum URLStatus: String, Sendable {
     case ready = "Ready"
@@ -47,6 +48,10 @@ final class AppModel {
     var showHealth = false
     var showShortcuts = false
     var showAbout = false
+    var confirmClear = false
+    var showRename = false
+    var renameTarget = ""
+    var renameText = ""
 
     private let store: BookmarkStore
 
@@ -166,9 +171,39 @@ final class AppModel {
 
     func clearURLs() {
         guard !urls.isEmpty else { return }
+        confirmClear = true
+    }
+
+    func confirmClearURLs() {
         pushUndo()
         urls = []
         status = "Waiting for pasted URLs"
+    }
+
+    func beginRename(_ name: String) {
+        guard !LibraryDefaults.isQuickSave(name) else { return }
+        renameTarget = name
+        renameText = name
+        showRename = true
+    }
+
+    func importFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.plainText, .commaSeparatedText]
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url {
+            let text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+            ingest(URLExtractor.parseFile(name: url.lastPathComponent, text: text))
+        }
+    }
+
+    func exportFile() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText, .commaSeparatedText]
+        panel.nameFieldStringValue = "nexus-urls.txt"
+        if panel.runModal() == .OK, let url = panel.url {
+            exportURLs(to: url)
+        }
     }
 
     func quickSave() {

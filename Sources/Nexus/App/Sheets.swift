@@ -85,24 +85,18 @@ struct SaveGroupSheet: View {
 struct HealthSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var checks: [LinkCheck] = []
+    @State private var scanned = 0
+    @State private var scanning = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Bookmark Health").font(.title2.weight(.semibold))
-            let groups = HealthScanner.duplicates(folders: model.folders, groups: model.groups)
-            if groups.isEmpty {
-                Text("No duplicate links.")
-                    .foregroundStyle(.secondary)
-            } else {
-                List(groups, id: \.first?.url) { group in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(group.first?.url ?? "")
-                            .font(.system(.body, design: .monospaced))
-                        Text(group.map(\.container).joined(separator: ", "))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(minHeight: 240)
+            TabView {
+                duplicatePane
+                    .tabItem { Text("Duplicates") }
+                deadPane
+                    .tabItem { Text("Dead Links") }
             }
             HStack {
                 Spacer()
@@ -111,7 +105,65 @@ struct HealthSheet: View {
             }
         }
         .padding(20)
-        .frame(width: 640, height: 420)
+        .frame(width: 680, height: 480)
+    }
+
+    private var duplicatePane: some View {
+        let groups = HealthScanner.duplicates(folders: model.folders, groups: model.groups)
+        return Group {
+            if groups.isEmpty {
+                Text("No duplicate links.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(groups, id: \.first?.url) { group in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(group.first?.url ?? "")
+                            .font(.system(.body, design: .monospaced))
+                        Text(group.map { "\($0.name) · \($0.container)" }.joined(separator: ", "))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private var deadPane: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button(scanning ? "Checking…" : "Check Links") { Task { await scan() } }
+                    .disabled(scanning)
+                if scanning {
+                    Text("\(scanned) checked")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            List(checks) { item in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(item.name).lineLimit(1)
+                        Text(item.container).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text(item.alive ? "OK" : (item.error ?? "Failed"))
+                        .foregroundStyle(item.alive ? .green : .red)
+                }
+            }
+        }
+    }
+
+    private func scan() async {
+        scanning = true
+        scanned = 0
+        let targets = HealthScanner.linkTargets(folders: model.folders, groups: model.groups)
+        checks = []
+        for target in targets {
+            if Task.isCancelled { break }
+            let result = await HealthScanner.check(target)
+            checks.append(result)
+            scanned += 1
+        }
+        scanning = false
     }
 }
 
@@ -178,33 +230,84 @@ struct SettingsView: View {
 
     var body: some View {
         @Bindable var model = model
-        Form {
-            Picker("Appearance", selection: $model.settings.appearance) {
-                Text("System").tag("system")
-                Text("Light").tag("light")
-                Text("Dark").tag("dark")
+        TabView {
+            Form {
+                Picker("Appearance", selection: $model.settings.appearance) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
             }
-            Stepper("Batch size: \(model.settings.batchSize)", value: $model.settings.batchSize, in: 1...100)
-            TextField("Minimum delay", value: $model.settings.delayMin, format: .number)
-            TextField("Maximum delay", value: $model.settings.delayMax, format: .number)
-            Toggle("Pause longer between links on the same site", isOn: $model.settings.staggerSameSite)
-            Toggle("Open in Private Safari by default", isOn: $model.settings.privateByDefault)
-            Toggle("Add copied links automatically", isOn: $model.settings.watchClipboard)
-            Toggle("Skip duplicate URLs", isOn: $model.settings.skipDuplicateRichLinks)
-            Toggle("Sort links alphabetically", isOn: $model.settings.sortRichLinks)
-            Toggle("Keep blank lines", isOn: $model.settings.keepBlankLines)
-            LabeledContent("Library") {
-                Text(model.libraryDirectory.path)
-                    .font(.callout)
-                    .textSelection(.enabled)
+            .padding(20)
+            .tabItem { Text("Appearance") }
+
+            Form {
+                Stepper("Batch size: \(model.settings.batchSize)", value: $model.settings.batchSize, in: 1...100)
+                TextField("Minimum delay", value: $model.settings.delayMin, format: .number)
+                TextField("Maximum delay", value: $model.settings.delayMax, format: .number)
+                Toggle("Pause longer between links on the same site", isOn: $model.settings.staggerSameSite)
+                Toggle("Open in Private Safari by default", isOn: $model.settings.privateByDefault)
+            }
+            .padding(20)
+            .tabItem { Text("Safari") }
+
+            Form {
+                Toggle("Add copied links automatically", isOn: $model.settings.watchClipboard)
+                Toggle("Keep URLs out of logs", isOn: .constant(true))
+                    .disabled(true)
+            }
+            .padding(20)
+            .tabItem { Text("Privacy") }
+
+            Form {
+                Toggle("Skip duplicate URLs", isOn: $model.settings.skipDuplicateRichLinks)
+                Toggle("Sort links alphabetically", isOn: $model.settings.sortRichLinks)
+                Toggle("Keep blank lines", isOn: $model.settings.keepBlankLines)
+            }
+            .padding(20)
+            .tabItem { Text("Rich Links") }
+
+            Form {
+                LabeledContent("Library") {
+                    Text(model.libraryDirectory.path)
+                        .font(.callout)
+                        .textSelection(.enabled)
+                }
                 Button("Show in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([model.libraryDirectory])
                 }
+                Stepper("Backup copies to keep: \(model.settings.backupCount)", value: $model.settings.backupCount, in: 1...50)
+            }
+            .padding(20)
+            .tabItem { Text("Storage") }
+        }
+        .frame(width: 560, height: 320)
+        .onChange(of: model.settings) { _, newValue in newValue.save() }
+    }
+}
+
+struct RenameSheet: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Rename Folder").font(.title2.weight(.semibold))
+            TextField("Folder name", text: Bindable(model).renameText)
+                .textFieldStyle(.roundedBorder)
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                Button("Rename") {
+                    model.renameFolder(from: model.renameTarget, to: model.renameText)
+                    dismiss()
+                }
+                .disabled(model.renameText.trimmingCharacters(in: .whitespaces).isEmpty)
+                .keyboardShortcut(.defaultAction)
             }
         }
         .padding(20)
-        .frame(width: 560)
-        .onChange(of: model.settings) { _, newValue in newValue.save() }
+        .frame(width: 420)
     }
 }
 

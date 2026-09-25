@@ -34,6 +34,8 @@ struct SidebarView: View {
             .scrollContentBackground(.hidden)
         }
         .padding(16)
+        .foregroundStyle(.white)
+        .background(Color.black.opacity(0.28))
     }
 
     @ViewBuilder
@@ -125,7 +127,7 @@ struct SidebarView: View {
     @ViewBuilder
     private func folderMenu(_ folder: FolderNode) -> some View {
         if !LibraryDefaults.isQuickSave(folder.name) {
-            Button("Rename") { model.renameFolder(from: folder.name, to: folder.name + " ") }
+            Button("Rename") { model.beginRename(folder.name) }
             Button("Delete", role: .destructive) { model.deleteFolder(named: folder.name) }
         }
     }

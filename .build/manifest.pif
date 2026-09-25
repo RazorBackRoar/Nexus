@@ -5,11 +5,11 @@
       "name" : "Nexus",
       "path" : "/Users/home/Workspace/Apps/Nexus",
       "projects" : [
-        "5981f4d8c539b482a52d7f8e2949e7950fb8c93aa137730d4160ad4c2a97798b",
+        "1cae79ac106338af4a50496603c066584cad4c8b894c8d915fe4f392629ac499",
         "eb4ddc29e5d17dbb8f439de546e6bdc1d7144606db347a130c0cacfe7e1ce401"
       ]
     },
-    "signature" : "ff80bbcc42557cec9bada7b9f78e03e3f430db4b635403a8a0f1c4474c028515",
+    "signature" : "58ce7d5339e4c50867d1452c46d2e396d16df37c0b2f28887ff104e5ed57bd64",
     "type" : "workspace"
   },
   {
@@ -242,6 +242,14 @@
               {
                 "fileType" : "sourcecode.swift",
                 "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_3",
+                "name" : "App/Starfield.swift",
+                "path" : "App/Starfield.swift",
+                "sourceTree" : "<group>",
+                "type" : "file"
+              },
+              {
+                "fileType" : "sourcecode.swift",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_4",
                 "name" : "Health/HealthScanner.swift",
                 "path" : "Health/HealthScanner.swift",
                 "sourceTree" : "<group>",
@@ -249,7 +257,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_4",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_5",
                 "name" : "NexusApp.swift",
                 "path" : "NexusApp.swift",
                 "sourceTree" : "<group>",
@@ -257,7 +265,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_5",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_6",
                 "name" : "Safari/SafariRunner.swift",
                 "path" : "Safari/SafariRunner.swift",
                 "sourceTree" : "<group>",
@@ -265,7 +273,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_6",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_7",
                 "name" : "Safari/SafariScripts.swift",
                 "path" : "Safari/SafariScripts.swift",
                 "sourceTree" : "<group>",
@@ -273,7 +281,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_7",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_8",
                 "name" : "Settings/NexusSettings.swift",
                 "path" : "Settings/NexusSettings.swift",
                 "sourceTree" : "<group>",
@@ -281,7 +289,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_8",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_9",
                 "name" : "Sidebar/SidebarView.swift",
                 "path" : "Sidebar/SidebarView.swift",
                 "sourceTree" : "<group>",
@@ -289,7 +297,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_9",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_10",
                 "name" : "Store/BookmarkStore.swift",
                 "path" : "Store/BookmarkStore.swift",
                 "sourceTree" : "<group>",
@@ -297,7 +305,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_10",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_11",
                 "name" : "Store/LibraryCodec.swift",
                 "path" : "Store/LibraryCodec.swift",
                 "sourceTree" : "<group>",
@@ -305,7 +313,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_11",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_12",
                 "name" : "Store/Models.swift",
                 "path" : "Store/Models.swift",
                 "sourceTree" : "<group>",
@@ -313,7 +321,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_12",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_13",
                 "name" : "URLWorkspace/URLExtractor.swift",
                 "path" : "URLWorkspace/URLExtractor.swift",
                 "sourceTree" : "<group>",
@@ -371,6 +379,14 @@
               {
                 "fileType" : "sourcecode.swift",
                 "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_3",
+                "name" : "App/Starfield.swift",
+                "path" : "App/Starfield.swift",
+                "sourceTree" : "<group>",
+                "type" : "file"
+              },
+              {
+                "fileType" : "sourcecode.swift",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_4",
                 "name" : "Health/HealthScanner.swift",
                 "path" : "Health/HealthScanner.swift",
                 "sourceTree" : "<group>",
@@ -378,7 +394,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_4",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_5",
                 "name" : "NexusApp.swift",
                 "path" : "NexusApp.swift",
                 "sourceTree" : "<group>",
@@ -386,7 +402,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_5",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_6",
                 "name" : "Safari/SafariRunner.swift",
                 "path" : "Safari/SafariRunner.swift",
                 "sourceTree" : "<group>",
@@ -394,7 +410,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_6",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_7",
                 "name" : "Safari/SafariScripts.swift",
                 "path" : "Safari/SafariScripts.swift",
                 "sourceTree" : "<group>",
@@ -402,7 +418,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_7",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_8",
                 "name" : "Settings/NexusSettings.swift",
                 "path" : "Settings/NexusSettings.swift",
                 "sourceTree" : "<group>",
@@ -410,7 +426,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_8",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_9",
                 "name" : "Sidebar/SidebarView.swift",
                 "path" : "Sidebar/SidebarView.swift",
                 "sourceTree" : "<group>",
@@ -418,7 +434,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_9",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_10",
                 "name" : "Store/BookmarkStore.swift",
                 "path" : "Store/BookmarkStore.swift",
                 "sourceTree" : "<group>",
@@ -426,7 +442,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_10",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_11",
                 "name" : "Store/LibraryCodec.swift",
                 "path" : "Store/LibraryCodec.swift",
                 "sourceTree" : "<group>",
@@ -434,7 +450,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_11",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_12",
                 "name" : "Store/Models.swift",
                 "path" : "Store/Models.swift",
                 "sourceTree" : "<group>",
@@ -442,7 +458,7 @@
               },
               {
                 "fileType" : "sourcecode.swift",
-                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_12",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_13",
                 "name" : "URLWorkspace/URLExtractor.swift",
                 "path" : "URLWorkspace/URLExtractor.swift",
                 "sourceTree" : "<group>",
@@ -470,13 +486,13 @@
       "targets" : [
         "5a7638ff18aea6f46af909215a5317a77f8fa8e49880f45857f82fffd924dd5d",
         "19b8a6fced2409e0e3a07309c52cf8a9134c30764987e919cef277798b72adc0",
-        "4decec6c11aa3ed087051e7d71e7ac5668e46ad6ac3368974f093ec89b348076",
+        "3aa34f2c0a2b8a87d8b3793744d0e34086758b438130a4189915d570ba84d64b",
         "bc4b006942263aaac6fcf772f09ae172416c44787de8a46990a1aff8471586f0",
-        "9d007b67afe319c43f0946fd34d7faddfa54b34f24a2ea30a403cd88b402955e",
+        "cb04f9f8b85456ba9d927ab528248bae85edd9e706d4d12375bf064d9cb3e9a2",
         "c6564e001692160e026489d2514c486bef7b4c0ca03412b7065c3f9d06d3290e"
       ]
     },
-    "signature" : "5981f4d8c539b482a52d7f8e2949e7950fb8c93aa137730d4160ad4c2a97798b",
+    "signature" : "1cae79ac106338af4a50496603c066584cad4c8b894c8d915fe4f392629ac499",
     "type" : "project"
   },
   {
@@ -1055,6 +1071,15 @@
 
               ],
               "removeHeadersOnCopy" : "false"
+            },
+            {
+              "codeSignOnCopy" : "false",
+              "fileReference" : "PACKAGE:nexus::MAINGROUP::REF_3::REF_13",
+              "guid" : "PACKAGE-PRODUCT:nexus_Nexus.Nexus::BUILDPHASE_0::13",
+              "platformFilters" : [
+
+              ],
+              "removeHeadersOnCopy" : "false"
             }
           ],
           "guid" : "PACKAGE-PRODUCT:nexus_Nexus.Nexus::BUILDPHASE_0",
@@ -1085,7 +1110,7 @@
       "productTypeIdentifier" : "com.apple.product-type.tool",
       "type" : "standard"
     },
-    "signature" : "4decec6c11aa3ed087051e7d71e7ac5668e46ad6ac3368974f093ec89b348076",
+    "signature" : "3aa34f2c0a2b8a87d8b3793744d0e34086758b438130a4189915d570ba84d64b",
     "type" : "target"
   },
   {
@@ -1450,6 +1475,15 @@
 
               ],
               "removeHeadersOnCopy" : "false"
+            },
+            {
+              "codeSignOnCopy" : "false",
+              "fileReference" : "PACKAGE:nexus::MAINGROUP::REF_6::REF_13",
+              "guid" : "PACKAGE-TARGET:Nexus-CDE28CDCA18-testable::BUILDPHASE_0::13",
+              "platformFilters" : [
+
+              ],
+              "removeHeadersOnCopy" : "false"
             }
           ],
           "guid" : "PACKAGE-TARGET:Nexus-CDE28CDCA18-testable::BUILDPHASE_0",
@@ -1480,7 +1514,7 @@
       "productTypeIdentifier" : "org.swift.product-type.common.object",
       "type" : "standard"
     },
-    "signature" : "9d007b67afe319c43f0946fd34d7faddfa54b34f24a2ea30a403cd88b402955e",
+    "signature" : "cb04f9f8b85456ba9d927ab528248bae85edd9e706d4d12375bf064d9cb3e9a2",
     "type" : "target"
   },
   {
