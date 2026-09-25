@@ -5,8 +5,8 @@ struct NewFolderSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var accent = "#5B8DEF"
-    private let swatches = ["#E5738A", "#D4A05A", "#5B8DEF", "#E85A5A", "#8A95A8", "#2A2A35", "#F0F4FA", "#5BA86A", "#2EC4A0"]
+    @State private var accent = "#4DA3FF"
+    private let swatches = ["#34D6C4", "#4DA3FF", "#9D7BFF", "#7C8CB5", "#52D273", "#F2C14E", "#FF9A3C", "#FF5A52", "#FF6FAE"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

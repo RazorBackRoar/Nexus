@@ -22,13 +22,13 @@ struct SidebarView: View {
                 }
                 .help("New Folder")
                 .buttonStyle(.plain)
-                .interactiveGlass(accent: Color(hex: "#9B7AE8"), radius: 8, lift: 1.08, sparkles: false)
+                .interactiveGlass(accent: Color(hex: "#8C7BFF"), radius: 8, lift: 1.08)
             }
             TextField("Filter Bookmarks", text: $model.filter)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 10)
                 .frame(height: 30)
-                .glass(radius: 9, opacity: 0.08, elevated: false)
+                .glass(radius: 9, elevated: false)
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(Array(model.visibleFolders.enumerated()), id: \.offset) { _, node in
@@ -43,12 +43,12 @@ struct SidebarView: View {
         }
         .padding(16)
         .foregroundStyle(.white)
-        .glass(radius: 20, opacity: 0.05)
+        .glass(radius: 20)
     }
 
     @ViewBuilder
     private func folderBlock(_ folder: FolderNode) -> some View {
-        let accent = Color(hex: folder.accent ?? "#5B8DEF")
+        let accent = Color(hex: LibraryDefaults.displayAccent(name: folder.name, stored: folder.accent))
         let selected = model.selectedFolder.caseInsensitiveCompare(folder.name) == .orderedSame
         Button {
             model.selectFolder(folder.name)
@@ -90,7 +90,7 @@ struct SidebarView: View {
                 Task { await model.openOne(item.url) }
             } label: {
                 HStack(spacing: 8) {
-                    Circle().fill(Color(hex: item.accent ?? folder.accent ?? "#5B8DEF")).frame(width: 8, height: 8)
+                    Circle().fill(Color(hex: item.accent ?? LibraryDefaults.displayAccent(name: folder.name, stored: folder.accent))).frame(width: 8, height: 8)
                     Text(item.name).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
@@ -108,7 +108,7 @@ struct SidebarView: View {
                 }
             } label: {
                 HStack {
-                    Circle().fill(Color(hex: folder.accent ?? "#5B8DEF")).frame(width: 8, height: 8)
+                    Circle().fill(Color(hex: LibraryDefaults.displayAccent(name: folder.name, stored: folder.accent))).frame(width: 8, height: 8)
                     Text(model.groupName(marker.id)).lineLimit(1)
                     Spacer()
                     if count > 0 {
@@ -145,9 +145,9 @@ struct EmptyURLState: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(
-                    LinearGradient(colors: [Color(hex: "#C9B8FF"), Color(hex: "#7C5CFF")], startPoint: .top, endPoint: .bottom)
+                    LinearGradient(colors: [Color(hex: "#E6EEFF"), Color(hex: "#7FA6FF")], startPoint: .top, endPoint: .bottom)
                 )
-                .shadow(color: Color(hex: "#7C5CFF").opacity(0.7), radius: 14)
+                .shadow(color: Color(hex: "#4DA3FF").opacity(0.6), radius: 14)
             Text("Paste URLs to get started")
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.95))
@@ -157,10 +157,10 @@ struct EmptyURLState: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
             HStack(spacing: 12) {
-                ColorActionButton(title: "Paste from Clipboard", colors: [Color(hex: "#5B8DEF"), Color(hex: "#2F5FD0")]) {
+                ColorActionButton(title: "Paste from Clipboard", colors: [Color(hex: "#4DA3FF")]) {
                     model.ingest(URLExtractor.extract(from: NSPasteboard.general.string(forType: .string) ?? ""))
                 }
-                ColorActionButton(title: "Import Safari Tabs", colors: [Color(hex: "#2EC4A0"), Color(hex: "#158F72")]) {
+                ColorActionButton(title: "Import Safari Tabs", colors: [Color(hex: "#3DDC97")]) {
                     Task { await model.importSafariTabs() }
                 }
             }
@@ -202,7 +202,7 @@ struct URLList: View {
                     .frame(minHeight: 36)
                     .padding(.horizontal, 14)
                     .contentShape(Rectangle())
-                    .interactiveGlass(accent: statusColor(row.status), radius: 10, intensity: 0.45, lift: 1.006, sparkles: false, pressable: false)
+                    .interactiveGlass(accent: statusColor(row.status), radius: 10, intensity: 0.45, lift: 1.006, pressable: false)
                     .padding(.horizontal, 10)
                     .onTapGesture(count: 2) { Task { await model.openOne(row.url) } }
                 }
@@ -266,7 +266,7 @@ private struct QuickSaveCard: View {
                 .onSubmit { model.updateQuickSaveNotes(id: entry.id, notes: notes) }
         }
         .padding(14)
-        .interactiveGlass(accent: Color(hex: "#2EC4A0"), radius: 14, intensity: 0.55, lift: 1.008, sparkles: false, pressable: false)
+        .interactiveGlass(accent: Color(hex: "#34D6C4"), radius: 14, intensity: 0.55, lift: 1.008, pressable: false)
         .onAppear { notes = entry.notes }
         .onChange(of: notes) { _, newValue in
             model.updateQuickSaveNotes(id: entry.id, notes: newValue)

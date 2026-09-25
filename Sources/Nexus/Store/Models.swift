@@ -155,4 +155,33 @@ public enum LibraryDefaults {
         name.caseInsensitiveCompare(quickSaveName) == .orderedSame
             || name.caseInsensitiveCompare("Quick Saves") == .orderedSame
     }
+
+    /// Display colors for the sidebar. Built-in folders get distinct hues; custom accents win.
+    public static let vividAccents: [String: String] = [
+        "quick save": "#34D6C4",
+        "fun": "#FF9A3C",
+        "misc": "#F2C14E",
+        "tech": "#4DA3FF",
+        "work": "#FF5A52",
+        "extra": "#9D7BFF",
+        "hidden": "#7C8CB5",
+        "special": "#FF6FAE",
+        "favorites": "#52D273",
+    ]
+
+    private static let legacyAccents: Set<String> = [
+        "#2EC4A0", "#E5738A", "#D4A05A", "#5B8DEF", "#E85A5A", "#8A95A8", "#2A2A35", "#F0F4FA", "#5BA86A",
+    ]
+
+    public static func displayAccent(name: String, stored: String?) -> String {
+        if let stored, !legacyAccents.contains(stored.uppercased()) {
+            return stored
+        }
+        if let vivid = vividAccents[name.lowercased()] {
+            return vivid
+        }
+        let palette = vividAccents.values.sorted()
+        let index = name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) } % palette.count
+        return palette[index]
+    }
 }

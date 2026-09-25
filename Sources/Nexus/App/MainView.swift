@@ -5,47 +5,31 @@ import UniformTypeIdentifiers
 
 struct MainView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         @Bindable var model = model
         ZStack {
-            StarfieldBackground(day: isDay)
+            StarfieldBackground(bright: bright)
             VStack(spacing: 6) {
                 Text("Nexus")
                     .font(.system(size: 52, weight: .semibold, design: .rounded))
                     .tracking(1.8)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: isDay
-                                ? [Color(red: 0.28, green: 0.12, blue: 0.48), Color(red: 0.45, green: 0.22, blue: 0.72)]
-                                : [Color(white: 1), Color(red: 0.86, green: 0.80, blue: 1), Color(red: 0.72, green: 0.66, blue: 0.92)],
+                            colors: [Color(white: 1), Color(red: 0.86, green: 0.90, blue: 1), Color(red: 0.70, green: 0.76, blue: 0.94)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(color: Color(red: 0.6, green: 0.4, blue: 1).opacity(isDay ? 0.25 : 0.55), radius: 18)
+                    .shadow(color: (bright ? Color(red: 1, green: 0.78, blue: 0.45) : Color(red: 0.45, green: 0.45, blue: 1)).opacity(0.45), radius: 20)
                 Text("Safari bookmark manager and batch URL opener")
                     .font(.system(size: 13))
-                    .foregroundStyle(isDay ? Color(red: 0.28, green: 0.16, blue: 0.42).opacity(0.75) : .white.opacity(0.62))
+                    .foregroundStyle(.white.opacity(0.72))
                     .padding(.bottom, 6)
                 HStack(spacing: 16) {
                     SidebarView()
                         .frame(width: 272)
                     DetailColumn()
-                }
-                .background {
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color(red: 0.55, green: 0.30, blue: 1).opacity(isDay ? 0.18 : 0.32), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 520
-                            )
-                        )
-                        .blur(radius: 40)
-                        .allowsHitTesting(false)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -59,6 +43,8 @@ struct MainView: View {
             }
         }
         .toolbarBackground(.hidden, for: .windowToolbar)
+        .environment(\.nexusBright, bright)
+        .animation(.easeInOut(duration: 0.6), value: bright)
         .background(WindowFrameSaver())
         .alert("Nexus", isPresented: Binding(
             get: { model.alertMessage != nil },
@@ -97,12 +83,8 @@ struct MainView: View {
         NSApp.appearance = name.map { NSAppearance(named: $0) } ?? nil
     }
 
-    private var isDay: Bool {
-        switch model.settings.appearance {
-        case "light": return true
-        case "dark": return false
-        default: return colorScheme == .light
-        }
+    private var bright: Bool {
+        !model.settings.privateByDefault
     }
 
     private func watchClipboard() {
@@ -139,7 +121,7 @@ struct DetailColumn: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.92))
                 Spacer()
-                ColorActionButton(title: "Load File", colors: [Color(hex: "#7C5CFF"), Color(hex: "#5B3FD9")]) { model.importFile() }
+                ColorActionButton(title: "Load File", colors: [Color(hex: "#8C7BFF")]) { model.importFile() }
                     .scaleEffect(0.85)
             }
             Group {
@@ -152,16 +134,16 @@ struct DetailColumn: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .glass(radius: 16, tint: Color(red: 0.55, green: 0.35, blue: 0.85), opacity: 0.04, elevated: false)
+            .glass(radius: 16, elevated: false)
 
             HStack(spacing: 12) {
                 Spacer(minLength: 0)
-                ColorActionButton(title: "Home", colors: [Color(hex: "#5B8DEF"), Color(hex: "#2F5FD0")]) { model.goHome() }
-                ColorActionButton(title: "Open All", colors: [Color(hex: "#2EC4A0"), Color(hex: "#158F72")]) { Task { await model.openAll() } }
-                ColorActionButton(title: "Save", colors: [Color(hex: "#38BDF8"), Color(hex: "#0E86B8")]) { model.showSaveGroup = true }
-                ColorActionButton(title: "Import", colors: [Color(hex: "#9B7AE8"), Color(hex: "#6A4BC4")]) { model.importFile() }
-                ColorActionButton(title: "Export", colors: [Color(hex: "#E57BC4"), Color(hex: "#B24A93")]) { model.exportFile() }
-                ColorActionButton(title: "Clear", colors: [Color(hex: "#F07070"), Color(hex: "#B83A3A")]) { model.clearURLs() }
+                ColorActionButton(title: "Home", colors: [Color(hex: "#4DA3FF")]) { model.goHome() }
+                ColorActionButton(title: "Open All", colors: [Color(hex: "#3DDC97")]) { Task { await model.openAll() } }
+                ColorActionButton(title: "Save", colors: [Color(hex: "#2EC4B6")]) { model.showSaveGroup = true }
+                ColorActionButton(title: "Import", colors: [Color(hex: "#8C7BFF")]) { model.importFile() }
+                ColorActionButton(title: "Export", colors: [Color(hex: "#F5A623")]) { model.exportFile() }
+                ColorActionButton(title: "Clear", colors: [Color(hex: "#FF5A52")]) { model.clearURLs() }
                 Spacer(minLength: 0)
             }
 
@@ -170,19 +152,18 @@ struct DetailColumn: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.62))
                 Spacer()
-                Picker("Safari", selection: Bindable(model).settings.privateByDefault) {
-                    Text("Standard Safari").tag(false)
-                    Text("Private Safari").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 260)
-                .onChange(of: model.settings.privateByDefault) { _, _ in model.settings.save() }
+                SafariModeSwitch(isPrivate: Binding(
+                    get: { model.settings.privateByDefault },
+                    set: { value in
+                        model.settings.privateByDefault = value
+                        model.settings.save()
+                    }
+                ))
             }
         }
         .padding(18)
         .foregroundStyle(.white)
-        .glass(radius: 20, opacity: 0.05)
+        .glass(radius: 20)
         .background(KeyboardCatcher())
     }
 }

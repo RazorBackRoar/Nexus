@@ -5,11 +5,11 @@
       "name" : "Nexus",
       "path" : "/Users/home/Workspace/Apps/Nexus",
       "projects" : [
-        "1cae79ac106338af4a50496603c066584cad4c8b894c8d915fe4f392629ac499",
+        "bc7148d0a653ed84d8027a5e0168b62f3fd8f654a5d8c51ff201c373d945b61e",
         "eb4ddc29e5d17dbb8f439de546e6bdc1d7144606db347a130c0cacfe7e1ce401"
       ]
     },
-    "signature" : "58ce7d5339e4c50867d1452c46d2e396d16df37c0b2f28887ff104e5ed57bd64",
+    "signature" : "7eda4762b7e7cb038e0b85cb20e9dff49ef9e3b5238ec0a1669ac98fc28aa19e",
     "type" : "workspace"
   },
   {
@@ -203,6 +203,14 @@
                 "guid" : "PACKAGE:nexus::MAINGROUP::REF_2::REF_0",
                 "name" : "NexusTests.swift",
                 "path" : "NexusTests.swift",
+                "sourceTree" : "<group>",
+                "type" : "file"
+              },
+              {
+                "fileType" : "sourcecode.swift",
+                "guid" : "PACKAGE:nexus::MAINGROUP::REF_2::REF_1",
+                "name" : "SnapshotPreview.swift",
+                "path" : "SnapshotPreview.swift",
                 "sourceTree" : "<group>",
                 "type" : "file"
               }
@@ -484,7 +492,7 @@
       "projectIsPackage" : "true",
       "projectName" : "Nexus",
       "targets" : [
-        "5a7638ff18aea6f46af909215a5317a77f8fa8e49880f45857f82fffd924dd5d",
+        "774fdf45718d36c3fbfa3f3ec764dc5cc1827fbbba5ffcccf0894ded2d52e043",
         "19b8a6fced2409e0e3a07309c52cf8a9134c30764987e919cef277798b72adc0",
         "3aa34f2c0a2b8a87d8b3793744d0e34086758b438130a4189915d570ba84d64b",
         "bc4b006942263aaac6fcf772f09ae172416c44787de8a46990a1aff8471586f0",
@@ -492,7 +500,7 @@
         "c6564e001692160e026489d2514c486bef7b4c0ca03412b7065c3f9d06d3290e"
       ]
     },
-    "signature" : "1cae79ac106338af4a50496603c066584cad4c8b894c8d915fe4f392629ac499",
+    "signature" : "bc7148d0a653ed84d8027a5e0168b62f3fd8f654a5d8c51ff201c373d945b61e",
     "type" : "project"
   },
   {
@@ -675,6 +683,15 @@
 
               ],
               "removeHeadersOnCopy" : "false"
+            },
+            {
+              "codeSignOnCopy" : "false",
+              "fileReference" : "PACKAGE:nexus::MAINGROUP::REF_2::REF_1",
+              "guid" : "PACKAGE-PRODUCT:nexus_NexusTests.NexusTests::BUILDPHASE_0::1",
+              "platformFilters" : [
+
+              ],
+              "removeHeadersOnCopy" : "false"
             }
           ],
           "guid" : "PACKAGE-PRODUCT:nexus_NexusTests.NexusTests::BUILDPHASE_0",
@@ -724,7 +741,7 @@
       "productTypeIdentifier" : "com.apple.product-type.bundle.unit-test",
       "type" : "standard"
     },
-    "signature" : "5a7638ff18aea6f46af909215a5317a77f8fa8e49880f45857f82fffd924dd5d",
+    "signature" : "774fdf45718d36c3fbfa3f3ec764dc5cc1827fbbba5ffcccf0894ded2d52e043",
     "type" : "target"
   },
   {

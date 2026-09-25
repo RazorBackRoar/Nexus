@@ -1,8 +1,16 @@
 import AppKit
 import SwiftUI
 
+@MainActor
+final class NexusAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+}
+
 @main
 struct NexusApp: App {
+    @NSApplicationDelegateAdaptor(NexusAppDelegate.self) private var appDelegate
     @State private var model = AppModel()
 
     var body: some Scene {
