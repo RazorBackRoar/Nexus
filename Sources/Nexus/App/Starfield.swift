@@ -79,8 +79,8 @@ struct StarfieldBackground: View {
                     drawLayer(Self.mid, context, size, time, speed: 6.5, strength: 0.72, bloom: false)
                     drawMotes(context, size, time, warm: solar)
                     drawLayer(Self.near, context, size, time, speed: 15, strength: 1, bloom: true)
-                    drawEclipse(context, size, time, alpha: solar)
-                    drawBlackHole(context, size, time, alpha: dark)
+                    drawDwarfStar(context, size, time, solar: solar)
+                    drawBlackHole(context, size, time, solar: solar)
                     drawMeteors(context, size, time)
                 }
             }
@@ -258,133 +258,162 @@ struct StarfieldBackground: View {
         }
     }
 
-    // MARK: Solar eclipse (Standard Safari)
+    // MARK: Focal object
 
-    private func drawEclipse(_ context: GraphicsContext, _ size: CGSize, _ time: Double, alpha: Double) {
-        guard alpha > 0.01 else { return }
+    private func focalCenter(_ size: CGSize) -> CGPoint {
+        CGPoint(x: size.width * 0.80, y: size.height * 0.17)
+    }
+
+    // MARK: Dwarf star (Standard Safari)
+
+    private func drawDwarfStar(_ context: GraphicsContext, _ size: CGSize, _ time: Double, solar: Double) {
+        guard solar > 0.01 else { return }
         var ctx = context
-        ctx.opacity = alpha
-        let center = CGPoint(x: size.width * 0.86, y: size.height * 0.13)
-        let r = min(size.width, size.height) * 0.062
+        ctx.opacity = solar
+        let center = focalCenter(size)
+        let grow = CGFloat(0.35 + 0.65 * solar)
+        let pulse = 0.92 + 0.08 * sin(time * 0.7)
+        let r = min(size.width, size.height) * 0.068 * grow
 
         ctx.fill(
-            Path(ellipseIn: CGRect(x: center.x - size.width * 0.8, y: center.y - size.width * 0.8, width: size.width * 1.6, height: size.width * 1.6)),
-            with: .radialGradient(
-                Gradient(colors: [Color(red: 1, green: 0.70, blue: 0.36).opacity(0.16), Color(red: 0.36, green: 0.28, blue: 0.85).opacity(0.07), .clear]),
-                center: center,
-                startRadius: r,
-                endRadius: size.width * 0.8
-            )
-        )
-        ctx.fill(
-            Path(ellipseIn: CGRect(x: center.x - r * 5.5, y: center.y - r * 5.5, width: r * 11, height: r * 11)),
+            Path(ellipseIn: CGRect(x: center.x - size.width, y: center.y - size.width, width: size.width * 2, height: size.width * 2)),
             with: .radialGradient(
                 Gradient(colors: [
-                    Color(red: 1, green: 0.93, blue: 0.80).opacity(0.46),
-                    Color(red: 1, green: 0.74, blue: 0.40).opacity(0.18),
-                    Color(red: 0.48, green: 0.40, blue: 0.95).opacity(0.07),
+                    Color(red: 1, green: 0.78, blue: 0.44).opacity(0.24),
+                    Color(red: 1, green: 0.56, blue: 0.26).opacity(0.08),
+                    Color(red: 0.40, green: 0.30, blue: 0.85).opacity(0.05),
                     .clear,
                 ]),
                 center: center,
-                startRadius: r * 0.9,
-                endRadius: r * 5.5
+                startRadius: r,
+                endRadius: size.width * 0.95
             )
         )
+
+        var shell = ctx
+        shell.translateBy(x: center.x, y: center.y)
+        shell.rotate(by: .radians(-0.35 + time * 0.004))
+        shell.scaleBy(x: 1, y: 0.78)
+        for band in 0..<18 {
+            let t = Double(band) / 17
+            let peak = sin(t * .pi)
+            let color = t < 0.5
+                ? Color(red: 1, green: 0.80, blue: 0.46)
+                : Color(red: 1, green: 0.58, blue: 0.30)
+            shell.stroke(
+                Path(ellipseIn: CGRect(x: -r * (4 + CGFloat(t) * 2.4), y: -r * (4 + CGFloat(t) * 2.4), width: r * (8 + CGFloat(t) * 4.8), height: r * (8 + CGFloat(t) * 4.8))),
+                with: .conicGradient(
+                    Gradient(colors: [color.opacity(0.14 * peak), color.opacity(0.04 * peak), color.opacity(0.14 * peak)]),
+                    center: .zero,
+                    angle: .radians(time * 0.03)
+                ),
+                lineWidth: r * 0.34
+            )
+        }
+
+        ctx.fill(
+            Path(ellipseIn: CGRect(x: center.x - r * 7, y: center.y - r * 7, width: r * 14, height: r * 14)),
+            with: .radialGradient(
+                Gradient(colors: [
+                    Color.white.opacity(pulse),
+                    Color(red: 1, green: 0.92, blue: 0.74).opacity(0.7 * pulse),
+                    Color(red: 1, green: 0.72, blue: 0.38).opacity(0.28),
+                    .clear,
+                ]),
+                center: center,
+                startRadius: r * 0.4,
+                endRadius: r * 5
+            )
+        )
+
         for streamer in Self.streamers {
-            let angle = streamer.angle + time * 0.004
-            let start = CGPoint(x: center.x + cos(angle) * r, y: center.y + sin(angle) * r)
-            let end = CGPoint(x: center.x + cos(angle) * r * streamer.length, y: center.y + sin(angle) * r * streamer.length)
+            let angle = streamer.angle + time * 0.006
+            let start = CGPoint(x: center.x + cos(angle) * r * 1.3, y: center.y + sin(angle) * r * 1.3)
+            let end = CGPoint(x: center.x + cos(angle) * r * 1.3 * streamer.length * 1.4, y: center.y + sin(angle) * r * 1.3 * streamer.length * 1.4)
             var ray = Path()
             ray.move(to: start)
             ray.addLine(to: end)
             ctx.stroke(
                 ray,
                 with: .linearGradient(
-                    Gradient(colors: [Color(red: 1, green: 0.93, blue: 0.80).opacity(streamer.strength), .clear]),
+                    Gradient(colors: [Color(red: 1, green: 0.94, blue: 0.82).opacity(streamer.strength), .clear]),
                     startPoint: start,
                     endPoint: end
                 ),
-                style: StrokeStyle(lineWidth: streamer.width, lineCap: .round)
+                style: StrokeStyle(lineWidth: streamer.width * 0.8, lineCap: .round)
             )
         }
-        ctx.fill(
-            Path(ellipseIn: CGRect(x: center.x - r * 1.9, y: center.y - r * 1.9, width: r * 3.8, height: r * 3.8)),
-            with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.95), Color(red: 1, green: 0.86, blue: 0.58).opacity(0.55), .clear]),
-                center: center,
-                startRadius: r * 0.95,
-                endRadius: r * 1.9
-            )
-        )
-        for (index, angle) in [0.6, 2.4, 4.3].enumerated() {
-            let wobble = sin(time * 0.3 + Double(index)) * 0.04
-            let a = angle + wobble
-            let left = CGPoint(x: center.x + cos(a - 0.05) * r, y: center.y + sin(a - 0.05) * r)
-            let right = CGPoint(x: center.x + cos(a + 0.05) * r, y: center.y + sin(a + 0.05) * r)
-            let peak = CGPoint(x: center.x + cos(a) * r * 1.14, y: center.y + sin(a) * r * 1.14)
-            var arc = Path()
-            arc.move(to: left)
-            arc.addQuadCurve(to: right, control: peak)
-            ctx.stroke(arc, with: .color(Color(red: 1, green: 0.36, blue: 0.16).opacity(0.18)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-            ctx.stroke(arc, with: .color(Color(red: 1, green: 0.50, blue: 0.24).opacity(0.6)), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
-        }
-        ctx.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)), with: .color(Color(red: 0.004, green: 0.005, blue: 0.012)))
-        ctx.stroke(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)), with: .color(.white.opacity(0.75)), lineWidth: 1.2)
 
-        let diamondAngle = -2.25
-        let diamond = CGPoint(x: center.x + cos(diamondAngle) * r, y: center.y + sin(diamondAngle) * r)
-        let pulse = 0.85 + 0.15 * sin(time * 0.8)
+        let spikeTurn = time * 0.008
+        for index in 0..<8 {
+            let angle = spikeTurn + Double(index) * .pi / 4
+            let length = r * (index % 2 == 0 ? 7 : 4)
+            let tip = CGPoint(x: center.x + cos(angle) * length, y: center.y + sin(angle) * length)
+            var spike = Path()
+            spike.move(to: center)
+            spike.addLine(to: tip)
+            ctx.stroke(
+                spike,
+                with: .linearGradient(
+                    Gradient(stops: [
+                        .init(color: .white.opacity(0.9 * pulse), location: 0),
+                        .init(color: Color(red: 1, green: 0.88, blue: 0.66).opacity(0.3), location: 0.35),
+                        .init(color: .clear, location: 1),
+                    ]),
+                    startPoint: center,
+                    endPoint: tip
+                ),
+                lineWidth: index % 2 == 0 ? 2 : 1.2
+            )
+        }
+
         ctx.fill(
-            Path(ellipseIn: CGRect(x: diamond.x - 24, y: diamond.y - 24, width: 48, height: 48)),
+            Path(ellipseIn: CGRect(x: center.x - r * 1.4, y: center.y - r * 1.4, width: r * 2.8, height: r * 2.8)),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(pulse), Color(red: 1, green: 0.85, blue: 0.55).opacity(0.4 * pulse), .clear]),
-                center: diamond,
+                Gradient(colors: [.white, Color(red: 1, green: 0.96, blue: 0.86).opacity(0.9), .clear]),
+                center: center,
                 startRadius: 0,
-                endRadius: 24
+                endRadius: r * 1.4
             )
         )
-        let flareWidth = size.width * 0.34
-        ctx.fill(
-            Path(CGRect(x: diamond.x - flareWidth / 2, y: diamond.y - 0.6, width: flareWidth, height: 1.2)),
-            with: .linearGradient(
-                Gradient(colors: [.clear, .white.opacity(0.55 * pulse), .clear]),
-                startPoint: CGPoint(x: diamond.x - flareWidth / 2, y: diamond.y),
-                endPoint: CGPoint(x: diamond.x + flareWidth / 2, y: diamond.y)
-            )
-        )
+        ctx.fill(Path(ellipseIn: CGRect(x: center.x - r * 0.5, y: center.y - r * 0.5, width: r, height: r)), with: .color(.white))
     }
 
     // MARK: Black hole (Private Safari)
 
-    private func drawBlackHole(_ context: GraphicsContext, _ size: CGSize, _ time: Double, alpha: Double) {
-        guard alpha > 0.01 else { return }
+    private func drawBlackHole(_ context: GraphicsContext, _ size: CGSize, _ time: Double, solar: Double) {
+        let dark = 1 - solar
+        guard dark > 0.01 else { return }
         var ctx = context
-        ctx.opacity = alpha
-        let center = CGPoint(x: size.width * 0.86, y: size.height * 0.13)
-        let r = min(size.width, size.height) * 0.058
-        let doppler = Angle.radians(.pi + sin(time * 0.1) * 0.25)
+        ctx.opacity = dark
+        let center = focalCenter(size)
+        let shrink = CGFloat(0.35 + 0.65 * dark)
+        let r = min(size.width, size.height) * 0.15 * shrink
+        let spin = time * 0.16
+        let doppler = Angle.radians(spin)
 
         ctx.fill(
-            Path(ellipseIn: CGRect(x: center.x - r * 9, y: center.y - r * 9, width: r * 18, height: r * 18)),
+            Path(ellipseIn: CGRect(x: center.x - r * 6, y: center.y - r * 6, width: r * 12, height: r * 12)),
             with: .radialGradient(
-                Gradient(colors: [Color(red: 0.22, green: 0.18, blue: 0.66).opacity(0.42), Color(red: 0.05, green: 0.10, blue: 0.42).opacity(0.14), .clear]),
+                Gradient(colors: [Color(red: 0.22, green: 0.18, blue: 0.68).opacity(0.46), Color(red: 0.05, green: 0.10, blue: 0.44).opacity(0.16), .clear]),
                 center: center,
                 startRadius: r,
-                endRadius: r * 9
+                endRadius: r * 6
             )
         )
 
         var disk = ctx
         disk.translateBy(x: center.x, y: center.y)
-        disk.rotate(by: .radians(-0.12))
-        disk.scaleBy(x: 1, y: 0.17)
+        disk.rotate(by: .radians(-0.14))
+        disk.scaleBy(x: 1, y: 0.19)
         drawDiskHalf(disk, r: r, from: 180, to: 360, doppler: doppler)
+        drawClumps(disk, r: r, spin: spin, front: false)
 
         for band in 0..<14 {
             let t = Double(band) / 13
             ctx.stroke(
                 arcPath(center: center, radius: r * (1.06 + CGFloat(t) * 0.5), from: 184, to: 356),
-                with: .color(Color(red: 1, green: 0.84 - 0.2 * t, blue: 0.62 - 0.3 * t).opacity(0.5 * pow(1 - t, 1.8) + 0.02)),
+                with: .color(Color(red: 1, green: 0.86 - 0.2 * t, blue: 0.64 - 0.3 * t).opacity(0.85 * pow(1 - t, 1.6) + 0.04)),
                 style: StrokeStyle(lineWidth: r * 0.1, lineCap: .round)
             )
         }
@@ -392,7 +421,7 @@ struct StarfieldBackground: View {
             let t = Double(band) / 5
             ctx.stroke(
                 arcPath(center: center, radius: r * (1.05 + CGFloat(t) * 0.18), from: 16, to: 164),
-                with: .color(Color(red: 1, green: 0.80, blue: 0.56).opacity(0.3 * (1 - t) + 0.02)),
+                with: .color(Color(red: 1, green: 0.82, blue: 0.58).opacity(0.55 * (1 - t) + 0.04)),
                 style: StrokeStyle(lineWidth: r * 0.05, lineCap: .round)
             )
         }
@@ -409,10 +438,11 @@ struct StarfieldBackground: View {
                 center: center,
                 angle: doppler
             ),
-            lineWidth: 1.5
+            lineWidth: 2.6
         )
 
         drawDiskHalf(disk, r: r, from: 0, to: 180, doppler: doppler)
+        drawClumps(disk, r: r, spin: spin, front: true)
 
         for flare in Self.flares {
             let phase = ((time + flare.offset) / flare.cycle).truncatingRemainder(dividingBy: 1)
@@ -441,7 +471,7 @@ struct StarfieldBackground: View {
             case ..<0.78: color = Color(red: 0.90, green: 0.36, blue: 0.16)
             default: color = Color(red: 0.36, green: 0.30, blue: 0.86)
             }
-            let strength = 0.34 * pow(1 - t, 1.4) + 0.03
+            let strength = 0.62 * pow(1 - t, 1.2) + 0.05
             disk.stroke(
                 arcPath(center: .zero, radius: radius, from: from, to: to),
                 with: .conicGradient(
@@ -450,6 +480,24 @@ struct StarfieldBackground: View {
                     angle: doppler
                 ),
                 style: StrokeStyle(lineWidth: r * 0.12, lineCap: .butt)
+            )
+        }
+    }
+
+    /// Hot clumps orbiting the disk; inner ones move faster so the spin reads clearly.
+    private func drawClumps(_ disk: GraphicsContext, r: CGFloat, spin: Double, front: Bool) {
+        for index in 0..<22 {
+            let lane = Double(index % 11) / 10
+            let radius = r * (1.3 + CGFloat(lane) * 1.7)
+            let speed = 2.2 / pow(1 + lane * 1.6, 1.5)
+            let degrees = (Double(index) * 67 + spin * speed * 180 / .pi).truncatingRemainder(dividingBy: 360)
+            let inFront = degrees < 180
+            guard inFront == front else { continue }
+            let color = lane < 0.4 ? Color(red: 1, green: 0.95, blue: 0.84) : Color(red: 1, green: 0.66, blue: 0.32)
+            disk.stroke(
+                arcPath(center: .zero, radius: radius, from: degrees, to: degrees + 16),
+                with: .color(color.opacity(0.62 * (1 - lane) + 0.08)),
+                style: StrokeStyle(lineWidth: r * 0.09, lineCap: .round)
             )
         }
     }
@@ -727,20 +775,21 @@ struct GlassSurface: ViewModifier {
         content
             .background {
                 ZStack {
-                    shape.fill(Color(red: 0.02, green: 0.025, blue: 0.06).opacity(elevated ? 0.30 : 0.24))
+                    shape.fill(Color(red: 0.02, green: 0.025, blue: 0.06).opacity(elevated ? 0.30 : 0.34))
                     shape.fill(
                         LinearGradient(
-                            colors: [edge.opacity(0.08), .clear, Color(red: 0.25, green: 0.45, blue: 1).opacity(0.04)],
+                            colors: [edge.opacity(bright ? 0.14 : 0.08), .clear, Color(red: 0.25, green: 0.45, blue: 1).opacity(0.04)],
                             startPoint: .topTrailing,
                             endPoint: .bottomLeading
                         )
                     )
+                    shape.fill(RadialGradient(colors: [edge.opacity(bright ? 0.18 : 0.08), .clear], center: .topTrailing, startRadius: 0, endRadius: 520))
                     shape.fill(RadialGradient(colors: [tint.opacity(tintOpacity), .clear], center: .topLeading, startRadius: 0, endRadius: 420))
                 }
             }
             .overlay {
                 shape
-                    .fill(LinearGradient(colors: [.white.opacity(elevated ? 0.07 : 0.03), .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.08)))
+                    .fill(LinearGradient(colors: [(bright ? edge : .white).opacity(elevated ? 0.10 : 0.04), .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.08)))
                     .allowsHitTesting(false)
             }
             .overlay {
@@ -771,7 +820,7 @@ struct GlassSurface: ViewModifier {
             .overlay {
                 shape.inset(by: 1.5).strokeBorder(.white.opacity(0.05), lineWidth: 1)
             }
-            .shadow(color: edge.opacity(elevated ? 0.12 : 0), radius: 22)
+            .shadow(color: edge.opacity(elevated ? (bright ? 0.24 : 0.12) : 0), radius: 24)
             .shadow(color: .black.opacity(elevated ? 0.6 : 0.3), radius: elevated ? 28 : 10, y: elevated ? 18 : 5)
     }
 }
@@ -803,6 +852,7 @@ struct InteractiveGlass: ViewModifier {
     var lift: CGFloat
     var pressable: Bool
 
+    @Environment(\.nexusBright) private var bright
     @State private var hovering = false
     @State private var pressed = false
     @State private var cursor: CGPoint?
@@ -811,10 +861,12 @@ struct InteractiveGlass: ViewModifier {
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         let lit = hovering || selected
+        let light = CosmicLight.edge(bright: bright)
         content
             .background {
                 ZStack {
                     shape.fill(Color(red: 0.02, green: 0.025, blue: 0.06).opacity(0.58))
+                    shape.fill(RadialGradient(colors: [light.opacity(bright ? 0.22 : 0.10), .clear], center: .topTrailing, startRadius: 0, endRadius: 110))
                     shape.fill(
                         LinearGradient(
                             colors: [
@@ -837,7 +889,7 @@ struct InteractiveGlass: ViewModifier {
             }
             .overlay {
                 shape
-                    .fill(LinearGradient(colors: [.white.opacity(lit ? 0.18 : 0.11), .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.45)))
+                    .fill(LinearGradient(colors: [(bright ? light : .white).opacity(lit ? 0.22 : 0.13), .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.45)))
                     .allowsHitTesting(false)
             }
             .overlay {
@@ -867,7 +919,7 @@ struct InteractiveGlass: ViewModifier {
             .overlay {
                 shape.strokeBorder(
                     LinearGradient(
-                        colors: [.white.opacity(lit ? 0.72 : 0.40), accent.opacity(lit ? 0.95 : 0.62), accent.opacity(0.2)],
+                        colors: [(bright ? light : .white).opacity(lit ? 0.8 : 0.45), accent.opacity(lit ? 0.95 : 0.62), accent.opacity(0.2)],
                         startPoint: .top,
                         endPoint: .bottom
                     ),
@@ -926,17 +978,28 @@ struct ColorActionButton: View {
     var colors: [Color]
     var action: () -> Void
 
+    private var accent: Color { colors.first ?? .blue }
+
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.white)
+                .shadow(color: accent.opacity(0.8), radius: 6)
                 .frame(minWidth: 104, minHeight: 40)
                 .padding(.horizontal, 12)
+                .overlay(alignment: .bottom) {
+                    Capsule()
+                        .fill(accent)
+                        .frame(height: 2)
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 1)
+                        .shadow(color: accent, radius: 5)
+                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .interactiveGlass(accent: colors.first ?? .blue, radius: 12)
+        .interactiveGlass(accent: accent, radius: 12, intensity: 1.6)
     }
 }
 

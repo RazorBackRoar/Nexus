@@ -16,12 +16,14 @@ struct MainView: View {
                     .tracking(1.8)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(white: 1), Color(red: 0.86, green: 0.90, blue: 1), Color(red: 0.70, green: 0.76, blue: 0.94)],
+                            colors: bright
+                                ? [Color(white: 1), Color(red: 1, green: 0.92, blue: 0.76), Color(red: 1, green: 0.78, blue: 0.50)]
+                                : [Color(white: 1), Color(red: 0.86, green: 0.90, blue: 1), Color(red: 0.70, green: 0.76, blue: 0.94)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(color: (bright ? Color(red: 1, green: 0.78, blue: 0.45) : Color(red: 0.45, green: 0.45, blue: 1)).opacity(0.45), radius: 20)
+                    .shadow(color: (bright ? Color(red: 1, green: 0.78, blue: 0.45) : Color(red: 0.45, green: 0.45, blue: 1)).opacity(bright ? 0.6 : 0.45), radius: 20)
                 Text("Safari bookmark manager and batch URL opener")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.72))
