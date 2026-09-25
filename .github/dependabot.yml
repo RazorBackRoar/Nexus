@@ -1,35 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: "uv"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/Denver"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "python"
-    groups:
-      python-dev-minor-patch:
-        dependency-type: "development"
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      python-prod-patch:
-        dependency-type: "production"
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -39,15 +9,8 @@ updates:
       timezone: "America/Denver"
     open-pull-requests-limit: 3
     commit-message:
-      prefix: "ci"
+      prefix: "deps"
       include: "scope"
     labels:
       - "dependencies"
       - "github-actions"
-    groups:
-      github-actions-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"

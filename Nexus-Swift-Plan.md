@@ -1,6 +1,6 @@
 # Nexus native rebuild plan
 
-Swift 6 + SwiftUI replacement for the current PySide6 app. This file lives in the Nexus repo at `/Users/home/Workspace/Apps/Nexus/Nexus-Swift-Plan.md`. Every code change from this plan happens in this same repo. The paste-ready instruction is `~/Desktop/Nexus-Swift-Prompt.md`, and that prompt follows this file.
+Swift 6 + SwiftUI replacement for the current PySide6 app. This file lives in the Nexus repo at `/Users/home/Workspace/Apps/Nexus/Nexus-Swift-Plan.md`. Every code change from this plan happens in this same repo. The paste-ready instruction is `~/Desktop/Nexus Prompt.md`, with the same text at `Nexus-Swift-Prompt.md` in this repo. That prompt follows this file.
 
 Do not start this plan until that prompt is the task. Keep this plan file. The Python removal phase does not delete it.
 
@@ -165,7 +165,7 @@ Each phase ends with `swift test` for the code it added. Do not delete Python in
 5. **Wire the library.** Load and save the real files. Filter, reorder, rename, accent, delete, undo. Quick Save cards edit notes and delete one card.
 6. **Safari.** Open one, Open All with pacing, import tabs, private-window failure path. Script-builder tests run without Safari. A live open test is manual.
 7. **Rich Links, export, health, updates.** Pasteboard HTML, text/CSV export, duplicate report, dead-link scan, update check.
-8. **Remove Python.** After phases 2–7 pass: remove `src/`, `tests/` (pytest), `pyproject.toml`, `uv.lock`, `Nexus.spec`, `run_preview.sh`, and Python CI. Add Swift CI modeled on Swifter. Rewrite `AGENTS.md` for the Swift app. Keep the icon asset and keep `Nexus-Swift-Plan.md`.
+8. **Remove Python.** After phases 2–7 pass: remove `src/`, `tests/` (pytest), `pyproject.toml`, `uv.lock`, `Nexus.spec`, `run_preview.sh`, and Python CI. Add Swift CI modeled on Swifter. Rewrite `AGENTS.md` for the Swift app. Keep the icon asset and keep `Nexus-Swift-Plan.md` and `Nexus-Swift-Prompt.md`.
 9. **Package.** `scripts/build-mac.sh` through the shared branding and DMG scripts. Leave `build/Release/Nexus.dmg` and `~/Desktop/Nexus.dmg`. Do not mount the DMG or copy the app into `/Applications`.
 
 ## Leave behind
