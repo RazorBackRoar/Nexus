@@ -17,7 +17,18 @@ Native macOS Safari bookmark manager and batch URL opener. Swift 6, SwiftUI, mac
 
 ## UI
 
-Keep the dark purple space theme with stars (including shooting stars) as the main visual style. Bookmarks, buttons, and other interactive controls must use distinct contrasting colors so they stand out — do not flatten the UI to a single purple look.
+Approved look (Sep 2026) — refine within it, do not redesign or return to pink/washed-out purple glassmorphism:
+
+- Dark cosmic environment. Private Safari: near-black deep space with a massive spinning black hole. Standard Safari: a bright white-gold dwarf star in the same spot. Switching modes animates between them.
+- The glass reflects the active light source: warm gold in Standard, cool violet in Private. Colors change with the mode.
+- Crystal-clear dark spacecraft glass with crisp, high-contrast text.
+- Stars fly across in parallax depth layers, with slow shooting stars.
+- Bookmark categories keep distinct accent colors; pink is a rare accent only. Action buttons stay punchy.
+- Hover makes cards and buttons glow, lift, or highlight. No star/sparkle particles near the cursor.
+
+Closing the window quits the app (`applicationShouldTerminateAfterLastWindowClosed` returns true). It must not keep running invisibly.
+
+README screenshots are offscreen renders of the real components with the default folders. Never capture the live window or library (bookmarks, clipboard URLs), and never take a full-screen capture.
 
 ## Library
 
