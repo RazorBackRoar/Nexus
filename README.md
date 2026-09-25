@@ -1,7 +1,7 @@
 # Nexus
 
 [![Download](https://img.shields.io/github/v/release/RazorBackRoar/Nexus?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/Nexus/releases/latest)
-[![Version](https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge)](https://github.com/RazorBackRoar/Nexus/releases/tag/v3.0.0)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge)](https://github.com/RazorBackRoar/Nexus/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/Nexus/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/Nexus/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Swift](https://img.shields.io/badge/swift-6-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org/)
@@ -15,7 +15,7 @@
 
 **Native macOS Safari bookmark manager and batch URL opener.**
 
-Swift 6 and SwiftUI. Deep purple glass, a star field, and colored controls. Opens links in Private Safari.
+Swift 6 and SwiftUI. Clear spacecraft glass over a living galaxy: a black hole in Private Safari, a solar eclipse in Standard Safari.
 
 <p align="center">
   <a href="https://github.com/RazorBackRoar/Nexus/releases/latest/download/Nexus.dmg"><strong>↓ Download Nexus.dmg</strong></a>
@@ -28,8 +28,9 @@ Swift 6 and SwiftUI. Deep purple glass, a star field, and colored controls. Open
 ## Features
 
 - **Private Safari** — launches in Private Browsing and pauses between tabs
+- **Two cosmic themes** — black hole for Private Safari, solar eclipse for Standard Safari
 - **Quick Save** — dated URL cards with notes (⌘⇧S)
-- **Bookmark folders** — colored glass rows you can filter and reorder
+- **Bookmark folders** — each category has its own color; filter and reorder
 - **Copy Rich Links** — Apple Notes–friendly HTML on the clipboard
 - **Paste and drop** — links from the clipboard, or `.txt` / `.csv` / `.md` files
 - **Apple Silicon** — Swift 6, arm64 only
