@@ -1,72 +1,31 @@
-# Architecture — Nexus
+# Architecture
 
-Developer map for the Safari bookmark manager and batch URL opener (PySide6).
+Nexus is a Swift 6 / SwiftUI app. Entry point: `Sources/Nexus/NexusApp.swift`.
 
-## Package layout
+## Layout
 
 | Path | Role |
 |------|------|
-| `src/nexus/main.py` | Entry point |
-| `src/nexus/core/bookmarks.py` | Tree model, `bookmarks_v2.json` persistence |
-| `src/nexus/core/group_store.py` | Bookmark groups sidecar (`bookmark_groups.json`) |
-| `src/nexus/core/link_converter.py` | Rich Links clipboard (AppKit HTML) |
-| `src/nexus/core/safari.py` | AppleScript Safari control |
-| `src/nexus/core/models.py` | `BookmarkGroup`, `QuickSaveEntry`, accents |
-| `src/nexus/gui/main_window.py` | Shell, migration, palettes |
-| `src/nexus/gui/widgets/` | URL table, Quick Save panel, group rows |
-| `src/nexus/gui/dialogs/` | New folder, Save Group dialogs |
-| `src/nexus/applescript/` | Script builder + poller |
+| `Sources/Nexus/NexusApp.swift` | App entry, window lifecycle |
+| `Sources/Nexus/App/` | `AppModel`, `MainView`, sheets, starfield |
+| `Sources/Nexus/Store/` | `BookmarkStore`, `LibraryCodec`, models, atomic JSON writes |
+| `Sources/Nexus/Safari/` | `SafariRunner` and AppleScript in `SafariScripts` |
+| `Sources/Nexus/Sidebar/` | Folder sidebar |
+| `Sources/Nexus/URLWorkspace/` | Paste, drop, and URL extraction |
+| `Sources/Nexus/Health/` | Library health scan |
+| `Sources/Nexus/Settings/` | Settings |
+| `Tests/NexusTests/` | `swift test` |
 
-## Sidebar columns
+## Library
 
-**Quick Save** (top-level, no subfolders) plus eight default bookmark tabs:
-`Fun`, `Misc`, `Tech`, `Work`, `Extra`, `Hidden`, `Special`, `Favorites`
-(`DEFAULT_BOOKMARK_FOLDER_NAMES` in `bookmarks.py`).
+Bookmark files stay `bookmarks_v2.json` and `bookmark_groups.json` under `~/Library/Application Support/Nexus/`.
 
-## Persistence
+`AtomicJSON.replace` writes an exclusive `.tmp` (`O_NOFOLLOW`), fsyncs, then renames over the destination. A missing or unreadable primary file restores `.bak` before defaults are created. Quick Save stays first and cannot be deleted.
 
-| File | Location | Contents |
-|------|----------|----------|
-| `bookmarks_v2.json` | Qt `AppDataLocation` (~`~/Library/Application Support/Nexus/`) | Bookmark tree + Quick Save markers |
-| `bookmark_groups.json` | Same directory | Named groups (sidecar to tree) |
+## Safari
 
-`BookmarkManager.save_bookmarks` uses atomic `.tmp` + `.bak`. On load failure,
-`.bak` is attempted before falling back to defaults.
+`SafariRunner` opens one tab at a time through `osascript`. Private Browsing is the default. Private windows need Accessibility and do not fall back to a standard window. Batches pause between tabs so Safari does not drop launches.
 
-## Key workflows
+## Build
 
-- **Batch open** — selected bookmarks → Safari via AppleScript (Automation permission required).
-- **Quick Save** — `Ctrl+Shift+S` saves URL blocks as dated cards (Date & Time | Bookmarks | Notes).
-- **Copy Rich Links** — Apple Notes–friendly HTML to clipboard.
-- **Drag-drop** — `.txt`/`.csv`/`.md` onto URL table extracts links.
-- **Save Group** — persists a named group under the active tab.
-
-## Async workers
-
-`AsyncWorker` extends `razorcore.threading.AsyncTaskWorker` for Safari open
-tasks. Bookmark I/O stays on the main thread with atomic file writes.
-
-## Testing
-
-```bash
-uv run pytest tests/ -q
-```
-
-Focused modules:
-
-| Area | Tests |
-|------|-------|
-| Bookmarks | `tests/test_bookmarks.py` |
-| Groups | `tests/core/test_group_store.py` |
-| Quick Save | `tests/gui/test_quick_save*.py` |
-| Safari | `tests/core/test_safari_controller.py` |
-
-GUI tests set `QT_QPA_PLATFORM=offscreen`.
-
-CI does **not** prove Safari Automation permissions or live AppleScript.
-
-## Related docs
-
-- [BUILD_AND_RELEASE.md](../BUILD_AND_RELEASE.md)
-- [docs/DMG_BUILD_README.md](DMG_BUILD_README.md)
-- [CONTRIBUTING.md](../CONTRIBUTING.md)
+`swift test`, then `./scripts/build-mac.sh`. Version is `Sources/Nexus/Resources/version.json`.

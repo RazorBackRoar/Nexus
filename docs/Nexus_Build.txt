@@ -1,3 +1,0 @@
-cd /Users/home/Zshrc/Windsurf/Nexus
-./build.sh
-ls dist

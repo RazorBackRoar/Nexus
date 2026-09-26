@@ -5,12 +5,11 @@ labels: bug
 ---
 
 ## App
-Nexus (version: <!-- see About panel or pyproject.toml -->)
+Nexus (version: <!-- see About panel or Sources/Nexus/Resources/version.json -->)
 
 ## Environment
 - macOS version:
 - Mac model (Apple Silicon):
-- Python version: 3.14 (if running from source)
 
 ## Steps to reproduce
 1.
